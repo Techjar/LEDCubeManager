@@ -1,0 +1,10 @@
+sound:
+  musicvolume: 1.0
+  effectvolume: 1.0
+display:
+  height: 768
+  width: 1024
+  antialiasing: true
+  antialiasingsamples: 4
+controls:
+  controller: vJoy Device
