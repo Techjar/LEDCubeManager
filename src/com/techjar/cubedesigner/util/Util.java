@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -293,6 +294,21 @@ public final class Util {
             mant &= 0x3ff;
         }
         return Float.intBitsToFloat((hbits & 0x8000) << 16 | (exp | mant) << 13);
+    }
+
+    public static byte[] readFully(InputStream in) throws IOException {
+        @Cleanup ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] bytes = new byte[4096]; int count;
+        while ((count = in.read(bytes, 0, bytes.length)) != -1) {
+            out.write(bytes, 0, count);
+        }
+        return out.toByteArray();
+    }
+
+    public static String readFile(File file) throws FileNotFoundException, IOException {
+        @Cleanup FileInputStream in = new FileInputStream(file);
+        byte[] bytes = readFully(in);
+        return new String(bytes, "UTF-8");
     }
 
     public static long microTime() {
