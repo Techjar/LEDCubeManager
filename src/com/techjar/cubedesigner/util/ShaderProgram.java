@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL40.*;
 import static org.lwjgl.opengl.GL41.*;
 import static org.lwjgl.opengl.GL43.*;
 
+import com.techjar.cubedesigner.util.logging.LogHelper;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,17 +19,21 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.lwjgl.opengl.GL20;
 
 /**
  *
  * @author Techjar
  */
 public class ShaderProgram {
-    private static final File shaderPath = new File("resources/models/");
+    private static final File shaderPath = new File("resources/shaders/");
     private static final Map<String, Integer> types;
-    @Getter private int programId;
+    private static final Map<String, Integer> typeBitLookup;
+    private static Map<String, ArrayList<Integer>> shaderCache = new HashMap<>();
+    private static ShaderProgram activeProgram;
+    @Getter private int id;
     private List<Integer> shaderIds;
+    private Map<String, Integer> attribs;
+    private Map<String, Integer> uniforms;
     private boolean linked;
 
     static {
@@ -40,52 +45,91 @@ public class ShaderProgram {
         typeMap.put("fsh", GL_FRAGMENT_SHADER);
         typeMap.put("csh", GL_COMPUTE_SHADER);
         types = Collections.unmodifiableMap(typeMap);
+        Map<String, Integer> typeBitMap = new HashMap<>();
+        typeBitMap.put("vsh", GL_VERTEX_SHADER_BIT);
+        typeBitMap.put("tcsh", GL_TESS_CONTROL_SHADER_BIT);
+        typeBitMap.put("tesh", GL_TESS_EVALUATION_SHADER_BIT);
+        typeBitMap.put("gsh", GL_GEOMETRY_SHADER_BIT);
+        typeBitMap.put("fsh", GL_FRAGMENT_SHADER_BIT);
+        typeBitMap.put("csh", GL_COMPUTE_SHADER_BIT);
+        typeBitLookup = Collections.unmodifiableMap(typeBitMap);
     }
 
     public ShaderProgram() {
         this.shaderIds = new ArrayList<>();
-        programId = glCreateProgram();
-        glProgramParameteri(programId, GL_PROGRAM_SEPARABLE, GL_TRUE);
+        this.attribs = new HashMap<>();
+        this.uniforms = new HashMap<>();
+        id = glCreateProgram();
+        //glProgramParameteri(id, GL_PROGRAM_SEPARABLE, GL_TRUE);
+    }
+
+    public int getAttribLocation(String name) {
+        if (attribs.containsKey(name)) return attribs.get(name);
+        int value = glGetAttribLocation(id, name);
+        attribs.put(name, value);
+        return value;
+    }
+
+    public int getUniformLocation(String name) {
+        if (uniforms.containsKey(name)) return uniforms.get(name);
+        int value = glGetUniformLocation(id, name);
+        uniforms.put(name, value);
+        return value;
     }
 
     @SneakyThrows(IOException.class)
-    public ShaderProgram loadShader(String name) {
+    public ShaderProgram loadShader(String name, int typeBits) {
         checkLinked(true);
+        if (shaderCache.containsKey(name)) {
+            for (int shaderId : shaderCache.get(name)) {
+                shaderIds.add(shaderId);
+            }
+            return this;
+        }
         boolean found = false;
         for (Map.Entry<String, Integer> entry : types.entrySet()) {
-            File file = new File(shaderPath, name + '.' + entry.getKey());
+            String fileName = name + '.' + entry.getKey();
+            File file = new File(shaderPath, fileName);
             if (file.exists()) {
                 found = true;
+                if ((typeBitLookup.get(entry.getKey()) & typeBits) == 0) continue;
                 String source = Util.readFile(file);
-                int id = glCreateShader(entry.getValue());
-                glShaderSource(id, source);
-                glCompileShader(id);
-                if (glGetShaderi(id, GL_COMPILE_STATUS) != GL_TRUE) {
-                    int length = glGetShaderi(id, GL_INFO_LOG_LENGTH);
-                    String log = glGetShaderInfoLog(id, length);
-                    throw new RuntimeException("Shader compile error: " + log);
+                int shaderId = glCreateShader(entry.getValue());
+                glShaderSource(shaderId, source);
+                glCompileShader(shaderId);
+                if (glGetShaderi(shaderId, GL_COMPILE_STATUS) != GL_TRUE) {
+                    int length = glGetShaderi(shaderId, GL_INFO_LOG_LENGTH);
+                    String log = glGetShaderInfoLog(shaderId, length);
+                    throw new RuntimeException("Shader compile error in " + fileName + ": " + log);
                 }
-                shaderIds.add(id);
+                shaderIds.add(shaderId);
+                if (!shaderCache.containsKey(name)) shaderCache.put(name, new ArrayList<Integer>());
+                shaderCache.get(name).add(id);
+                LogHelper.fine("Loaded shader: %s", fileName);
             }
         }
         if (!found) throw new FileNotFoundException("Shader \"" + name + "\" does not exist");
         return this;
     }
 
+    public ShaderProgram loadShader(String name) {
+        return loadShader(name, GL_ALL_SHADER_BITS);
+    }
+
     public ShaderProgram link() {
         checkLinked(true);
         for (int i : shaderIds) {
-            glAttachShader(programId, i);
+            glAttachShader(id, i);
         }
-        glLinkProgram(programId);
-        if (glGetProgrami(programId, GL_LINK_STATUS) != GL_TRUE) {
-            int length = glGetProgrami(programId, GL_INFO_LOG_LENGTH);
-            String log = glGetShaderInfoLog(programId, length);
+        glLinkProgram(id);
+        glValidateProgram(id);
+        if (glGetProgrami(id, GL_LINK_STATUS) != GL_TRUE) {
+            int length = glGetProgrami(id, GL_INFO_LOG_LENGTH);
+            String log = glGetShaderInfoLog(id, length);
             throw new RuntimeException("Program linking error: " + log);
         }
         for (int i : shaderIds) {
-            glDetachShader(programId, i);
-            glDeleteShader(i);
+            glDetachShader(id, i);
         }
         shaderIds = null;
         linked = true;
@@ -94,11 +138,26 @@ public class ShaderProgram {
 
     public void use() {
         checkLinked(false);
-        glUseProgram(programId);
+        glUseProgram(id);
+        activeProgram = this;
     }
 
     public static void useNone() {
         glUseProgram(0);
+        activeProgram = null;
+    }
+
+    public static ShaderProgram getCurrent() {
+        return activeProgram;
+    }
+
+    public static void cleanup() {
+        for (ArrayList<Integer> list : shaderCache.values()) {
+            for (int shaderId : list) {
+                glDeleteShader(shaderId);
+            }
+        }
+        shaderCache.clear();
     }
 
     private void checkLinked(boolean errorCondition) {

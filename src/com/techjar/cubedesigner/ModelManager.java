@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
+import org.newdawn.slick.opengl.Texture;
 
 /**
  *
@@ -27,8 +28,10 @@ import lombok.SneakyThrows;
 public class ModelManager {
     protected final File modelPath;
     protected Map<String, Model> cache;
+    protected TextureManager textureManager;
 
-    public ModelManager() {
+    public ModelManager(TextureManager textureManager) {
+        this.textureManager = textureManager;
         modelPath = new File("resources/models/");
         cache = new HashMap<>();
     }
@@ -38,6 +41,7 @@ public class ModelManager {
         Model cached = cache.get(file);
         if (cached != null) return cached;
         WavefrontObject object = null;
+        Texture texture = textureManager.getTexture("white.png");
         File modelFile = new File(modelPath, file);
         @Cleanup BufferedReader br = new BufferedReader(new FileReader(modelFile));
         String line;
@@ -47,6 +51,12 @@ public class ModelManager {
                 case "render":
                     if (object != null) throw new IOException("Duplicate \"render\" entry in model file");
                     object = new WavefrontObject(new File(modelFile.getParent(), split[1]).getAbsolutePath());
+                    break;
+                case "texture":
+                    texture = textureManager.getTexture(split[1]);
+                    break;
+                case "scale":
+                    // TODO
                     break;
                 case "collision":
                     // TODO
@@ -88,7 +98,7 @@ public class ModelManager {
             if (vertex.getZ() > maxVertex.getZ()) maxVertex.setZ(vertex.getZ());
         }
         Vector3 center = minVertex.add(maxVertex).divide(2);
-        Model model = new Model(vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size());
+        Model model = new Model(vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size(), texture);
         // TODO: collision mesh loading
         cache.put(file, model);
         return model;

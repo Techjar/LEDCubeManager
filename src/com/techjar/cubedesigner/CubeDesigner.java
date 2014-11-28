@@ -3,13 +3,19 @@ package com.techjar.cubedesigner;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL14.*;
+import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL32.*;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL31.*;
+import static org.lwjgl.opengl.GL32.*;
+import static org.lwjgl.opengl.GL33.*;
+import static org.lwjgl.opengl.GL41.*;
 import static org.lwjgl.util.glu.GLU.*;
 
+import com.hackoeur.jglm.Mat3;
+import com.hackoeur.jglm.Mat4;
+import com.hackoeur.jglm.Matrices;
 import com.techjar.cubedesigner.gui.GUICallback;
 import com.techjar.cubedesigner.gui.screen.Screen;
 import com.techjar.cubedesigner.util.Angle;
@@ -17,8 +23,10 @@ import com.techjar.cubedesigner.util.ArgumentParser;
 import com.techjar.cubedesigner.util.Axis;
 import com.techjar.cubedesigner.util.ConfigManager;
 import com.techjar.cubedesigner.util.Constants;
+import com.techjar.cubedesigner.util.LightSource;
 import com.techjar.cubedesigner.util.Model;
 import com.techjar.cubedesigner.util.Quaternion;
+import com.techjar.cubedesigner.util.ShaderProgram;
 import com.techjar.cubedesigner.util.Util;
 import com.techjar.cubedesigner.util.Vector2;
 import com.techjar.cubedesigner.util.Vector3;
@@ -61,7 +69,10 @@ import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.Pbuffer;
 import org.lwjgl.opengl.PixelFormat;
+import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 import org.newdawn.slick.UnicodeFont;
 
 /**
@@ -116,6 +127,15 @@ public class CubeDesigner {
     private int depthFBO;
     private int depthTexture;
 
+    // Really import OpenGL matrix stuff
+    private Mat4 projectionMatrix;
+    private Matrix4f viewMatrix;
+    public Matrix4f modelMatrix;
+
+    // Shaders
+    private ShaderProgram progInstanceDraw;
+    private int sampler0;
+
     public CubeDesigner(String[] args) throws LWJGLException {
         instance = this;
         System.setProperty("sun.java2d.noddraw", "true");
@@ -149,7 +169,7 @@ public class CubeDesigner {
     public void start() throws LWJGLException {
         if (running) throw new IllegalStateException("Client already running!");
         running = true;
-        //Runtime.getRuntime().addShutdownHook(new ShutdownThread());
+        Runtime.getRuntime().addShutdownHook(new ShutdownThread());
         initDisplayModes();
         initConfig();
 
@@ -176,13 +196,12 @@ public class CubeDesigner {
         if (config.hasChanged()) config.save();
 
         textureManager = new TextureManager();
-        init();
-
-        modelManager = new ModelManager();
+        modelManager = new ModelManager(textureManager);
         fontManager = new FontManager();
         soundManager = new SoundManager();
         camera = new Camera();
         frustum = new Frustum();
+        init();
 
         timeCounter = getTime();
         deltaTime = System.nanoTime();
@@ -238,12 +257,18 @@ public class CubeDesigner {
         Display.setParent(canvas);
     }
 
+    public void shutdown() {
+        closeRequested = true;
+    }
+
     private void shutdownInternal() throws LWJGLException {
         running = false;
         //if (config != null && config.hasChanged()) config.save();
         if (soundManager != null) soundManager.getSoundSystem().cleanup();
         if (textureManager != null) textureManager.cleanup();
         if (fontManager != null) fontManager.cleanup();
+        if (modelManager != null) modelManager.cleanup();
+        ShaderProgram.cleanup();
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();
@@ -406,9 +431,10 @@ public class CubeDesigner {
         setupAntiAliasing();
     }
 
+    @SneakyThrows(LWJGLException.class)
     private void initGL() {
         // 3D Initialization
-        glClearColor(0, 0, 0, 0);
+        glClearColor(0, 0, 0, 1);
         glClearDepth(1);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
@@ -440,11 +466,44 @@ public class CubeDesigner {
         //glEnable(GL_COLOR_MATERIAL);
 
         glEnable(GL_LIGHT0);
+
+        // Setup samplers
+        sampler0 = glGenSamplers();
+        glSamplerParameteri(sampler0, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler0, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(sampler0, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(sampler0, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+        // Shader init, catch errors and exit
+        try {
+            initShaders();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            shutdownInternal();
+            System.exit(0);
+        }
+    }
+    
+    private void initShaders() {
+        progInstanceDraw = new ShaderProgram().loadShader("instancedraw").link();
+    }
+    
+    private void postInit() {
+        glBindBuffer(GL_ARRAY_BUFFER, modelManager.getModel("golfball.model").getVBO());
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
+        glEnableVertexAttribArray(2);
     }
 
     public void resizeGL(int width, int height) {
         // Viewport setup
         glViewport(0, 0, width, height);
+
+        // Setup projection matrix
+        projectionMatrix = Matrices.perspective(45, (float)width / (float)height, 0.1F, 1000);
     }
 
     private void processKeyboard() {
@@ -550,21 +609,24 @@ public class CubeDesigner {
 
     @SneakyThrows(IOException.class)
     public void render() {
-        checkGLError("Pre render");
         renderStart = System.nanoTime();
         if (antiAliasing) glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFBO);
         
         // Setup and render 3D
-        glMatrixMode(GL_PROJECTION);
+        /*glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         gluPerspective(45, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, 1000);
         glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();*/
+        glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        checkGLError("Pre render 3D");
         render3D();
+        checkGLError("Post render 3D");
 
         // Setup and render 2D
         glMatrixMode(GL_PROJECTION);
@@ -576,7 +638,9 @@ public class CubeDesigner {
         glDisable(GL_LIGHTING);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        checkGLError("Pre render 2D");
         render2D();
+        checkGLError("Post render 2D");
 
         if (antiAliasing) {
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -605,79 +669,85 @@ public class CubeDesigner {
             }
             ImageIO.write(image, "png", file);
         }
-        checkGLError("Post render");
-    }
-
-    public void render2D() {
-        glPushMatrix();
-
-        long renderTime = System.nanoTime() - renderStart;
-        if (renderDebug) {
-            Runtime runtime = Runtime.getRuntime();
-            UnicodeFont debugFont = fontManager.getFont("batmfa_", 20, false, false).getUnicodeFont();
-            int y = 0;
-            debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, org.newdawn.slick.Color.yellow);
-            debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), org.newdawn.slick.Color.yellow);
-            debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), org.newdawn.slick.Color.yellow);
-            Vector3 vector = camera.getAngle().forward();
-            debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), org.newdawn.slick.Color.yellow);
-            //vector = camera.getPosition();
-            //debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), org.newdawn.slick.Color.yellow);
-            debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), org.newdawn.slick.Color.yellow);
-        }
-        
-        glPopMatrix();
     }
 
     public void render3D() {
         glPushMatrix();
 
         // Position and orient the camera
-        Vector3 camPos = camera.getPosition();
         //Vector3 camLook = camera.getAngle().forward();
         //Vector3 camLookPos = camPos.add(camLook);
         //glRotatef(camera.getAngle().getRoll(), 0, 0, 1);
         //gluLookAt(camPos.getX(), camPos.getY(), camPos.getZ(), camLookPos.getX(), camLookPos.getY(), camLookPos.getZ(), 0, 1, 0);
-        glRotatef(camera.getAngle().getRoll(), 0, 0, -1);
+        /*glRotatef(camera.getAngle().getRoll(), 0, 0, -1);
         glRotatef(camera.getAngle().getPitch(), -1, 0, 0);
         glRotatef(camera.getAngle().getYaw(), 0, -1, 0);
         glTranslatef(-camPos.getX(), -camPos.getY(), -camPos.getZ());
-        frustum.update();
+        frustum.update();*/
+        viewMatrix = new Matrix4f();
+        modelMatrix = new Matrix4f();
+        Vector3 camPos = camera.getPosition();
+        Angle camAngle = camera.getAngle();
+        viewMatrix.rotate((float)Math.toRadians(camAngle.getRoll()), new Vector3f(0, 0, -1));
+        viewMatrix.rotate((float)Math.toRadians(camAngle.getPitch()), new Vector3f(-1, 0, 0));
+        viewMatrix.rotate((float)Math.toRadians(camAngle.getYaw()), new Vector3f(0, -1, 0));
+        viewMatrix.translate(Util.convertVector(camPos.negate()));
+        frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
+        
+        progInstanceDraw.use();
+        sendMatrixToProgram();
+        glActiveTexture(GL_TEXTURE0);
+        glBindSampler(0, sampler0);
+        
+        LightSource light = new LightSource();
+        light.position = new Vector4f(1, 1, 1, 0);
+        light.constantAttenuation = 1.0F;
+        light.linearAttenuation = 0.0F;
+        light.quadraticAttenuation = 0.0F;
+        light.sendToShader(0, 0);
+        
 
-        floatBuffer.rewind();
+        /*floatBuffer.rewind();
         floatBuffer.put(new float[]{1, 1, 1, 0});
         floatBuffer.rewind();
-        glLight(GL_LIGHT0, GL_POSITION, floatBuffer);
+        glLight(GL_LIGHT0, GL_POSITION, floatBuffer);*/
+        
         faceCount = 0;
-
-        String[] modelNames = new String[]{"ohgod.model"/*, "dentsphere.model", "cube.model"*/};
-        float mult = 5;
+        String[] modelNames = new String[]{/*"golfball.model", "dentsphere.model", "cube.model",*/ "sphere.model"};
+        //String modelName = "golfball.model";
+        float mult = 7;
         Random rand = new Random(1000);
 
-        int width = 10;
-        int length = 1;
-        int height = 1;
-        int size = width * length * height * 3 * 4;
-        if (posBuf == null || posBuf.capacity() != size) posBuf = BufferUtils.createByteBuffer(size);
-        if (posVbo == 0) posVbo = glGenBuffers();
-        posBuf.rewind();
-        posBuf.limit(posBuf.capacity());
+        int width = 8;
+        int length = 8;
+        int height = 8;
+        int size = width * length * height * 16 * 4;
+        int renderCount = 0;
+        if (matBuf == null || matBuf.capacity() != size) matBuf = BufferUtils.createByteBuffer(size);
+        if (matVbo == 0) matVbo = glGenBuffers();
+        matBuf.rewind();
+        matBuf.limit(matBuf.capacity());theAngle += 1F;
+        //Model model = modelManager.getModel(modelName);
         for (int y = 0; y < height; y++) {
             for (int z = 0; z < length; z++) {
                 for (int x = 0; x < width; x++) {
                     float xx = x * mult;
                     float yy = y * mult;
                     float zz = z * mult;
-                    posBuf.putFloat(xx);
-                    posBuf.putFloat(yy);
-                    posBuf.putFloat(zz);
+                    Vector3 pos = new Vector3(xx, yy, zz);
                     Model model = modelManager.getModel(modelNames[rand.nextInt(modelNames.length)]);
-                    if (model.isInFrustum(new Vector3(xx, yy, zz))) {
+                    if (model.isInFrustum(pos)) {
+                        //posBuf.putFloat(xx);
+                        //posBuf.putFloat(yy);
+                        //posBuf.putFloat(zz);
+                        //Matrix4f matrix = new Matrix4f();
+                        //matrix.translate(new Vector3f(xx, yy, zz));
+                        //Util.storeMatrixInBuffer(matrix, matBuf);
                         faceCount += model.getFaceCount();
+                        //renderCount++;
+                        rand.setSeed(x | (y << 8) | (z << 16));
+                        rand.nextInt();
+                        model.render(pos, new Quaternion(Axis.YAW, 90), new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)), false);
                     }
                     /*Vector3 center = model.getCenter();
                     if (frustum.sphereInFrustum(center.getX() + xx, center.getY() + yy, center.getZ() + zz, model.getRadius()) > 0) {
@@ -693,11 +763,32 @@ public class CubeDesigner {
                 }
             }
         }
-        posBuf.limit(posBuf.position());
-        posBuf.rewind();
-        glBindBuffer(GL_ARRAY_BUFFER, posVbo);
-        glBufferData(GL_ARRAY_BUFFER, posBuf, GL_STREAM_DRAW);
+        matBuf.limit(matBuf.position());
+        matBuf.rewind();
+
+        /*glBindBuffer(GL_ARRAY_BUFFER, model.getVBO());
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, matVbo);
+        glBufferData(GL_ARRAY_BUFFER, matBuf, GL_STREAM_DRAW);
+        for (int i = 0; i < 4; i++) {
+            glVertexAttribPointer(3 + i, 4, GL_FLOAT, false, 64, 16 * i);
+            glEnableVertexAttribArray(3 + i);
+            glVertexAttribDivisor(3 + i, 1);
+        }
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // Use program and send matrices
+        progInstanceDraw.use();
+        sendMatrixToProgram();
+        glDrawArraysInstanced(GL_TRIANGLES, 0, model.getIndices(), renderCount);
+        ShaderProgram.useNone();*/
+
+        ShaderProgram.useNone();
 
 
         /*
@@ -737,7 +828,32 @@ public class CubeDesigner {
         modelManager.getModel(model).render();*/
         
         glPopMatrix();
-    }private int posVbo; private ByteBuffer posBuf;
+    }private int matVbo; private ByteBuffer matBuf; float theAngle;
+
+    public void render2D() {
+        glPushMatrix();
+
+        long renderTime = System.nanoTime() - renderStart;
+        if (renderDebug) {
+            Runtime runtime = Runtime.getRuntime();
+            UnicodeFont debugFont = fontManager.getFont("batmfa_", 20, false, false).getUnicodeFont();
+            int y = 0;
+            debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, org.newdawn.slick.Color.yellow);
+            debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), org.newdawn.slick.Color.yellow);
+            //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), org.newdawn.slick.Color.yellow);
+            //debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), org.newdawn.slick.Color.yellow);
+            Vector3 vector = camera.getAngle().forward();
+            debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), org.newdawn.slick.Color.yellow);
+            vector = camera.getPosition();
+            debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), org.newdawn.slick.Color.yellow);
+            //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), org.newdawn.slick.Color.yellow);
+            //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), org.newdawn.slick.Color.yellow);
+            debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, org.newdawn.slick.Color.yellow);
+            //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), org.newdawn.slick.Color.yellow);
+        }
+
+        glPopMatrix();
+    }
 
     private void checkGLError(String stage) {
         int error;
@@ -746,6 +862,21 @@ public class CubeDesigner {
             LogHelper.severe("@ %s", stage);
             LogHelper.severe("%d: %s", error, gluErrorString(error));
         }
+    }
+
+    private void sendMatrixToProgram() {
+        ShaderProgram program = ShaderProgram.getCurrent();
+        if (program == null) return;
+        int projectionMatrixLoc = program.getUniformLocation("projection_matrix");
+        int viewMatrixLoc = program.getUniformLocation("view_matrix");
+        matrixBuffer.rewind();
+        Util.storeMatrixInBuffer(projectionMatrix, matrixBuffer);
+        matrixBuffer.rewind();
+        glUniformMatrix4(projectionMatrixLoc, false, matrixBuffer);
+        matrixBuffer.rewind();
+        viewMatrix.store(matrixBuffer);
+        matrixBuffer.rewind();
+        glUniformMatrix4(viewMatrixLoc, false, matrixBuffer);
     }
 
     public DisplayMode findDisplayMode(int width, int height) {

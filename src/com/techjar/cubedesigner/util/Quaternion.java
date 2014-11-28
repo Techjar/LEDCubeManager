@@ -41,6 +41,10 @@ public class Quaternion {
         z = vector.z * sinRot;
     }
 
+    public Quaternion(Axis axis, float rotation) {
+        this(axis.getVector(), rotation);
+    }
+
     public Quaternion(float pitch, float yaw, float roll, Angle.Order order) {
         // X Pitch Y Yaw Z Roll
         // YXZ Order
@@ -63,11 +67,56 @@ public class Quaternion {
     }
 
     public Quaternion(float pitch, float yaw, float roll) {
-        this(pitch, yaw, roll, Angle.Order.ZYX);
+        this(pitch, yaw, roll, Angle.Order.YXZ);
     }
 
     public Quaternion(Angle angle) {
         this(angle.getPitch(), angle.getYaw(), angle.getRoll(), angle.getOrder());
+    }
+
+    public Quaternion(Matrix3f matrix) {
+        this(matrix.m00, matrix.m01, matrix.m02, matrix.m10, matrix.m11, matrix.m12, matrix.m20, matrix.m21, matrix.m22);
+    }
+
+    public Quaternion(Matrix4f matrix) {
+        this(matrix.m00, matrix.m01, matrix.m02, matrix.m10, matrix.m11, matrix.m12, matrix.m20, matrix.m21, matrix.m22);
+    }
+
+    private Quaternion(float m00, float m01, float m02, float m10, float m11, float m12, float m20, float m21, float m22) {
+        float s;
+        float tr = m00 + m11 + m22;
+        if (tr >= 0.0) {
+            s = (float)Math.sqrt(tr + 1.0);
+            w = s * 0.5f;
+            s = 0.5f / s;
+            x = (m21 - m12) * s;
+            y = (m02 - m20) * s;
+            z = (m10 - m01) * s;
+        } else {
+            float max = Math.max(Math.max(m00, m11), m22);
+            if (max == m00) {
+                s = (float)Math.sqrt(m00 - (m11 + m22) + 1.0);
+                x = s * 0.5f;
+                s = 0.5f / s;
+                y = (m01 + m10) * s;
+                z = (m20 + m02) * s;
+                w = (m21 - m12) * s;
+            } else if (max == m11) {
+                s = (float)Math.sqrt(m11 - (m22 + m00) + 1.0);
+                y = s * 0.5f;
+                s = 0.5f / s;
+                z = (m12 + m21) * s;
+                x = (m01 + m10) * s;
+                w = (m02 - m20) * s;
+            } else {
+                s = (float)Math.sqrt(m22 - (m00 + m11) + 1.0);
+                z = s * 0.5f;
+                s = 0.5f / s;
+                x = (m20 + m02) * s;
+                y = (m12 + m21) * s;
+                w = (m10 - m01) * s;
+            }
+        }
     }
 
     public Quaternion copy() {
@@ -139,7 +188,10 @@ public class Quaternion {
     }
 
     public Quaternion rotate(Axis axis, float degrees) {
-        return this.multiply(new Quaternion(axis.getVector(), degrees));
+        //return this.multiply(new Quaternion(axis.getVector(), degrees));
+        Matrix4f matrix = getMatrix();
+        matrix.rotate((float)Math.toRadians(degrees), Util.convertVector(axis.getVector()));
+        return new Quaternion(matrix);
     }
 
     public Quaternion multiply(Quaternion other) {

@@ -148,6 +148,7 @@ public class TextureManager {
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, texHeight, 0, hasAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, (ByteBuffer)null);
         texture.uploadCurrentFrame();
 
         return texture;
@@ -220,7 +221,7 @@ public class TextureManager {
             buffer.put(textureData.get(frameInfo[currentFrame].index));
             buffer.rewind();
             glBindTexture(GL_TEXTURE_2D, getTextureID());
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, getTextureWidth(), getTextureHeight(), 0, hasAlpha() ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, buffer);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, getTextureWidth(), getTextureHeight(), hasAlpha() ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, buffer);
         }
     }
 }

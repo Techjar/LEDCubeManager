@@ -26,7 +26,7 @@ public class Angle {
     private Order order;
 
     public Angle() {
-        this.order = Order.ZYX;
+        this.order = Order.YXZ;
     }
 
     public Angle(Order order) {
@@ -41,11 +41,11 @@ public class Angle {
     }
 
     public Angle(float pitch, float yaw, float roll) {
-        this(pitch, yaw, roll, Order.ZYX);
+        this(pitch, yaw, roll, Order.YXZ);
     }
 
     public Angle(float pitch, float yaw) {
-        this(pitch, yaw, 0, Order.ZYX);
+        this(pitch, yaw, 0, Order.YXZ);
     }
 
     public Angle(Angle other) {

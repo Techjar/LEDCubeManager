@@ -2,6 +2,8 @@ package com.techjar.cubedesigner.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.hackoeur.jglm.Mat3;
+import com.hackoeur.jglm.Mat4;
 import com.techjar.cubedesigner.CubeDesigner;
 import com.techjar.cubedesigner.util.json.ShapeInfo;
 import java.io.ByteArrayOutputStream;
@@ -15,6 +17,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,6 +31,9 @@ import lombok.SneakyThrows;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.util.vector.Matrix3f;
+import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.geom.Ellipse;
 import org.newdawn.slick.geom.Point;
@@ -66,12 +72,124 @@ public final class Util {
         return new org.lwjgl.util.Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
     }
 
-    public static Vector2f convertVector2(Vector2 vector) {
+    public static Vector2f convertVector(Vector2 vector) {
         return new Vector2f(vector.getX(), vector.getY());
     }
 
-    public static Vector2 convertVector2f(Vector2f vector) {
+    public static Vector2 convertVector(Vector2f vector) {
         return new Vector2(vector.getX(), vector.getY());
+    }
+
+    public static Vector3f convertVector(Vector3 vector) {
+        return new Vector3f(vector.getX(), vector.getY(), vector.getZ());
+    }
+
+    public static Vector3 convertVector(Vector3f vector) {
+        return new Vector3(vector.getX(), vector.getY(), vector.getZ());
+    }
+
+    public static Matrix3f convertMatrix(Mat3 matrix) {
+        Matrix3f out = new Matrix3f();
+        out.m00 = matrix.m00; out.m01 = matrix.m01; out.m02 = matrix.m02;
+        out.m10 = matrix.m10; out.m11 = matrix.m11; out.m12 = matrix.m12;
+        out.m20 = matrix.m20; out.m21 = matrix.m21; out.m22 = matrix.m22;
+        return out;
+    }
+
+    public static Matrix4f convertMatrix(Mat4 matrix) {
+        Matrix4f out = new Matrix4f();
+        out.m00 = matrix.m00; out.m01 = matrix.m01; out.m02 = matrix.m02; out.m03 = matrix.m03;
+        out.m10 = matrix.m10; out.m11 = matrix.m11; out.m12 = matrix.m12; out.m13 = matrix.m13;
+        out.m20 = matrix.m20; out.m21 = matrix.m21; out.m22 = matrix.m22; out.m23 = matrix.m23;
+        out.m30 = matrix.m30; out.m31 = matrix.m31; out.m32 = matrix.m32; out.m33 = matrix.m33;
+        return out;
+    }
+
+    public static float[] matrixToArray(Matrix3f matrix) {
+        return new float[] {
+            matrix.m00, matrix.m01, matrix.m02,
+            matrix.m10, matrix.m11, matrix.m12,
+            matrix.m20, matrix.m21, matrix.m22
+        };
+    }
+
+    public static float[] matrixToArray(Matrix4f matrix) {
+        return new float[] {
+            matrix.m00, matrix.m01, matrix.m02, matrix.m03,
+            matrix.m10, matrix.m11, matrix.m12, matrix.m13,
+            matrix.m20, matrix.m21, matrix.m22, matrix.m23,
+            matrix.m30, matrix.m31, matrix.m32, matrix.m33
+        };
+    }
+
+    public static float[] matrixToArray(Mat3 matrix) {
+        return new float[] {
+            matrix.m00, matrix.m01, matrix.m02,
+            matrix.m10, matrix.m11, matrix.m12,
+            matrix.m20, matrix.m21, matrix.m22
+        };
+    }
+
+    public static float[] matrixToArray(Mat4 matrix) {
+        return new float[] {
+            matrix.m00, matrix.m01, matrix.m02, matrix.m03,
+            matrix.m10, matrix.m11, matrix.m12, matrix.m13,
+            matrix.m20, matrix.m21, matrix.m22, matrix.m23,
+            matrix.m30, matrix.m31, matrix.m32, matrix.m33
+        };
+    }
+
+    public static void storeColorInBuffer(org.lwjgl.util.Color color, ByteBuffer buffer) {
+        buffer.putFloat(color.getRed() / 255F);
+        buffer.putFloat(color.getGreen() / 255F);
+        buffer.putFloat(color.getBlue() / 255F);
+        buffer.putFloat(color.getAlpha() / 255F);
+    }
+
+    public static void storeColorInBuffer(org.lwjgl.util.Color color, FloatBuffer buffer) {
+        buffer.put(color.getRed() / 255F);
+        buffer.put(color.getGreen() / 255F);
+        buffer.put(color.getBlue() / 255F);
+        buffer.put(color.getAlpha() / 255F);
+    }
+
+    public static void storeMatrixInBuffer(Matrix3f matrix, ByteBuffer buffer) {
+        buffer.putFloat(matrix.m00); buffer.putFloat(matrix.m01); buffer.putFloat(matrix.m02);
+        buffer.putFloat(matrix.m10); buffer.putFloat(matrix.m11); buffer.putFloat(matrix.m12);
+        buffer.putFloat(matrix.m20); buffer.putFloat(matrix.m21); buffer.putFloat(matrix.m22);
+    }
+
+    public static void storeMatrixInBuffer(Matrix4f matrix, ByteBuffer buffer) {
+        buffer.putFloat(matrix.m00); buffer.putFloat(matrix.m01); buffer.putFloat(matrix.m02); buffer.putFloat(matrix.m03);
+        buffer.putFloat(matrix.m10); buffer.putFloat(matrix.m11); buffer.putFloat(matrix.m12); buffer.putFloat(matrix.m13);
+        buffer.putFloat(matrix.m20); buffer.putFloat(matrix.m21); buffer.putFloat(matrix.m22); buffer.putFloat(matrix.m23);
+        buffer.putFloat(matrix.m30); buffer.putFloat(matrix.m31); buffer.putFloat(matrix.m32); buffer.putFloat(matrix.m33);
+    }
+
+    public static void storeMatrixInBuffer(Mat3 matrix, ByteBuffer buffer) {
+        buffer.putFloat(matrix.m00); buffer.putFloat(matrix.m01); buffer.putFloat(matrix.m02);
+        buffer.putFloat(matrix.m10); buffer.putFloat(matrix.m11); buffer.putFloat(matrix.m12);
+        buffer.putFloat(matrix.m20); buffer.putFloat(matrix.m21); buffer.putFloat(matrix.m22);
+    }
+
+    public static void storeMatrixInBuffer(Mat4 matrix, ByteBuffer buffer) {
+        buffer.putFloat(matrix.m00); buffer.putFloat(matrix.m01); buffer.putFloat(matrix.m02); buffer.putFloat(matrix.m03);
+        buffer.putFloat(matrix.m10); buffer.putFloat(matrix.m11); buffer.putFloat(matrix.m12); buffer.putFloat(matrix.m13);
+        buffer.putFloat(matrix.m20); buffer.putFloat(matrix.m21); buffer.putFloat(matrix.m22); buffer.putFloat(matrix.m23);
+        buffer.putFloat(matrix.m30); buffer.putFloat(matrix.m31); buffer.putFloat(matrix.m32); buffer.putFloat(matrix.m33);
+    }
+
+    public static void storeMatrixInBuffer(Mat3 matrix, FloatBuffer buffer) {
+        buffer.put(matrix.m00); buffer.put(matrix.m01); buffer.put(matrix.m02);
+        buffer.put(matrix.m10); buffer.put(matrix.m11); buffer.put(matrix.m12);
+        buffer.put(matrix.m20); buffer.put(matrix.m21); buffer.put(matrix.m22);
+    }
+
+    public static void storeMatrixInBuffer(Mat4 matrix, FloatBuffer buffer) {
+        buffer.put(matrix.m00); buffer.put(matrix.m01); buffer.put(matrix.m02); buffer.put(matrix.m03);
+        buffer.put(matrix.m10); buffer.put(matrix.m11); buffer.put(matrix.m12); buffer.put(matrix.m13);
+        buffer.put(matrix.m20); buffer.put(matrix.m21); buffer.put(matrix.m22); buffer.put(matrix.m23);
+        buffer.put(matrix.m30); buffer.put(matrix.m31); buffer.put(matrix.m32); buffer.put(matrix.m33);
     }
     
     public static org.lwjgl.util.Color addColors(org.lwjgl.util.Color color1, org.lwjgl.util.Color color2) {
