@@ -36,7 +36,6 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.geom.Ellipse;
-import org.newdawn.slick.geom.Point;
 import org.newdawn.slick.geom.Polygon;
 import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.geom.RoundedRectangle;
@@ -200,6 +199,18 @@ public final class Util {
         return new org.lwjgl.util.Color(MathHelper.clamp(color1.getRed() - color2.getRed(), 0, 255), MathHelper.clamp(color1.getGreen() - color2.getGreen(), 0, 255), MathHelper.clamp(color1.getBlue() - color2.getBlue(), 0, 255));
     }
 
+    public static org.lwjgl.util.Color multiplyColor(org.lwjgl.util.Color color1, double mult) {
+        return new org.lwjgl.util.Color(MathHelper.clamp((int)Math.round(color1.getRed() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getGreen() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getBlue() * mult), 0, 255));
+    }
+
+    public static int encodeCubeVector(Vector3 vector) {
+        return (int)vector.getX() | ((int)vector.getY() << 3) | ((int)vector.getZ() << 6);
+    }
+
+    public static Vector3 decodeCubeVector(int number) {
+        return new Vector3(number & 7, (number >> 3) & 7, (number >> 6) & 7);
+    }
+
     public static float getAxisValue(Controller con, String name) {
         if (name == null) return 0;
         for (int i = 0; i < con.getAxisCount(); i++) {
@@ -227,7 +238,7 @@ public final class Util {
     }
 
     public static Shape getMouseHitbox() {
-        return new Point(getMouseX(), getMouseY());
+        return new Rectangle(getMouseX(), getMouseY(), 1, 1);
     }
 
     /**
@@ -281,8 +292,6 @@ public final class Util {
                 return new Circle(0, 0, info.radius);
             case "ellipse":
                 return new Ellipse(0, 0, info.radius1, info.radius2);
-            case "point":
-                return new Point(0, 0);
             case "polygon":
                 if (info.points.length % 2 != 0) throw new IllegalArgumentException("Invalid point array, must have even number of elements");
                 float[] points = new float[info.points.length];

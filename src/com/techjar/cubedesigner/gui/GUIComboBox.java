@@ -6,6 +6,7 @@ import com.techjar.cubedesigner.CubeDesigner;
 import com.techjar.cubedesigner.util.MathHelper;
 import com.techjar.cubedesigner.util.Util;
 import com.techjar.cubedesigner.RenderHelper;
+import com.techjar.cubedesigner.util.Vector2;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -87,8 +88,8 @@ public class GUIComboBox extends GUI {
         glDisable(GL_TEXTURE_2D);
         glBegin(GL_TRIANGLES);
             glVertex2f(getPosition().getX() + dimension.getWidth() - 16, getPosition().getY() + 3);
-            glVertex2f(getPosition().getX() + dimension.getWidth() - 3.5f, getPosition().getY() + 3);
             glVertex2f(getPosition().getX() + dimension.getWidth() - 10.25f, getPosition().getY() + dimension.getHeight() - 3);
+            glVertex2f(getPosition().getX() + dimension.getWidth() - 3.5f, getPosition().getY() + 3);
         glEnd();
         glEnable(GL_TEXTURE_2D);
         if (getSelectedItem() != null) {
@@ -115,6 +116,9 @@ public class GUIComboBox extends GUI {
         scrollBox.setWidth(dimension.getWidth() - guiBg.getBorderSize() - 20);
         scrollBox.setHeight(MathHelper.clamp((dimension.getHeight() - (guiBg.getBorderSize() * 2)) * items.size(), (dimension.getHeight() - (guiBg.getBorderSize() * 2)), (dimension.getHeight() - (guiBg.getBorderSize() * 2)) * visibleItems));
         scrollBox.setScrollYIncrement(dimension.getHeight() - (guiBg.getBorderSize() * 2));
+        for (GUIComboItem item : items) {
+            item.setDimension(scrollBox.getWidth(), getHeight() - (guiBg.getBorderSize() * 2));
+        }
     }
 
     private void updateScrollBox() {
@@ -124,11 +128,11 @@ public class GUIComboBox extends GUI {
             item.setY(i * (getHeight() - (guiBg.getBorderSize() * 2)));
             scrollBox.addComponent(item);
         }
-        if (getSelectedItem() != null) scrollBox.setScrollOffset(scrollBox.getScrollOffset());
+        if (selectedItem > -1) scrollBox.setScrollOffset(new Vector2(0, selectedItem * (int)(getHeight() - (guiBg.getBorderSize() * 2))));
         scrollBox.setHeight(MathHelper.clamp((dimension.getHeight() - (guiBg.getBorderSize() * 2)) * items.size(), (dimension.getHeight() - (guiBg.getBorderSize() * 2)), (dimension.getHeight() - (guiBg.getBorderSize() * 2)) * visibleItems));
         scrollBox.setY(dimension.getHeight() - guiBg.getBorderSize());
         if (!checkWithinContainer(scrollBox.getComponentBox()))
-            scrollBox.setY(-scrollBox.getHeight() + 2);
+            scrollBox.setY(-scrollBox.getHeight() + guiBg.getBorderSize());
     }
 
     public int getVisibleItems() {

@@ -20,7 +20,8 @@ struct Material {
 };
 
 layout(binding=0) uniform sampler2D model_texture;
-layout(location=0) uniform Light lights[1];
+layout(location=0) uniform int num_lights;
+layout(location=1) uniform Light lights[10];
 
 // The view matrix and the projection matrix are constant
 // across a draw
@@ -45,8 +46,6 @@ Material front_material = Material(
 );
 
 void main(void) {
-    //out_Color = texture2D(model_texture, vertex.texcoord);
-    //out_Color = vec4(1, 1, 1, 1);
     vec4 color = texture2D(model_texture, vertex.texcoord) * vertex.color;
 
     mat4 view_inverse = inverse(view_matrix);
@@ -57,8 +56,8 @@ void main(void) {
     vec4 totalDiffuse;
     vec4 totalSpecular;
 
-    for (int i = 0; i < lights.length(); i++) {
-        Light light = lights[0];
+    for (int i = 0; i < num_lights; i++) {
+        Light light = lights[i];
         if (light.position.w == 0) {
             attenuation = 1;
             lightDirection = normalize(vec3(light.position));
@@ -66,7 +65,20 @@ void main(void) {
             vec3 positionToLight = light.position.xyz - vertex.position;
             float distance = length(positionToLight);
             lightDirection = normalize(positionToLight);
-            attenuation = 1.0 / (light.constantAttenuation + light.linearAttenuation * distance + light.quadraticAttenuation * distance * distance);
+            float linAtt = 0;
+            float quadAtt = 0;
+            if (light.linearAttenuation != 0) {
+                quadAtt = light.linearAttenuation * distance * distance;
+            }
+            if (light.quadraticAttenuation != 0) {
+                quadAtt = light.quadraticAttenuation * distance * distance;
+            }
+            float totalAtt = light.constantAttenuation + linAtt + quadAtt;
+            if (totalAtt != 1) {
+                attenuation = 1.0 / totalAtt;
+            } else {
+                attenuation = 1;
+            }
             if (light.spotCutoff <= 90) {
                 float clampedCosine = max(0, dot(-lightDirection, light.spotDirection));
                 if (clampedCosine < cos(radians(light.spotCutoff))) {
@@ -90,14 +102,4 @@ void main(void) {
 
     vec4 ambient = scene_ambient * front_material.ambient;
     out_Color = color * (ambient + totalDiffuse) + totalSpecular;
-    
-    /*vec3 direction = normalize(light_source.position.xyz - vertex.position);
-    vec3 eye = normalize(-vertex.position);
-    vec3 refl = normalize(-reflect(direction, vertex.normal));
-
-    vec4 ambient = light_source.ambient;
-    vec4 diffuse = light_source.diffuse * max(dot(vertex.normal, direction), 0);
-    vec4 specular = light_source.specular * pow(max(dot(refl, eye), 0), 0.3 * 50);
-
-    out_Color = color * (ambient + diffuse) + specular;*/
 }

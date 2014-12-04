@@ -20,6 +20,7 @@ public class Camera {
     @Getter @Setter private float rotateMultiplier;
     @Getter @Setter private Vector3 position;
     @Getter private Angle angle;
+    private boolean pW, pS, pA, pD, pShift;
 
     public Camera() {
         this.moveSpeed = 20;
@@ -28,23 +29,45 @@ public class Camera {
         this.angle = new Angle(Angle.Order.YXZ);
     }
 
+    public boolean processKeyboardEvent() {
+        boolean pressed = Keyboard.getEventKeyState();
+        switch (Keyboard.getEventKey()) {
+            case Keyboard.KEY_W:
+                pW = pressed;
+                break;
+            case Keyboard.KEY_S:
+                pS = pressed;
+                break;
+            case Keyboard.KEY_A:
+                pA = pressed;
+                break;
+            case Keyboard.KEY_D:
+                pD = pressed;
+                break;
+            case Keyboard.KEY_LSHIFT:
+                pShift = pressed;
+                break;
+        }
+        return true;
+    }
+
     public void update(float delta) {
         //position = position.add(velocity);
         //angle = angle.add(angularVelocity);
         float moveMult = 1;
-        if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+        if (pShift) {
             moveMult = 5;
         }
-        if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
+        if (pW) {
             position = position.add(angle.forward().multiply(moveSpeed * moveMult * delta));
         }
-        if (Keyboard.isKeyDown(Keyboard.KEY_S)) {
+        if (pS) {
             position = position.subtract(angle.forward().multiply(moveSpeed * moveMult * delta));
         }
-        if (Keyboard.isKeyDown(Keyboard.KEY_D)) {
+        if (pD) {
             position = position.add(angle.right().multiply(moveSpeed * moveMult * delta));
         }
-        if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
+        if (pA) {
             position = position.subtract(angle.right().multiply(moveSpeed * moveMult * delta));
         }
         if (Mouse.isGrabbed()) {

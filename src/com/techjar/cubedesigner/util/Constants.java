@@ -11,6 +11,9 @@ public final class Constants {
     private Constants() {
     }
 
-    public static final String APP_TITLE = "Cube Designer";
+    public static final String APP_TITLE = "LED Cube Manager";
     public static final File DATA_DIRECTORY = OperatingSystem.getDataDirectory("cubedesigner");
+    public static final int CUBE_X = 8;
+    public static final int CUBE_Y = 8;
+    public static final int CUBE_Z = 8;
 }

@@ -2,6 +2,7 @@ package com.techjar.cubedesigner.gui;
 
 import com.techjar.cubedesigner.util.Util;
 import com.techjar.cubedesigner.util.Vector2;
+import com.techjar.cubedesigner.util.logging.LogHelper;
 import java.util.ArrayList;
 import java.util.List;
 import org.lwjgl.input.Controller;
@@ -51,7 +52,7 @@ public abstract class GUI {
                 case TOP_RIGHT:
                     return new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY());
                 case BOTTOM_LEFT:
-                    return new Vector2(position.getX() + parentPos.getX(), -position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
+                    return new Vector2(position.getX() + parentPos.getX(), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
                 case BOTTOM_RIGHT:
                     return new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
                 case TOP_CENTER:

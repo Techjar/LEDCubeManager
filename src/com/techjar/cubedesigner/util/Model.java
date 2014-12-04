@@ -7,6 +7,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL33.*;
 
+import com.obj.WavefrontObject;
 import com.techjar.cubedesigner.CubeDesigner;
 import com.techjar.cubedesigner.RenderHelper;
 import com.techjar.cubedesigner.util.logging.LogHelper;
@@ -29,12 +30,15 @@ public class Model {
     private static final FloatBuffer colorBuffer;
     private static final int colorVbo;
     private static final int matrixVbo;
+    private boolean mutable = true;
     private int vbo;
     @Getter private int indices;
     private Vector3 center;
     @Getter private float radius;
     @Getter private int faceCount;
     @Getter private Texture texture;
+    @Getter private WavefrontObject collisionMesh;
+    private AxisAlignedBB aabb;
     //private float[] vertices;
     //private float[] normals;
     //private float[] texCoords;
@@ -45,10 +49,8 @@ public class Model {
         colorVbo = glGenBuffers();
         matrixVbo = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, colorVbo);
-        for (int i = 0; i < 4; i++) {
-            glVertexAttribPointer(3, 4, GL_FLOAT, false, 16, 0);
-            glVertexAttribDivisor(3, 1);
-        }
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, 16, 0);
+        glVertexAttribDivisor(3, 1);
         glBindBuffer(GL_ARRAY_BUFFER, matrixVbo);
         for (int i = 0; i < 4; i++) {
             glVertexAttribPointer(4 + i, 4, GL_FLOAT, false, 64, 16 * i);
@@ -57,7 +59,7 @@ public class Model {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    public Model(int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount, Texture texture) {
+    public Model(int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {
         this.indices = indices;
         //this.vertices = vertices;
         //this.normals = normals;
@@ -66,7 +68,6 @@ public class Model {
         this.center = center;
         this.radius = radius;
         this.faceCount = faceCount;
-        this.texture = texture;
         int dataSize = vertices.length * 4 + normals.length * 2 + (hasTexCoords ? texCoords.length * 2 : (vertices.length / 3) * 2 * 2);
         if (buffer == null || buffer.capacity() < dataSize) {
             buffer = BufferUtils.createByteBuffer(dataSize);
@@ -170,8 +171,8 @@ public class Model {
         return render(position, quat, color, true);
     }
 
-    public boolean render(Vector3 position, Quaternion angle) {
-        return render(position, angle, new Color(255, 255, 255), true);
+    public boolean render(Vector3 position, Quaternion quat) {
+        return render(position, quat, new Color(255, 255, 255), true);
     }
 
     public boolean isInFrustum(Vector3 position) {
@@ -185,6 +186,33 @@ public class Model {
 
     public Vector3 getCenter() {
         return center.copy();
+    }
+
+    public void setTexture(Texture texture) {
+        checkMutable();
+        this.texture = texture;
+    }
+
+    public void setCollisionMesh(WavefrontObject collisionMesh) {
+        checkMutable();
+        this.collisionMesh = collisionMesh;
+    }
+
+    public AxisAlignedBB getAABB() {
+        return aabb;
+    }
+
+    public void setAABB(AxisAlignedBB aabb) {
+        checkMutable();
+        this.aabb = aabb;
+    }
+
+    public void makeImmutable() {
+        mutable = false;
+    }
+
+    private void checkMutable() {
+        if (!mutable) throw new IllegalStateException("model is immutable");
     }
 
     public void release() {

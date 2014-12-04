@@ -1,0 +1,2 @@
+render led.obj
+collision mesh led_collision.obj

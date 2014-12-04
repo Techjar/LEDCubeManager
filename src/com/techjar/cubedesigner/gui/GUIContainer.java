@@ -75,7 +75,7 @@ public abstract class GUIContainer extends GUI {
     public void render() {
         RenderHelper.beginScissor(getScissorBox());
         for (GUI gui : components) {
-            if (gui.isVisible()) gui.render();
+            if (gui.isVisible() && gui.getComponentBox().intersects(getContainerBox())) gui.render();
         }
         RenderHelper.endScissor();
     }
@@ -119,7 +119,7 @@ public abstract class GUIContainer extends GUI {
     
     public GUI removeComponent(int index) {
         GUI component = components.get(index);
-        if (component != null) removeComponent(component);
+        removeComponent(component);
         return component;
     }
     
@@ -127,7 +127,6 @@ public abstract class GUIContainer extends GUI {
         Iterator it = components.iterator();
         while (it.hasNext()) {
             GUI gui = (GUI)it.next();
-            gui.remove();
             gui.setParent(null);
             it.remove();
         }

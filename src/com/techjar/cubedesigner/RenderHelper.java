@@ -3,6 +3,7 @@ package com.techjar.cubedesigner;
 import com.techjar.cubedesigner.util.Util;
 import static org.lwjgl.opengl.GL11.*;
 
+import com.techjar.cubedesigner.util.logging.LogHelper;
 import java.nio.FloatBuffer;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -32,12 +33,12 @@ public final class RenderHelper {
         glTranslatef(x, y, 0);
         if (color != null) {
             setGlColor(color);
-        } else glColor3f(1, 1, 1);
+        } else glColor4f(1, 1, 1, 1);
         glBegin(GL_QUADS);
         if (texture != null) glTexCoord2f(0, 0); glVertex2f(0, 0);
-        if (texture != null) glTexCoord2f(texture.getWidth(), 0); glVertex2f(width, 0);
-        if (texture != null) glTexCoord2f(texture.getWidth(), texture.getHeight()); glVertex2f(width, height);
         if (texture != null) glTexCoord2f(0, texture.getHeight()); glVertex2f(0, height);
+        if (texture != null) glTexCoord2f(texture.getWidth(), texture.getHeight()); glVertex2f(width, height);
+        if (texture != null) glTexCoord2f(texture.getWidth(), 0); glVertex2f(width, 0);
         glEnd();
         glTranslatef(-x, -y, 0);
         if (texture == null) glEnable(GL_TEXTURE_2D);
@@ -95,7 +96,7 @@ public final class RenderHelper {
     }
 
     private static void performScissor(Rectangle rect) {
-        glScissor((int)rect.getX(), (int)rect.getY(), (int)rect.getWidth(), (int)rect.getHeight());
+        glScissor((int)rect.getX(), CubeDesigner.getHeight() - (int)rect.getHeight() - (int)rect.getY(), (int)rect.getWidth(), (int)rect.getHeight());
     }
     
     public static void beginScissor(Rectangle rect, boolean clipToPrevious) {
@@ -111,8 +112,9 @@ public final class RenderHelper {
     
     public static void endScissor() {
         if (!scissorStack.isEmpty()) {
-            performScissor(scissorStack.pop());
+            scissorStack.pop();
             if (scissorStack.isEmpty()) glDisable(GL_SCISSOR_TEST);
+            else performScissor(scissorStack.peek());
         }
     }
 

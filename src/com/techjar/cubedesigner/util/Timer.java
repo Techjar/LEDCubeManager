@@ -29,10 +29,10 @@ public class Timer {
     }
 
     public double getMinutes() {
-        return (System.nanoTime() - time) / 1000000000D * 60D;
+        return (System.nanoTime() - time) / (1000000000D * 60D);
     }
 
     public double getHours() {
-        return (System.nanoTime() - time) / 1000000000D * 60D * 60D;
+        return (System.nanoTime() - time) / (1000000000D * 60D * 60D);
     }
 }

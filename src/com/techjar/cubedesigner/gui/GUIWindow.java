@@ -15,12 +15,16 @@ import org.newdawn.slick.geom.Rectangle;
  * @author Techjar
  */
 public class GUIWindow extends GUIContainer {
+    public static final int HIDE_ON_CLOSE = 0;
+    public static final int REMOVE_ON_CLOSE = 1;
+
     protected GUIBackground guiBg;
     protected GUIButton closeBtn;
     protected Dimension minSize = new Dimension(50, 50);
     protected Dimension maxSize = new Dimension();
     protected boolean canMove = true;
     protected boolean canResize = true;
+    protected int closeAction = HIDE_ON_CLOSE;
     protected boolean onTop;
     
     protected Vector2 mouseLast;
@@ -40,12 +44,11 @@ public class GUIWindow extends GUIContainer {
         this.closeBtn.setDimension(20, 20);
         this.closeBtn.setParent(this);
         this.closeBtn.windowClose = true;
-        this.closeBtn.setClickHandler(new GUICallback(this) {
+        this.closeBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                Object[] args = this.getArgs();
-                GUIWindow window = (GUIWindow)args[0];
-                window.remove();
+                if (closeAction == REMOVE_ON_CLOSE) remove();
+                else if (closeAction == HIDE_ON_CLOSE) setVisible(false);
             }
         });
     }
@@ -243,6 +246,14 @@ public class GUIWindow extends GUIContainer {
 
     public void setResizable(boolean canResize) {
         this.canResize = canResize;
+    }
+
+    public int getCloseAction() {
+        return closeAction;
+    }
+
+    public void setCloseAction(int closeAction) {
+        this.closeAction = closeAction;
     }
     
     public Dimension getMinimumSize() {

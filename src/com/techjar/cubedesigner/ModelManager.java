@@ -5,6 +5,7 @@ import com.obj.Face;
 import com.obj.TextureCoordinate;
 import com.obj.Vertex;
 import com.obj.WavefrontObject;
+import com.techjar.cubedesigner.util.AxisAlignedBB;
 import com.techjar.cubedesigner.util.Model;
 import com.techjar.cubedesigner.util.Util;
 import com.techjar.cubedesigner.util.Vector3;
@@ -40,30 +41,48 @@ public class ModelManager {
     public Model getModel(String file) {
         Model cached = cache.get(file);
         if (cached != null) return cached;
-        WavefrontObject object = null;
+        File objectFile = null;
+        File collisionFile = null;
         Texture texture = textureManager.getTexture("white.png");
+        Vector3 scale = new Vector3(1, 1, 1);
         File modelFile = new File(modelPath, file);
         @Cleanup BufferedReader br = new BufferedReader(new FileReader(modelFile));
         String line;
         while ((line = br.readLine()) != null) {
             String[] split = line.split(" ", 2);
+            String[] subsplit = split[1].split(" ");
             switch (split[0].toLowerCase()) {
                 case "render":
-                    if (object != null) throw new IOException("Duplicate \"render\" entry in model file");
-                    object = new WavefrontObject(new File(modelFile.getParent(), split[1]).getAbsolutePath());
+                    if (objectFile != null) throw new IOException("Duplicate \"render\" entry in model file");
+                    //object = new WavefrontObject(new File(modelFile.getParent(), split[1]).getAbsolutePath());
+                    objectFile = new File(modelFile.getParent(), split[1]);
                     break;
                 case "texture":
                     texture = textureManager.getTexture(split[1]);
                     break;
                 case "scale":
-                    // TODO
+                    if (subsplit.length == 1) {
+                        scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]));
+                    } else if (subsplit.length == 1) {
+                        scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[1]), Float.parseFloat(subsplit[2]));
+                    } else {
+                        throw new IOException("Illegal arguments to scale: " + split[1]);
+                    }
                     break;
                 case "collision":
-                    // TODO
+                    switch (subsplit[1].toLowerCase()) {
+                        case "mesh":
+                            //collision = new WavefrontObject(new File(modelPath, subsplit[2]).getAbsolutePath());
+                            collisionFile = new File(modelPath, subsplit[2]);
+                            break;
+                    }
                     break;
             }
         }
-        if (object == null) throw new IOException("Missing \"render\" entry in model file");
+        if (objectFile == null) throw new IOException("Missing \"render\" entry in model file");
+        WavefrontObject object = new WavefrontObject(objectFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
+        WavefrontObject collision = null;
+        if (collisionFile != null) collision = new WavefrontObject(collisionFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
         List<Float> vertices = new ArrayList<>();
         List<Float> normals = new ArrayList<>();
         List<Float> texCoords = new ArrayList<>();
@@ -98,8 +117,11 @@ public class ModelManager {
             if (vertex.getZ() > maxVertex.getZ()) maxVertex.setZ(vertex.getZ());
         }
         Vector3 center = minVertex.add(maxVertex).divide(2);
-        Model model = new Model(vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size(), texture);
-        // TODO: collision mesh loading
+        Model model = new Model(vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size());
+        model.setTexture(texture);
+        model.setCollisionMesh(collision);
+        model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
+        model.makeImmutable();
         cache.put(file, model);
         return model;
     }

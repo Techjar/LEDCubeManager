@@ -18,7 +18,7 @@ import org.newdawn.slick.opengl.Texture;
 public class GUIRadioButton extends GUI {
     protected Color color;
     protected GUIBackground guiBg;
-    protected GUICallback changeHandler;
+    protected GUICallback selectHandler;
     protected GUILabel label;
     protected Texture circle;
     protected boolean selected;
@@ -106,9 +106,9 @@ public class GUIRadioButton extends GUI {
                     ((GUIRadioButton)gui).selected = false;
                 }
             }
-            if (changeHandler != null) {
-                changeHandler.setComponent(this);
-                changeHandler.run();
+            if (selectHandler != null) {
+                selectHandler.setComponent(this);
+                selectHandler.run();
             }
         }
     }
@@ -119,5 +119,13 @@ public class GUIRadioButton extends GUI {
 
     public void setLabel(GUILabel label) {
         this.label = label;
+    }
+
+    public GUICallback getSelectHandler() {
+        return selectHandler;
+    }
+
+    public void setSelectHandler(GUICallback selectHandler) {
+        this.selectHandler = selectHandler;
     }
 }

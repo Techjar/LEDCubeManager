@@ -16,8 +16,21 @@ import static org.lwjgl.util.glu.GLU.*;
 import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.hackoeur.jglm.Matrices;
+import com.obj.WavefrontObject;
 import com.techjar.cubedesigner.gui.GUICallback;
 import com.techjar.cubedesigner.gui.screen.Screen;
+import com.techjar.cubedesigner.gui.screen.ScreenMainControl;
+import com.techjar.cubedesigner.hardware.LEDManager;
+import com.techjar.cubedesigner.hardware.SerialThread;
+import com.techjar.cubedesigner.hardware.animation.Animation;
+import com.techjar.cubedesigner.hardware.animation.AnimationFolder;
+import com.techjar.cubedesigner.hardware.animation.AnimationMatrix;
+import com.techjar.cubedesigner.hardware.animation.AnimationNone;
+import com.techjar.cubedesigner.hardware.animation.AnimationPulsate;
+import com.techjar.cubedesigner.hardware.animation.AnimationRain;
+import com.techjar.cubedesigner.hardware.animation.AnimationRandomize;
+import com.techjar.cubedesigner.hardware.animation.AnimationStaticFill;
+import com.techjar.cubedesigner.hardware.animation.SpectrumAnalyzer;
 import com.techjar.cubedesigner.util.Angle;
 import com.techjar.cubedesigner.util.ArgumentParser;
 import com.techjar.cubedesigner.util.Axis;
@@ -48,13 +61,17 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.lwjgl.BufferUtils;
@@ -66,7 +83,6 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.Pbuffer;
 import org.lwjgl.opengl.PixelFormat;
 import org.lwjgl.util.Color;
@@ -100,10 +116,14 @@ public class CubeDesigner {
     @Getter private static SoundManager soundManager;
     @Getter private static Camera camera;
     @Getter private static Frustum frustum;
+    @Getter private static SpectrumAnalyzer spectrumAnalyzer;
+    @Getter private static JFileChooser fileChooser;
     private List<Screen> screenList = new ArrayList<>();
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
     private List<GUICallback> resizeHandlers = new ArrayList<>();
     private Map<String, Integer> validControllers = new HashMap<>();
+    private Map<String, Animation> animations = new HashMap<>();
+    private List<String> animationNames = new ArrayList<>();
     private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
     private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
     private int fpsCounter;
@@ -114,12 +134,14 @@ public class CubeDesigner {
     private long faceCount;
     private boolean screenshot;
     private boolean regrab;
+    public boolean renderFPS;
     public boolean renderDebug;
     public boolean wireframe;
     public final boolean antiAliasingSupported;
     public final int antiAliasingMaxSamples;
     private boolean antiAliasing = true;
     private int antiAliasingSamples = 4;
+    private float fieldOfView;
     private int multisampleFBO;
     private int multisampleTexture;
     private int multisampleDepthTexture;
@@ -136,25 +158,47 @@ public class CubeDesigner {
     private ShaderProgram progInstanceDraw;
     private int sampler0;
 
+    // Arduino stuff
+    private static LEDManager ledManager;
+    private static boolean drawClick;
+    @Getter private static SerialThread serialThread;
+    @Getter private static String serialPortName = "COM3";
+    @Getter private static Color paintColor = new Color(255, 255, 255);
+    @Getter private static boolean[] highlight = new boolean[512];
+    @Getter private static Vector3 paintSize = new Vector3(0, 0, 0);
+    @Getter @Setter private static int layerIsolation = 0;
+    @Getter @Setter private static int selectedLayer = 0;
+
     public CubeDesigner(String[] args) throws LWJGLException {
         instance = this;
         System.setProperty("sun.java2d.noddraw", "true");
         LogHelper.init(new File(Constants.DATA_DIRECTORY, "logs"));
+        LongSleeperThread.startSleeper();
 
         ArgumentParser.parse(args, new ArgumentParser.Argument(true, "--loglevel") {
             @Override
-            public void runAction(String paramater) {
-                LogHelper.setLevel(Level.parse(paramater));
+            public void runAction(String parameter) {
+                LogHelper.setLevel(Level.parse(parameter));
+            }
+        }, new ArgumentParser.Argument(false, "--showfps") {
+            @Override
+            public void runAction(String parameter) {
+                renderFPS = true;
             }
         }, new ArgumentParser.Argument(false, "--debug") {
             @Override
-            public void runAction(String paramater) {
+            public void runAction(String parameter) {
                 renderDebug = true;
             }
         }, new ArgumentParser.Argument(false, "--wireframe") {
             @Override
-            public void runAction(String paramater) {
+            public void runAction(String parameter) {
                 wireframe = true;
+            }
+        }, new ArgumentParser.Argument(true, "--port") {
+            @Override
+            public void runAction(String parameter) {
+                serialPortName = parameter;
             }
         });
 
@@ -201,12 +245,63 @@ public class CubeDesigner {
         soundManager = new SoundManager();
         camera = new Camera();
         frustum = new Frustum();
+        ledManager = new LEDManager();
+        fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.flac, *.mid)", "wav", "mp3", "flac", "mid"));
+        fileChooser.setMultiSelectionEnabled(false);
         init();
+
+        camera.setPosition(new Vector3(-80, 85, 28));
+        camera.setAngle(new Angle(-30, -90, 0));
 
         timeCounter = getTime();
         deltaTime = System.nanoTime();
 
+        addAnimation(new AnimationNone());
+        addAnimation(spectrumAnalyzer = new SpectrumAnalyzer());
+        addAnimation(new AnimationStaticFill());
+        addAnimation(new AnimationPulsate());
+        addAnimation(new AnimationRandomize());
+        addAnimation(new AnimationRain());
+        addAnimation(new AnimationMatrix());
+        //addAnimation(new AnimationFolder());
+
+        serialThread = new SerialThread();
+        serialThread.start();
+
+        screenList.add(new ScreenMainControl());
+
         run();
+    }
+
+    public static LEDManager getLEDManager() {
+        return ledManager;
+    }
+
+    private void addAnimation(Animation animation) {
+        animations.put(animation.getName(), animation);
+        animationNames.add(animation.getName());
+    }
+
+    public Map<String, Animation> getAnimations() {
+        return Collections.unmodifiableMap(animations);
+    }
+
+    public List<String> getAnimationNames() {
+        return Collections.unmodifiableList(animationNames);
+    }
+
+    public static boolean isLEDWithinIsolation(int x, int y, int z) {
+        switch (layerIsolation) {
+            case 1: return x == selectedLayer;
+            case 2: return y == selectedLayer;
+            case 3: return z == selectedLayer;
+        }
+        return true;
+    }
+
+    public static boolean isLEDWithinIsolation(Vector3 vector) {
+        return isLEDWithinIsolation((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
     }
 
     private void makeFrame() throws LWJGLException {
@@ -396,6 +491,7 @@ public class CubeDesigner {
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
         config.defaultProperty("display.height", displayMode.getHeight());
+        config.defaultProperty("display.fieldofview", 45F);
         config.defaultProperty("display.antialiasing", true);
         config.defaultProperty("display.antialiasingsamples", 4);
         //config.defaultProperty("display.fullscreen", false);
@@ -408,6 +504,7 @@ public class CubeDesigner {
         }
         antiAliasing = config.getBoolean("display.antialiasing");
         antiAliasingSamples = config.getInteger("display.antialiasingsamples");
+        fieldOfView = config.getFloat("display.fieldofview");
         //fullscreen = config.getBoolean("display.fullscreen");
 
         if (!antiAliasingSupported) {
@@ -416,6 +513,10 @@ public class CubeDesigner {
         } else if (antiAliasingSamples < 2 || antiAliasingSamples > antiAliasingMaxSamples || !Util.isPowerOfTwo(antiAliasingSamples)) {
             antiAliasingSamples = 4;
             config.setProperty("display.antialiasingsamples", 4);
+        }
+        if (fieldOfView < 10 || fieldOfView > 170) {
+            fieldOfView = 45;
+            config.setProperty("display.fieldofview", 45F);
         }
 
         /*if (config.getInteger("version") < Constants.VERSION) {
@@ -434,7 +535,7 @@ public class CubeDesigner {
     @SneakyThrows(LWJGLException.class)
     private void initGL() {
         // 3D Initialization
-        glClearColor(0, 0, 0, 1);
+        glClearColor(0.08F, 0.08F, 0.08F, 1);
         glClearDepth(1);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
@@ -501,9 +602,6 @@ public class CubeDesigner {
     public void resizeGL(int width, int height) {
         // Viewport setup
         glViewport(0, 0, width, height);
-
-        // Setup projection matrix
-        projectionMatrix = Matrices.perspective(45, (float)width / (float)height, 0.1F, 1000);
     }
 
     private void processKeyboard() {
@@ -516,12 +614,13 @@ public class CubeDesigner {
                 continue;
             }
             if (Keyboard.getEventKeyState()) {
-                if (Keyboard.getEventKey() == Keyboard.KEY_F11) setFullscreen(!fullscreen);
+                //if (Keyboard.getEventKey() == Keyboard.KEY_F11) setFullscreen(!fullscreen);
                 if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
                     Mouse.setGrabbed(!Mouse.isGrabbed());
                     if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
                 }
             }
+            if (!camera.processKeyboardEvent()) continue;
             /*float moveSpeed = 0.01F;
             if (Keyboard.getEventKey() == Keyboard.KEY_W) {
                 if (Keyboard.getEventKeyState()) camera.setVelocity(camera.getVelocity().add(camera.getAngle().forward().multiply(moveSpeed)));
@@ -540,6 +639,59 @@ public class CubeDesigner {
                 if (screen.isVisible() && screen.isEnabled() && !screen.processMouseEvent()) continue toploop;
             //if (world != null && !world.processMouseEvent()) continue;
             //if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState() && !asteroids.containsKey(getMousePos())) asteroids.put(getMousePos(), AsteroidGenerator.generate());
+            highlight = new boolean[512];
+            if (Mouse.getEventButtonState() && Mouse.getEventButton() == 0) drawClick = true;
+            else if (!Mouse.getEventButtonState() && Mouse.getEventButton() == 0) drawClick = false;
+            if (!Mouse.isGrabbed()) {
+                Vector3 led = traceCursorToLED();
+                if (led != null) {
+                    for (int x = (int)led.getX(); x <= Math.min((int)led.getX() + (int)paintSize.getX(), 7); x++) {
+                        for (int y= (int)led.getY(); y <= Math.min((int)led.getY() + (int)paintSize.getY(), 7); y++) {
+                            for (int z = (int)led.getZ(); z <= Math.min((int)led.getZ() + (int)paintSize.getZ(), 7); z++) {
+                                if (isLEDWithinIsolation(x, y, z)) {
+                                    highlight[x | (y << 3) | (z << 6)] = true;
+                                    if (drawClick) {
+                                        ledManager.setLEDColorNormalized(x, y, z, paintColor);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!drawClick && Mouse.getEventButtonState() && Mouse.getEventButton() == 1) {
+                        Color targetColor = ledManager.getLEDColorNormalized((int)led.getX(), (int)led.getY(), (int)led.getZ());
+                        if (!targetColor.equals(paintColor)) {
+                            boolean[] processed = new boolean[512];
+                            LinkedList<Vector3> stack = new LinkedList<>();
+                            stack.push(led);
+                            while (!stack.isEmpty()) {
+                                Vector3 current = stack.pop();
+                                Color color = ledManager.getLEDColorNormalized((int)current.getX(), (int)current.getY(), (int)current.getZ());
+                                if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
+                                    ledManager.setLEDColorNormalized((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
+                                    processed[Util.encodeCubeVector(current)] = true;
+                                    Vector3 offset = null;
+                                    for (int i = 0; i < 6; i++) {
+                                        switch (i) {
+                                            case 0: offset = new Vector3(1, 0, 0); break;
+                                            case 1: offset = new Vector3(-1, 0, 0); break;
+                                            case 2: offset = new Vector3(0, 1, 0); break;
+                                            case 3: offset = new Vector3(0, -1, 0); break;
+                                            case 4: offset = new Vector3(0, 0, 1); break;
+                                            case 5: offset = new Vector3(0, 0, -1); break;
+                                        }
+                                        Vector3 node = current.add(offset);
+                                        if (node.getX() >= 0 && node.getX() <= 7 && node.getY() >= 0 && node.getY() <= 7 && node.getZ() >= 0 && node.getZ() <= 7) {
+                                            if (!processed[Util.encodeCubeVector(node)]) {
+                                                stack.push(node);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -560,30 +712,6 @@ public class CubeDesigner {
 
         camera.update(delta);
         textureManager.update(delta);
-
-        /*Vector3 unit = new Vector3(0, 0, -1);
-        //Angle angle = new Angle(90, 0, 0);
-        Angle angle = new Angle(253, 45, 111);
-        System.out.println(angle);
-        Vector3 vector = angle.forward();
-        System.out.println(vector);
-        //Angle angle2 = new Vector3().angle(vector);
-        //System.out.println(angle2);
-        System.out.println(new Angle(new Quaternion(angle)));
-        System.out.println(new Angle(new Quaternion(angle)).forward());
-        //System.out.println(unit.multiply(new Quaternion(angle).getMatrix()));
-        //System.out.println(new Quaternion(new Vector3(1, 0, 0), 90).multiply(unit));
-        //System.out.println(unit.multiply(angle.getMatrix()));
-        //System.out.println(new Quaternion(angle));
-        //System.out.println(angle2.forward());
-        System.out.println(" ");*/
-        //System.out.println(fpsRender);
-
-        //camera.setAngle(new Angle(70, camera.getAngle().getYaw() + 1, 0));
-        //camera.setAngle(camera.getAngle().rotate(Axis.YAW, 1));
-        //camera.setAngle(camera.getAngle().rotate(Axis.ROLL, 1));
-        //camera.setAngle(new Angle(0, camera.getAngle().getYaw() + 1, camera.getAngle().getRoll() + 1));
-        //camera.setPosition(new Vector3(0, 0, -2));
 
         Iterator<Screen> it = screenList.iterator();
         while (it.hasNext()) {
@@ -620,6 +748,8 @@ public class CubeDesigner {
         glLoadIdentity();*/
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
+        // Setup projection matrix
+        projectionMatrix = Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, 1000);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -700,11 +830,10 @@ public class CubeDesigner {
         glBindSampler(0, sampler0);
         
         LightSource light = new LightSource();
-        light.position = new Vector4f(1, 1, 1, 0);
-        light.constantAttenuation = 1.0F;
-        light.linearAttenuation = 0.0F;
-        light.quadraticAttenuation = 0.0F;
-        light.sendToShader(0, 0);
+        //light.position = new Vector4f(0, 1, 0, 0);
+        light.position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
+        light.sendToShader(1, 0);
+        glUniform1i(0, 1);
         
 
         /*floatBuffer.rewind();
@@ -713,30 +842,40 @@ public class CubeDesigner {
         glLight(GL_LIGHT0, GL_POSITION, floatBuffer);*/
         
         faceCount = 0;
-        String[] modelNames = new String[]{/*"golfball.model", "dentsphere.model", "cube.model",*/ "sphere.model"};
-        //String modelName = "golfball.model";
-        float mult = 7;
-        Random rand = new Random(1000);
+        //String[] modelNames = new String[]{"golfball.model", "dentsphere.model", "cube.model", "led.model"};
+        String modelName = "led.model";
+        float mult = 8;
+        Random rand = new Random();
+
+        //Vector3[] ray = getCursorRay();
+        //Vector3 pPos = ray[0].add(ray[1].normalized().multiply(100));
+        //modelManager.getModel(modelName).render(pPos, new Quaternion(), new Color(255, 255, 255), false);
 
         int width = 8;
         int length = 8;
         int height = 8;
         int size = width * length * height * 16 * 4;
-        int renderCount = 0;
-        if (matBuf == null || matBuf.capacity() != size) matBuf = BufferUtils.createByteBuffer(size);
-        if (matVbo == 0) matVbo = glGenBuffers();
-        matBuf.rewind();
-        matBuf.limit(matBuf.capacity());theAngle += 1F;
-        //Model model = modelManager.getModel(modelName);
+        Model model = modelManager.getModel(modelName);
+        Color[] colors = new Color[512];
+        synchronized (ledManager) {
+            for (int y = 0; y < height; y++) {
+                for (int z = 0; z < length; z++) {
+                    for (int x = 0; x < width; x++) {
+                        colors[x | (y << 3) | (z << 6)] = ledManager.getLEDColorNormalized(x, y, z);
+                    }
+
+                }
+            }
+        }
         for (int y = 0; y < height; y++) {
             for (int z = 0; z < length; z++) {
                 for (int x = 0; x < width; x++) {
-                    float xx = x * mult;
+                    float xx = z * mult;
                     float yy = y * mult;
-                    float zz = z * mult;
+                    float zz = x * mult;
                     Vector3 pos = new Vector3(xx, yy, zz);
-                    Model model = modelManager.getModel(modelNames[rand.nextInt(modelNames.length)]);
-                    if (model.isInFrustum(pos)) {
+                    //Model model = modelManager.getModel(modelNames[rand.nextInt(modelNames.length)]);
+                    if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
                         //posBuf.putFloat(xx);
                         //posBuf.putFloat(yy);
                         //posBuf.putFloat(zz);
@@ -745,9 +884,21 @@ public class CubeDesigner {
                         //Util.storeMatrixInBuffer(matrix, matBuf);
                         faceCount += model.getFaceCount();
                         //renderCount++;
-                        rand.setSeed(x | (y << 8) | (z << 16));
-                        rand.nextInt();
-                        model.render(pos, new Quaternion(Axis.YAW, 90), new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)), false);
+                        //rand.setSeed(x | (y << 8) | (z << 16));
+                        //rand.nextInt();
+                        /*if (rand.nextInt(1) == 0) {
+                            //ledManager.setLEDColor(x, y, z, new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)));
+                            //ledManager.setLEDColor(x, y, z, new Color(255, 255, 255));
+                            //ledManager.setLEDColor(x, y, z, new Color());
+                            Color color = new Color();
+                            color.fromHSB((1F / 512F) * i, 1, 1);
+                            ledManager.setLEDColor(x, y, z, color);
+                        }*/
+                        //ledManager.setLEDColor(x, y, z, new Color(x * 2, y * 2, z * 2));
+                        //Color color = colors[x | (y << 3) | (z << 6)];
+                        //model.render(pos, new Quaternion(), isLEDWithinIsolation(x, y, z) ? color : new Color(color.getRed(), color.getGreen(), color.getBlue(), 8), false);
+                        model.render(pos, new Quaternion(), colors[x | (y << 3) | (z << 6)], false);
+                        //model.render(pos, new Quaternion(Axis.YAW, 90), new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)), false);
                     }
                     /*Vector3 center = model.getCenter();
                     if (frustum.sphereInFrustum(center.getX() + xx, center.getY() + yy, center.getZ() + zz, model.getRadius()) > 0) {
@@ -763,8 +914,24 @@ public class CubeDesigner {
                 }
             }
         }
-        matBuf.limit(matBuf.position());
-        matBuf.rewind();
+
+        model = modelManager.getModel("led_larger.model");
+        for (int y = 0; y < height; y++) {
+            for (int z = 0; z < length; z++) {
+                for (int x = 0; x < width; x++) {
+                    if (highlight[x | (y << 3) | (z << 6)]) {
+                        float xx = z * mult;
+                        float yy = y * mult;
+                        float zz = x * mult;
+                        Vector3 pos = new Vector3(xx, yy, zz);
+                        if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
+                            faceCount += model.getFaceCount();
+                            model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), false);
+                        }
+                    }
+                }
+            }
+        }
 
         /*glBindBuffer(GL_ARRAY_BUFFER, model.getVBO());
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
@@ -828,28 +995,35 @@ public class CubeDesigner {
         modelManager.getModel(model).render();*/
         
         glPopMatrix();
-    }private int matVbo; private ByteBuffer matBuf; float theAngle;
+    }
 
     public void render2D() {
         glPushMatrix();
 
+        for (Screen screen : screenList)
+            if (screen.isVisible()) screen.render();
+
         long renderTime = System.nanoTime() - renderStart;
-        if (renderDebug) {
-            Runtime runtime = Runtime.getRuntime();
-            UnicodeFont debugFont = fontManager.getFont("batmfa_", 20, false, false).getUnicodeFont();
+        if (/*renderFPS || renderDebug ||*/ true) {
+            UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
+            org.newdawn.slick.Color debugColor = org.newdawn.slick.Color.yellow;
             int y = 0;
-            debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, org.newdawn.slick.Color.yellow);
-            debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), org.newdawn.slick.Color.yellow);
-            Vector3 vector = camera.getAngle().forward();
-            debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), org.newdawn.slick.Color.yellow);
-            vector = camera.getPosition();
-            debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), org.newdawn.slick.Color.yellow);
-            debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, org.newdawn.slick.Color.yellow);
-            //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), org.newdawn.slick.Color.yellow);
+            if (renderFPS || renderDebug) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Serial port " + (serialThread.isPortOpen() ? "open" : "closed"), debugColor);
+            if (renderDebug) {
+                Runtime runtime = Runtime.getRuntime();
+                debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);
+                //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), debugColor);
+                //debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), debugColor);
+                Vector3 vector = camera.getAngle().forward();
+                debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
+                vector = camera.getPosition();
+                debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
+                //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
+                //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
+                debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, debugColor);
+                //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
+            }
         }
 
         glPopMatrix();
@@ -877,6 +1051,53 @@ public class CubeDesigner {
         viewMatrix.store(matrixBuffer);
         matrixBuffer.rewind();
         glUniformMatrix4(viewMatrixLoc, false, matrixBuffer);
+    }
+
+    public Vector3[] getCursorRay() {
+        //Vector2 cursorPos = Util.getMousePos();
+        float nearClip = 0.1F;
+        Vector3 look = camera.getAngle().forward();
+        Vector3 lookH = camera.getAngle().right();
+        Vector3 lookV = camera.getAngle().up().negate();
+        float fovRad = (float)Math.toRadians(fieldOfView);
+        float vLength = (float)Math.tan(fovRad / 2) * nearClip;
+        float hLength = vLength * ((float)displayMode.getWidth() / (float)displayMode.getHeight());
+        lookH = lookH.multiply(hLength);
+        lookV = lookV.multiply(vLength);
+        float mouseX = (Util.getMouseX() - displayMode.getWidth() / 2F) / (displayMode.getWidth() / 2F);
+        float mouseY = (Util.getMouseY() - displayMode.getHeight() / 2F) / (displayMode.getHeight() / 2F);
+        Vector3 position = camera.getPosition().add(look.multiply(nearClip)).add(lookH.multiply(mouseX)).add(lookV.multiply(mouseY));
+        Vector3 direction = position.subtract(camera.getPosition()).normalized();
+        return new Vector3[]{position, direction};
+    }
+
+    public Vector3 traceCursorToLED() {
+        Vector3[] ray = getCursorRay();
+        Vector3 position = ray[0];
+        Vector3 direction = ray[1].multiply(0.5F);
+
+        float mult = 8;
+        int width = 8;
+        int length = 8;
+        int height = 8;
+        Model model = modelManager.getModel("led.model");
+        for (float step = 1; step < 1000; step += 2) {
+            Vector3 rayPos = position.add(direction.multiply(step));
+            for (int y = 0; y < height; y++) {
+                for (int z = 0; z < length; z++) {
+                    for (int x = 0; x < width; x++) {
+                        float xx = z * mult;
+                        float yy = y * mult;
+                        float zz = x * mult;
+                        Vector3 pos = new Vector3(xx, yy, zz);
+                        if (model.getAABB().containsPoint(pos, rayPos) && isLEDWithinIsolation(x, y, z)) {
+                            return new Vector3(x, y, z);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public DisplayMode findDisplayMode(int width, int height) {

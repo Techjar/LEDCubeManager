@@ -132,9 +132,9 @@ public final class MathHelper {
      */
     public static Angle lerp(Angle start, Angle end, float fraction) {
         float fractionInverse = 1.0F - fraction;
-        float pitch = (start.getPitch() * (fractionInverse)) + (end.getPitch() * fraction);
-        float yaw = (start.getYaw() * (fractionInverse)) + (end.getYaw() * fraction);
-        float roll = (start.getRoll() * (fractionInverse)) + (end.getRoll() * fraction);
+        float pitch = (start.getPitch() * fractionInverse) + (end.getPitch() * fraction);
+        float yaw = (start.getYaw() * fractionInverse) + (end.getYaw() * fraction);
+        float roll = (start.getRoll() * fractionInverse) + (end.getRoll() * fraction);
         return new Angle(pitch, yaw, roll);
     }
 
@@ -146,11 +146,12 @@ public final class MathHelper {
      * @return the interpolated value
      */
     public static Color lerp(Color start, Color end, float fraction) {
-        float fractionInverse = 1.0F - fraction;
-        float red = (start.getRed()* (fractionInverse)) + (end.getRed() * fraction);
-        float green = (start.getGreen() * (fractionInverse)) + (end.getGreen() * fraction);
-        float blue = (start.getBlue() * (fractionInverse)) + (end.getBlue() * fraction);
-        float alpha = (start.getAlpha() * (fractionInverse)) + (end.getAlpha() * fraction);
+        float fractionInverse = 1 - fraction;
+        //System.out.println(fraction);
+        float red = (start.getRed() * fractionInverse) + (end.getRed() * fraction);
+        float green = (start.getGreen() * fractionInverse) + (end.getGreen() * fraction);
+        float blue = (start.getBlue() * fractionInverse) + (end.getBlue() * fraction);
+        float alpha = (start.getAlpha() * fractionInverse) + (end.getAlpha() * fraction);
         return new Color((int)red, (int)green, (int)blue, (int)alpha);
     }
 }

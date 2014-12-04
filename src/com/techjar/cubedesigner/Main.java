@@ -3,6 +3,8 @@ package com.techjar.cubedesigner;
 
 import com.techjar.cubedesigner.util.OperatingSystem;
 import java.io.File;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  *
@@ -16,6 +18,11 @@ public class Main {
         if (OperatingSystem.isUnknown()) {
             System.out.println("Unsupported OS detected, exiting...");
             System.exit(0);
+        }
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            ex.printStackTrace();
         }
         try {
             File workingDir = new File(System.getProperty("user.dir"));

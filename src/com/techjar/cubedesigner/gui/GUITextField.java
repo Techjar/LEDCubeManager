@@ -9,10 +9,13 @@ import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.geom.Rectangle;
 import com.techjar.cubedesigner.util.Util;
 import com.techjar.cubedesigner.RenderHelper;
+import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 
 /**
  *
@@ -21,8 +24,10 @@ import java.awt.datatransfer.Transferable;
 public class GUITextField extends GUIText {
     protected GUIBackground guiBg;
     protected int maxLength = Short.MAX_VALUE;
+    protected String validCharRegex = ".";
     protected boolean focused;
     protected boolean canLoseFocus = true;
+    //protected int cursorPosition;
     protected GUICallback changeHandler;
     
     // Timing stuff
@@ -60,7 +65,17 @@ public class GUITextField extends GUIText {
                             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                             Transferable data = clipboard.getContents(this);
                             if (data != null && data.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                                text.append((String)data.getTransferData(DataFlavor.stringFlavor));
+                                String str = (String)data.getTransferData(DataFlavor.stringFlavor);
+                                if (text.length() + str.length() > maxLength) {
+                                    str = str.substring(0, maxLength - text.length());
+                                    if (str.length() < 1) return false;
+                                }
+                                for (char ch : str.toCharArray()) {
+                                    if (!Util.isValidCharacter(ch) || !String.valueOf(ch).matches(validCharRegex)) {
+                                        return false;
+                                    }
+                                }
+                                text.append(str);
                                 if (changeHandler != null) {
                                     changeHandler.setComponent(this);
                                     changeHandler.run();
@@ -68,13 +83,13 @@ public class GUITextField extends GUIText {
                             }
                             return false;
                         }
-                    } catch (Exception ex) {
+                    } catch (HeadlessException | UnsupportedFlavorException | IOException ex) {
                         ex.printStackTrace();
                     }
                     return true;
                 }
                 char ch = Keyboard.getEventCharacter();
-                if (Util.isValidCharacter(ch) && text.length() < maxLength) {
+                if (text.length() < maxLength && Util.isValidCharacter(ch) && String.valueOf(ch).matches(validCharRegex)) {
                     text.append(ch);
                     if (changeHandler != null) {
                         changeHandler.setComponent(this);
@@ -121,8 +136,9 @@ public class GUITextField extends GUIText {
             if (checkMouseIntersect(box)) {
                 focused = true;
             }
-            else if(focused && canLoseFocus)
+            else if(focused && canLoseFocus) {
                 focused = false;
+            }
         }
         
         if (repeatState && Util.milliTime() - repeatLastTime >= 500) {
@@ -131,7 +147,7 @@ public class GUITextField extends GUIText {
                 repeatState2 = true;
             }
             if (Util.milliTime() - repeatLastTime2 >= 50) {
-                if (Util.isValidCharacter(repeatLastChar) && text.length() < maxLength) {
+                if (text.length() < maxLength && Util.isValidCharacter(repeatLastChar) && String.valueOf(repeatLastChar).matches(validCharRegex)) {
                     text.append(repeatLastChar);
                     if (changeHandler != null) {
                         changeHandler.setComponent(this);
@@ -192,6 +208,14 @@ public class GUITextField extends GUIText {
 
     public void setMaxLength(int maxLength) {
         this.maxLength = maxLength;
+    }
+
+    public String getValidCharacterRegex() {
+        return validCharRegex;
+    }
+
+    public void setValidCharacterRegex(String validCharRegex) {
+        this.validCharRegex = validCharRegex;
     }
 
     public GUICallback getChangeHandler() {

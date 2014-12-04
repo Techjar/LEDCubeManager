@@ -4,6 +4,7 @@ import com.techjar.cubedesigner.CubeDesigner;
 import com.techjar.cubedesigner.util.MathHelper;
 import com.techjar.cubedesigner.util.Util;
 import com.techjar.cubedesigner.RenderHelper;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.newdawn.slick.geom.Rectangle;
@@ -17,20 +18,52 @@ public class GUISlider extends GUI {
     protected Color lineColor;
     protected float value;
     protected float lastValue;
-    protected int draggerWidth;
-    protected int lineHeight;
+    protected int draggerSize;
+    protected int lineSize;
+    protected float increment;
+    protected boolean showNotches;
+    protected boolean vertical;
     protected boolean dragging;
+    protected long repeatTime;
     protected GUICallback changeHandler;
 
     public GUISlider(Color color, Color lineColor) {
         this.color = color;
         this.lineColor = lineColor;
-        this.draggerWidth = 10;
-        this.lineHeight = 2;
+        this.draggerSize = 10;
+        this.lineSize = 2;
+        this.increment = 0;
+        this.showNotches = true;
+        this.vertical = false;
     }
     
     @Override
     public boolean processKeyboardEvent() {
+        if (Keyboard.getEventKeyState()) {
+            if (checkMouseIntersect(getComponentBox())) {
+                float incr = increment > 0 ? increment : 0.05F;
+                switch (Keyboard.getEventKey()) {
+                    case Keyboard.KEY_LEFT:
+                    case Keyboard.KEY_DOWN:
+                        value = MathHelper.clamp(value - incr, 0, 1);
+                        if (changeHandler != null && lastValue != value) {
+                            changeHandler.setComponent(this);
+                            changeHandler.run();
+                        }
+                        lastValue = value;
+                        return false;
+                    case Keyboard.KEY_RIGHT:
+                    case Keyboard.KEY_UP:
+                        value = MathHelper.clamp(value + incr, 0, 1);
+                        if (changeHandler != null && lastValue != value) {
+                            changeHandler.setComponent(this);
+                            changeHandler.run();
+                        }
+                        lastValue = value;
+                        return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -38,7 +71,7 @@ public class GUISlider extends GUI {
     public boolean processMouseEvent() {
         if (Mouse.getEventButton() == 0) {
             if (Mouse.getEventButtonState()) {
-                Rectangle box = new Rectangle(getPosition().getX() + getSliderPos(), getPosition().getY(), draggerWidth, dimension.getHeight());
+                Rectangle box = getSliderBox();
                 if (checkMouseIntersect(box)) {
                     dragging = true;
                     return false;
@@ -52,8 +85,17 @@ public class GUISlider extends GUI {
     @Override
     public void update(float delta) {
         if (dragging) {
-            int mouseX = Util.getMouseX() - (int)getPosition().getX() - draggerWidth / 2;
-            value = (float)MathHelper.clamp(mouseX, 0, dimension.getWidth() - draggerWidth) / (float)(dimension.getWidth() - draggerWidth);
+            if (vertical) {
+                int mouseY = Util.getMouseY() - (int)getPosition().getY() - draggerSize / 2;
+                value = 1 - MathHelper.clamp(mouseY, 0, dimension.getHeight() - draggerSize) / (float)(dimension.getHeight() - draggerSize);
+            } else {
+                int mouseX = Util.getMouseX() - (int)getPosition().getX() - draggerSize / 2;
+                value = MathHelper.clamp(mouseX, 0, dimension.getWidth() - draggerSize) / (float)(dimension.getWidth() - draggerSize);
+            }
+            if (increment > 0) {
+                float mult = 1 / increment;
+                value = MathHelper.clamp(Math.round(value * mult) / mult, 0, 1);
+            }
             if (changeHandler != null && lastValue != value) {
                 changeHandler.setComponent(this);
                 changeHandler.run();
@@ -62,7 +104,7 @@ public class GUISlider extends GUI {
         }
         
         if (!Mouse.isButtonDown(0)) {
-            Rectangle box = new Rectangle(getPosition().getX() + getSliderPos(), getPosition().getY(), draggerWidth, dimension.getHeight());
+            Rectangle box = getSliderBox();
             if (checkMouseIntersect(box)) {
                 if (!hovered && !dragging) CubeDesigner.getSoundManager().playEffect("ui/rollover.wav", false);
                 hovered = true;
@@ -74,15 +116,36 @@ public class GUISlider extends GUI {
     @Override
     public void render() {
         Color theColor = new Color(color);
-        Rectangle box = new Rectangle(getPosition().getX() + getSliderPos(), getPosition().getY(), draggerWidth, dimension.getHeight());
+        Rectangle box = getSliderBox();
         if (dragging || checkMouseIntersect(box))
             theColor = Util.addColors(theColor, new Color(50, 50, 50));
-        RenderHelper.drawSquare(getPosition().getX() + draggerWidth / 2, getPosition().getY() + dimension.getHeight() / 2 - lineHeight / 2, dimension.getWidth() - draggerWidth, lineHeight, lineColor);
-        RenderHelper.drawSquare(getPosition().getX() + getSliderPos(), getPosition().getY(), draggerWidth, dimension.getHeight(), theColor);
+        if (vertical) {
+            if (showNotches && increment > 0) {
+                for (float i = increment; i < 1; i += increment) {
+                    RenderHelper.drawSquare(getPosition().getX() + dimension.getWidth() / 2 - lineSize * 2, getPosition().getY() + draggerSize / 2 + (dimension.getHeight() - draggerSize) * i - 1, lineSize * 4, lineSize, lineColor);
+                }
+            }
+            RenderHelper.drawSquare(getPosition().getX() + dimension.getWidth() / 2 - lineSize / 2, getPosition().getY() + draggerSize / 2, lineSize, dimension.getHeight() - draggerSize, lineColor);
+            RenderHelper.drawSquare(getPosition().getX(), getPosition().getY() + getSliderPos(), dimension.getWidth(), draggerSize, theColor);
+        } else {
+            if (showNotches && increment > 0) {
+                for (float i = increment; i < 1; i += increment) {
+                    RenderHelper.drawSquare(getPosition().getX() + draggerSize / 2 + (dimension.getWidth() - draggerSize) * i - 1, getPosition().getY() + dimension.getHeight() / 2 - lineSize * 2, lineSize, lineSize * 4, lineColor);
+                }
+            }
+            RenderHelper.drawSquare(getPosition().getX() + draggerSize / 2, getPosition().getY() + dimension.getHeight() / 2 - lineSize / 2, dimension.getWidth() - draggerSize, lineSize, lineColor);
+            RenderHelper.drawSquare(getPosition().getX() + getSliderPos(), getPosition().getY(), draggerSize, dimension.getHeight(), theColor);
+        }
     }
     
     protected int getSliderPos() {
-        return (int)(value * (dimension.getWidth() - draggerWidth));
+        if (vertical) return (int)((1 - value) * (dimension.getHeight() - draggerSize));
+        return (int)(value * (dimension.getWidth() - draggerSize));
+    }
+
+    protected Rectangle getSliderBox() {
+        if (vertical) return new Rectangle(getPosition().getX(), getPosition().getY() + (getSliderPos()), dimension.getWidth(), draggerSize);
+        return new Rectangle(getPosition().getX() + getSliderPos(), getPosition().getY(), draggerSize, dimension.getHeight());
     }
     
     public float getValue() {
@@ -95,6 +158,10 @@ public class GUISlider extends GUI {
             changeHandler.setComponent(this);
             changeHandler.run();
         }
+    }
+
+    public void setValueWithoutNotify(float value) {
+        this.value = MathHelper.clamp(value, 0, 1);
     }
 
     public Color getColor() {
@@ -113,20 +180,44 @@ public class GUISlider extends GUI {
         this.lineColor = lineColor;
     }
 
-    public int getDraggerWidth() {
-        return draggerWidth;
+    public int getDraggerSize() {
+        return draggerSize;
     }
 
-    public void setDraggerWidth(int draggerWidth) {
-        this.draggerWidth = draggerWidth;
+    public void setDraggerSize(int draggerWidth) {
+        this.draggerSize = draggerWidth;
     }
 
-    public int getLineHeight() {
-        return lineHeight;
+    public int getLineSize() {
+        return lineSize;
     }
 
-    public void setLineHeight(int lineHeight) {
-        this.lineHeight = lineHeight;
+    public void setLineSize(int lineHeight) {
+        this.lineSize = lineHeight;
+    }
+
+    public float getIncrement() {
+        return increment;
+    }
+
+    public void setIncrement(float increment) {
+        this.increment = increment;
+    }
+
+    public boolean getShowNotches() {
+        return showNotches;
+    }
+
+    public void setShowNotches(boolean showNotches) {
+        this.showNotches = showNotches;
+    }
+
+    public boolean isVertical() {
+        return vertical;
+    }
+
+    public void setVertical(boolean vertical) {
+        this.vertical = vertical;
     }
 
     public GUICallback getChangeHandler() {

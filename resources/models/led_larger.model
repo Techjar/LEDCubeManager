@@ -1,0 +1,3 @@
+render led.obj
+collision mesh led_collision.obj
+scale 1.2
