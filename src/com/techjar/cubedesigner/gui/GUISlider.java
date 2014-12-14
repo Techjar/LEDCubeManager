@@ -154,6 +154,10 @@ public class GUISlider extends GUI {
     
     public void setValue(float value) {
         this.value = MathHelper.clamp(value, 0, 1);
+        if (increment > 0) {
+            float mult = 1 / increment;
+            this.value = MathHelper.clamp(Math.round(this.value * mult) / mult, 0, 1);
+        }
         if (changeHandler != null) {
             changeHandler.setComponent(this);
             changeHandler.run();

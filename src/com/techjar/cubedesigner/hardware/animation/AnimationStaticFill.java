@@ -22,7 +22,7 @@ public class AnimationStaticFill extends Animation {
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 for (int z = 0; z < 8; z++) {
-                    ledManager.setLEDColorNormalized(x, y, z, CubeDesigner.getPaintColor());
+                    ledManager.setLEDColor(x, y, z, CubeDesigner.getPaintColor());
                 }
             }
         }

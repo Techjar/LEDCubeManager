@@ -18,6 +18,6 @@ public enum Axis {
     }
 
     public Vector3 getVector() {
-        return vector;
+        return vector.copy();
     }
 }

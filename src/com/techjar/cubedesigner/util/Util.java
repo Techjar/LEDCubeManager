@@ -21,9 +21,12 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 import lombok.Cleanup;
@@ -204,10 +207,17 @@ public final class Util {
     }
 
     public static int encodeCubeVector(Vector3 vector) {
+        // TODO: Base this on cube dimensions
         return (int)vector.getX() | ((int)vector.getY() << 3) | ((int)vector.getZ() << 6);
     }
 
+    public static int encodeCubeVector(int x, int y, int z) {
+        // TODO: Base this on cube dimensions
+        return encodeCubeVector(new Vector3(x, y, z));
+    }
+
     public static Vector3 decodeCubeVector(int number) {
+        // TODO: Base this on cube dimensions
         return new Vector3(number & 7, (number >> 3) & 7, (number >> 6) & 7);
     }
 
@@ -217,6 +227,25 @@ public final class Util {
             if (name.equals(con.getAxisName(i))) return con.getAxisValue(i);
         }
         return 0;
+    }
+
+    public static <T> List<T> arrayAsListCopy(T... array) {
+        List<T> list = new ArrayList<>();
+        list.addAll(Arrays.asList(array));
+        return list;
+    }
+
+    public static void shuffleArray(Object[] array, Random random) {
+        for (int i = array.length - 1; i > 0; i--) {
+            int index = random.nextInt(i + 1);
+            Object obj = array[index];
+            array[index] = array[i];
+            array[i] = obj;
+        }
+    }
+
+    public static void shuffleArray(Object[] array) {
+        shuffleArray(array, new Random());
     }
 
     public static int getMouseX() {

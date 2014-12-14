@@ -1,0 +1,16 @@
+@resources/sounds/music/aerodynamic.mp3
+# This is a comment
+Rain 10000
+Snake 10000 255 0 0
+Randomize 10000
+Scrollers 1000 0 255 0
+null 1000 0 0 255
+null 1000 255 0 255
+null 1000 255 255 0
+null 1000 255 255 255
+null 1000 255 0 0
+null 1000 0 255 255
+null 1000 127 0 255
+null 1000 255 127 0
+null 1000 0 0 255
+Strobe 5000 0 0 255

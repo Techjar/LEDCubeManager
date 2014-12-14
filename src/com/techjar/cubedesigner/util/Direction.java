@@ -19,6 +19,7 @@ public enum Direction {
     private final int x;
     private final int y;
     private final int z;
+    public static final Direction[] VALID_DIRECTIONS = {UP, DOWN, NORTH, SOUTH, EAST, WEST};
 
     private Direction(int x, int y, int z) {
         this.x = x;

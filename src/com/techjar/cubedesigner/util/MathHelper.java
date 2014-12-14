@@ -10,6 +10,14 @@ public final class MathHelper {
     private MathHelper() {
     }
 
+    public static double log2(double a) {
+        return Math.log(a) / Math.log(2);
+    }
+
+    public static double log(double a, double base) {
+        return Math.log(a) / Math.log(base);
+    }
+
     /**
      * Converts input number to a number within the specified range.
      * @param i input number

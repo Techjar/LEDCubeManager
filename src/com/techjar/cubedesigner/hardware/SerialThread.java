@@ -3,6 +3,7 @@ package com.techjar.cubedesigner.hardware;
 
 import com.techjar.cubedesigner.CubeDesigner;
 import com.techjar.cubedesigner.hardware.animation.Animation;
+import com.techjar.cubedesigner.hardware.animation.AnimationSequence;
 import jssc.SerialPort;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,10 +19,11 @@ public class SerialThread extends Thread {
     private long updateTime;
     @Getter @Setter private int refreshRate = 60;
     @Getter private Animation currentAnimation;
+    @Getter private AnimationSequence currentSequence;
     private SerialPort port;
 
     public SerialThread() {
-        this.setName("Animation / Serial Writer Thread");
+        this.setName("Animation / Serial Writer");
         ledManager = CubeDesigner.getLEDManager();
         updateTime = System.nanoTime();
         port = new SerialPort(CubeDesigner.getSerialPortName());
@@ -35,10 +37,11 @@ public class SerialThread extends Thread {
             if (System.nanoTime() - updateTime >= interval) {
                 updateTime = System.nanoTime();
                 synchronized (lock) {
+                    if (currentSequence != null) currentSequence.update();
                     if (currentAnimation != null) currentAnimation.refresh();
                     try {
                         if (port.isOpened()) {
-                            port.writeBytes(ledManager.getConcatenatedArray());
+                            port.writeBytes(ledManager.getSerialData());
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();
@@ -53,6 +56,14 @@ public class SerialThread extends Thread {
         synchronized (lock) {
             this.currentAnimation = currentAnimation;
             if (currentAnimation != null) currentAnimation.reset();
+        }
+    }
+
+    public void setCurrentSequence(AnimationSequence currentSequence) {
+        synchronized (lock) {
+            this.currentSequence = currentSequence;
+            CubeDesigner.getInstance().getScreenMainControl().animComboBox.setEnabled(currentSequence == null);
+            if (currentSequence != null) currentSequence.start();
         }
     }
 

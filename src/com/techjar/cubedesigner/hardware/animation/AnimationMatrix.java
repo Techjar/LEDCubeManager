@@ -38,7 +38,7 @@ public class AnimationMatrix extends Animation {
                     for (int y = 7; y >= 0; y--) {
                         int stateIndex = index | (y << 6);
                         if (y == 7) {
-                            if (lines[index] == 0 && random.nextInt(50) == 0) {
+                            if (lines[index] == 0 && random.nextInt(20) == 0) {
                                 int count = random.nextInt(3) + 3;
                                 for (int i = 0; i < count; i++) lines[index] |= (0b10000000 << i);
                                 float value = random.nextFloat() * 1.333F;
@@ -50,7 +50,7 @@ public class AnimationMatrix extends Animation {
                         boolean bit = checkBit(lines[index], y);
                         if (bit != states[stateIndex]) {
                             states[stateIndex] = bit;
-                            ledManager.setLEDColorNormalized(x, y, z, states[stateIndex] ? colors[index] : new Color());
+                            ledManager.setLEDColor(x, y, z, states[stateIndex] ? colors[index] : new Color());
                         }
                     }
                 }
@@ -62,6 +62,13 @@ public class AnimationMatrix extends Animation {
     public void reset() {
         lines = new int[64];
         states = new boolean[512];
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                for (int z = 0; z < 8; z++) {
+                    ledManager.setLEDColor(x, y, z, new Color());
+                }
+            }
+        }
     }
 
     private boolean checkBit(int number, int bit) {

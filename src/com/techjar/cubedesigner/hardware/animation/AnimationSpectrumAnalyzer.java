@@ -1,11 +1,8 @@
 
 package com.techjar.cubedesigner.hardware.animation;
 
-import com.techjar.cubedesigner.CubeDesigner;
-import com.techjar.cubedesigner.hardware.LEDManager;
 import com.techjar.cubedesigner.util.MathHelper;
 import com.techjar.cubedesigner.util.Vector2;
-import com.techjar.cubedesigner.util.logging.LogHelper;
 import ddf.minim.AudioPlayer;
 import ddf.minim.Minim;
 import ddf.minim.analysis.FFT;
@@ -21,12 +18,12 @@ import org.lwjgl.util.Color;
  *
  * @author Techjar
  */
-public class SpectrumAnalyzer extends Animation {
+public class AnimationSpectrumAnalyzer extends Animation {
     private final Minim minim;
     private final FFTThread thread;
     @Setter public int updateRate = 60;
 
-    public SpectrumAnalyzer() {
+    public AnimationSpectrumAnalyzer() {
         super();
         this.minim = new Minim(this);
         this.thread = new FFTThread();
@@ -56,6 +53,11 @@ public class SpectrumAnalyzer extends Animation {
     @SneakyThrows(IOException.class)
     public InputStream createInput(String fileName) {
         return new FileInputStream(fileName);
+    }
+
+    public boolean isPlaying() {
+        if (thread.player != null) return thread.player.isPlaying();
+        return false;
     }
 
     public void play() {
@@ -93,6 +95,13 @@ public class SpectrumAnalyzer extends Animation {
         return 0;
     }
 
+    public int getPositionMillis() {
+        if (thread.player != null) {
+            return thread.player.position();
+        }
+        return 0;
+    }
+
     public void setPosition(float position) {
         if (thread.player != null) {
             thread.player.rewind();
@@ -126,7 +135,7 @@ public class SpectrumAnalyzer extends Animation {
         float[] amplitudes = new float[64];
 
         public FFTThread() {
-            this.setName("Spectrum Analyzer FFT Thread");
+            this.setName("Spectrum Analyzer FFT");
             this.updateTime = System.nanoTime();
         }
 
@@ -156,7 +165,7 @@ public class SpectrumAnalyzer extends Animation {
                     for (int j = 0; j < 8; j++) {
                         float increment = (1.75F * (j + 1)) * (1 - (i / 70F));
                         //ledManager.setLEDColor(i % 8, peak, i / 8, amplitude > 0 ? colorAtY(peak) : new Color());
-                        ledManager.setLEDColor((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
+                        ledManager.setLEDColorRaw((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
                         //if (amplitude <= 0) break;
                         amplitude -= increment;
                     }
@@ -178,10 +187,11 @@ public class SpectrumAnalyzer extends Animation {
         }
 
         private Color colorAtY(int y, float brightness) {
-            if (y > 6) return new Color(Math.round(15 * brightness), 0, 0);
-            if (y > 5) return new Color(Math.round(15 * brightness), Math.round(15 * brightness), 0);
-            if (y > 1) return new Color(0, Math.round(15 * brightness), 0);
-            return new Color(0, 0, Math.round(15 * brightness));
+            int res = ledManager.getResolution();
+            if (y > 6) return new Color(Math.round(res * brightness), 0, 0);
+            if (y > 5) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
+            if (y > 1) return new Color(0, Math.round(res * brightness), 0);
+            return new Color(0, 0, Math.round(res * brightness));
         }
 
         private Vector2 spiralPosition(int index) {

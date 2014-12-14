@@ -1,0 +1,25 @@
+@@resources/sounds/music/aerodynamic.mp3
+# This is a comment
+Rain 0
+Snake 10000 255 0 0
+Randomize 20000
+Scrollers 30000 0 255 0
+null 31000 0 0 255
+null 32000 255 0 255
+null 33000 255 255 0
+null 34000 255 255 255
+null 35000 255 0 0
+null 36000 0 255 255
+null 37000 127 0 255
+null 38000 255 127 0
+null 39000 0 0 255
+Strobe 40000 0 0 255
+null 41000 0 0 255
+null 42000 255 0 255
+null 43000 255 255 0
+null 44000 255 255 255
+null 45000 255 0 0
+null 46000 0 255 255
+null 47000 127 0 255
+null 48000 255 127 0
+null 49000 0 0 255

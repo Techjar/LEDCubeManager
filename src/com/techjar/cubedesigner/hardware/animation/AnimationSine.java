@@ -10,26 +10,26 @@ import org.lwjgl.util.Color;
  *
  * @author Techjar
  */
-public class AnimationPulsate extends Animation {
+public class AnimationSine extends Animation {
     private Timer timer = new Timer();
 
-    public AnimationPulsate() {
+    public AnimationSine() {
         super();
     }
 
     @Override
     public String getName() {
-        return "Pulsate";
+        return "Sine Wave";
     }
 
     @Override
     public void refresh() {
-        for (int y = 0; y < 8; y++) {
-            double value = Math.sin(timer.getSeconds() * 2 + ((7 - y) / 7F) * 3) * 0.5 + 0.5;
-            Color color = Util.multiplyColor(CubeDesigner.getPaintColor(), value);
-            for (int x = 0; x < 8; x++) {
-                for (int z = 0; z < 8; z++) {
-                    ledManager.setLEDColor(x, y, z, color);
+        for (int x = 0; x < 8; x++) {
+            double value = Math.sin(timer.getSeconds() * 5 + ((7 - x) / 7F) * 3) * 0.5 + 0.5;
+            int onY = (int)Math.round(value * 7);
+            for (int z = 0; z < 8; z++) {
+                for (int y = 0; y < 8; y++) {
+                    ledManager.setLEDColor(x, y, z, y == onY ? CubeDesigner.getPaintColor() : new Color());
                 }
             }
         }

@@ -20,17 +20,10 @@ import com.obj.WavefrontObject;
 import com.techjar.cubedesigner.gui.GUICallback;
 import com.techjar.cubedesigner.gui.screen.Screen;
 import com.techjar.cubedesigner.gui.screen.ScreenMainControl;
+import com.techjar.cubedesigner.hardware.ArduinoLEDManager;
 import com.techjar.cubedesigner.hardware.LEDManager;
 import com.techjar.cubedesigner.hardware.SerialThread;
-import com.techjar.cubedesigner.hardware.animation.Animation;
-import com.techjar.cubedesigner.hardware.animation.AnimationFolder;
-import com.techjar.cubedesigner.hardware.animation.AnimationMatrix;
-import com.techjar.cubedesigner.hardware.animation.AnimationNone;
-import com.techjar.cubedesigner.hardware.animation.AnimationPulsate;
-import com.techjar.cubedesigner.hardware.animation.AnimationRain;
-import com.techjar.cubedesigner.hardware.animation.AnimationRandomize;
-import com.techjar.cubedesigner.hardware.animation.AnimationStaticFill;
-import com.techjar.cubedesigner.hardware.animation.SpectrumAnalyzer;
+import com.techjar.cubedesigner.hardware.animation.*;
 import com.techjar.cubedesigner.util.Angle;
 import com.techjar.cubedesigner.util.ArgumentParser;
 import com.techjar.cubedesigner.util.Axis;
@@ -116,7 +109,7 @@ public class CubeDesigner {
     @Getter private static SoundManager soundManager;
     @Getter private static Camera camera;
     @Getter private static Frustum frustum;
-    @Getter private static SpectrumAnalyzer spectrumAnalyzer;
+    @Getter private static AnimationSpectrumAnalyzer spectrumAnalyzer;
     @Getter private static JFileChooser fileChooser;
     private List<Screen> screenList = new ArrayList<>();
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
@@ -148,6 +141,9 @@ public class CubeDesigner {
     private int shadowMapSize = 1024;
     private int depthFBO;
     private int depthTexture;
+
+    // Screens
+    @Getter private ScreenMainControl screenMainControl;
 
     // Really import OpenGL matrix stuff
     private Mat4 projectionMatrix;
@@ -245,31 +241,25 @@ public class CubeDesigner {
         soundManager = new SoundManager();
         camera = new Camera();
         frustum = new Frustum();
-        ledManager = new LEDManager();
+        ledManager = new ArduinoLEDManager();
         fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.flac, *.mid)", "wav", "mp3", "flac", "mid"));
         fileChooser.setMultiSelectionEnabled(false);
         init();
 
         camera.setPosition(new Vector3(-80, 85, 28));
-        camera.setAngle(new Angle(-30, -90, 0));
+        camera.setAngle(new Angle(-31, -90, 0));
 
         timeCounter = getTime();
         deltaTime = System.nanoTime();
 
-        addAnimation(new AnimationNone());
-        addAnimation(spectrumAnalyzer = new SpectrumAnalyzer());
-        addAnimation(new AnimationStaticFill());
-        addAnimation(new AnimationPulsate());
-        addAnimation(new AnimationRandomize());
-        addAnimation(new AnimationRain());
-        addAnimation(new AnimationMatrix());
-        //addAnimation(new AnimationFolder());
+        spectrumAnalyzer = new AnimationSpectrumAnalyzer();
+        loadAnimations();
 
         serialThread = new SerialThread();
         serialThread.start();
 
-        screenList.add(new ScreenMainControl());
+        screenList.add(screenMainControl = new ScreenMainControl());
 
         run();
     }
@@ -289,6 +279,54 @@ public class CubeDesigner {
 
     public List<String> getAnimationNames() {
         return Collections.unmodifiableList(animationNames);
+    }
+
+    public Animation getAnimationByClassName(String name) {
+        for (Animation animation : animations.values()) {
+            if (name.equals(animation.getClass().getSimpleName())) {
+                return animation;
+            }
+        }
+        return null;
+    }
+
+    public static void setPaintColor(Color color) {
+        paintColor.set(color.getRed(), color.getGreen(), color.getBlue());
+        instance.screenMainControl.redColorSlider.setValue(color.getRed() / 255F);
+        instance.screenMainControl.greenColorSlider.setValue(color.getGreen() / 255F);
+        instance.screenMainControl.blueColorSlider.setValue(color.getBlue() / 255F);
+    }
+
+    public void loadAnimations() {
+        animations.clear();
+        animationNames.clear();
+        addAnimation(new AnimationNone());
+        addAnimation(spectrumAnalyzer);
+        addAnimation(new AnimationStaticFill());
+        addAnimation(new AnimationPulsate());
+        addAnimation(new AnimationPulsateHue());
+        addAnimation(new AnimationRandomize());
+        addAnimation(new AnimationRain());
+        addAnimation(new AnimationMatrix());
+        //addAnimation(new AnimationFolder());
+        addAnimation(new AnimationBlink());
+        addAnimation(new AnimationStrobe());
+        addAnimation(new AnimationSnake());
+        addAnimation(new AnimationSnakeBattle());
+        addAnimation(new AnimationSnakeInfinite());
+        addAnimation(new AnimationScrollers());
+        addAnimation(new AnimationProgressiveFill());
+        addAnimation(new AnimationSine());
+        addAnimation(new AnimationSineDouble());
+        addAnimation(new AnimationStacker());
+        addAnimation(new AnimationRainbowStacker());
+        addAnimation(new AnimationCandyCaneStacker());
+        addAnimation(new AnimationDrain());
+        addAnimation(new AnimationFaucet());
+        addAnimation(new AnimationMultiFaucet());
+        if (screenMainControl != null) {
+            screenMainControl.populateAnimationList();
+        }
     }
 
     public static boolean isLEDWithinIsolation(int x, int y, int z) {
@@ -618,6 +656,11 @@ public class CubeDesigner {
                 if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
                     Mouse.setGrabbed(!Mouse.isGrabbed());
                     if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_R && serialThread.getCurrentSequence() == null) {
+                    loadAnimations();
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
+                    camera.setPosition(new Vector3(-80, 85, 28));
+                    camera.setAngle(new Angle(-31, -90, 0));
                 }
             }
             if (!camera.processKeyboardEvent()) continue;
@@ -651,23 +694,23 @@ public class CubeDesigner {
                                 if (isLEDWithinIsolation(x, y, z)) {
                                     highlight[x | (y << 3) | (z << 6)] = true;
                                     if (drawClick) {
-                                        ledManager.setLEDColorNormalized(x, y, z, paintColor);
+                                        ledManager.setLEDColor(x, y, z, paintColor);
                                     }
                                 }
                             }
                         }
                     }
                     if (!drawClick && Mouse.getEventButtonState() && Mouse.getEventButton() == 1) {
-                        Color targetColor = ledManager.getLEDColorNormalized((int)led.getX(), (int)led.getY(), (int)led.getZ());
+                        Color targetColor = ledManager.getLEDColor((int)led.getX(), (int)led.getY(), (int)led.getZ());
                         if (!targetColor.equals(paintColor)) {
                             boolean[] processed = new boolean[512];
                             LinkedList<Vector3> stack = new LinkedList<>();
                             stack.push(led);
                             while (!stack.isEmpty()) {
                                 Vector3 current = stack.pop();
-                                Color color = ledManager.getLEDColorNormalized((int)current.getX(), (int)current.getY(), (int)current.getZ());
+                                Color color = ledManager.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
                                 if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
-                                    ledManager.setLEDColorNormalized((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
+                                    ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
                                     processed[Util.encodeCubeVector(current)] = true;
                                     Vector3 offset = null;
                                     for (int i = 0; i < 6; i++) {
@@ -861,7 +904,7 @@ public class CubeDesigner {
             for (int y = 0; y < height; y++) {
                 for (int z = 0; z < length; z++) {
                     for (int x = 0; x < width; x++) {
-                        colors[x | (y << 3) | (z << 6)] = ledManager.getLEDColorNormalized(x, y, z);
+                        colors[x | (y << 3) | (z << 6)] = ledManager.getLEDColor(x, y, z);
                     }
 
                 }
@@ -1009,7 +1052,8 @@ public class CubeDesigner {
             org.newdawn.slick.Color debugColor = org.newdawn.slick.Color.yellow;
             int y = 0;
             if (renderFPS || renderDebug) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Serial port " + (serialThread.isPortOpen() ? "open" : "closed"), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (serialThread.isPortOpen() ? "open" : "closed"), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Music time: " + spectrumAnalyzer.getPositionMillis(), debugColor);
             if (renderDebug) {
                 Runtime runtime = Runtime.getRuntime();
                 debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);
