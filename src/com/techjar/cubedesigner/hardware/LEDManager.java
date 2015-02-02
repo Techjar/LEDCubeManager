@@ -23,9 +23,19 @@ public interface LEDManager {
     public Dimension3D getDimensions();
 
     /**
-     * Returns byte array to be sent across the serial connection.
+     * Get gamma correction
      */
-    public byte[] getSerialData();
+    public boolean getGammaCorrection();
+
+    /**
+     * Set gamma correction
+     */
+    public void setGammaCorrection(boolean gammaCorrection);
+
+    /**
+     * Returns byte array to be sent across the controller connection.
+     */
+    public byte[] getCommData();
 
     /**
      * Gets the color of an LED as the raw value, not normalized into the 24-bit RGB color space.

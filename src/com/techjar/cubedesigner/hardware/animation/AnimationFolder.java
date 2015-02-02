@@ -17,7 +17,7 @@ public class AnimationFolder extends Animation {
 
     @Override
     public void refresh() {
-        
+        // TODO
     }
 
     @Override

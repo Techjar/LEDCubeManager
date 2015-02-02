@@ -72,7 +72,7 @@ public class GUISlider extends GUI {
         if (Mouse.getEventButton() == 0) {
             if (Mouse.getEventButtonState()) {
                 Rectangle box = getSliderBox();
-                if (checkMouseIntersect(box)) {
+                if (checkMouseIntersect(getComponentBox())) {
                     dragging = true;
                     return false;
                 }

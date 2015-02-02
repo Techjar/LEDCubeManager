@@ -18,6 +18,12 @@ public final class MathHelper {
         return Math.log(a) / Math.log(base);
     }
 
+    public static double cie1931(double lum) {
+        lum *= 100;
+        if (lum <= 8) return lum / 902.3;
+        else return Math.pow((lum + 16) / 116, 3);
+    }
+
     /**
      * Converts input number to a number within the specified range.
      * @param i input number

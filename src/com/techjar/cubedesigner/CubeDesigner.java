@@ -20,9 +20,10 @@ import com.obj.WavefrontObject;
 import com.techjar.cubedesigner.gui.GUICallback;
 import com.techjar.cubedesigner.gui.screen.Screen;
 import com.techjar.cubedesigner.gui.screen.ScreenMainControl;
-import com.techjar.cubedesigner.hardware.ArduinoLEDManager;
+import com.techjar.cubedesigner.hardware.OldArduinoLEDManager;
 import com.techjar.cubedesigner.hardware.LEDManager;
-import com.techjar.cubedesigner.hardware.SerialThread;
+import com.techjar.cubedesigner.hardware.ArduinoLEDManager;
+import com.techjar.cubedesigner.hardware.CommThread;
 import com.techjar.cubedesigner.hardware.animation.*;
 import com.techjar.cubedesigner.util.Angle;
 import com.techjar.cubedesigner.util.ArgumentParser;
@@ -30,6 +31,7 @@ import com.techjar.cubedesigner.util.Axis;
 import com.techjar.cubedesigner.util.ConfigManager;
 import com.techjar.cubedesigner.util.Constants;
 import com.techjar.cubedesigner.util.LightSource;
+import com.techjar.cubedesigner.util.MathHelper;
 import com.techjar.cubedesigner.util.Model;
 import com.techjar.cubedesigner.util.Quaternion;
 import com.techjar.cubedesigner.util.ShaderProgram;
@@ -157,13 +159,15 @@ public class CubeDesigner {
     // Arduino stuff
     private static LEDManager ledManager;
     private static boolean drawClick;
-    @Getter private static SerialThread serialThread;
+    @Getter private static CommThread commThread;
     @Getter private static String serialPortName = "COM3";
+    @Getter private static int serverPort = 7545;
     @Getter private static Color paintColor = new Color(255, 255, 255);
     @Getter private static boolean[] highlight = new boolean[512];
     @Getter private static Vector3 paintSize = new Vector3(0, 0, 0);
     @Getter @Setter private static int layerIsolation = 0;
     @Getter @Setter private static int selectedLayer = 0;
+    @Getter @Setter private static boolean convertingAudio;
 
     public CubeDesigner(String[] args) throws LWJGLException {
         instance = this;
@@ -191,10 +195,15 @@ public class CubeDesigner {
             public void runAction(String parameter) {
                 wireframe = true;
             }
-        }, new ArgumentParser.Argument(true, "--port") {
+        }, new ArgumentParser.Argument(true, "--serialport") {
             @Override
             public void runAction(String parameter) {
                 serialPortName = parameter;
+            }
+        }, new ArgumentParser.Argument(true, "--serverport") {
+            @Override
+            public void runAction(String parameter) {
+                serverPort = Integer.parseInt(parameter);
             }
         });
 
@@ -206,12 +215,15 @@ public class CubeDesigner {
         LogHelper.config("AA Supported: %s / Max Samples: %d", antiAliasingSupported ? "yes" : "no", antiAliasingMaxSamples);
     }
 
-    public void start() throws LWJGLException {
+    public void start() throws LWJGLException, IOException {
         if (running) throw new IllegalStateException("Client already running!");
         running = true;
         Runtime.getRuntime().addShutdownHook(new ShutdownThread());
         initDisplayModes();
         initConfig();
+
+        File musicDir = new File("resampled");
+        if (!musicDir.exists()) musicDir.mkdirs();
 
         Display.setDisplayMode(displayMode);
         makeFrame();
@@ -241,9 +253,9 @@ public class CubeDesigner {
         soundManager = new SoundManager();
         camera = new Camera();
         frustum = new Frustum();
-        ledManager = new ArduinoLEDManager();
+        ledManager = new ArduinoLEDManager(4, false);
         fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.flac, *.mid)", "wav", "mp3", "flac", "mid"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac)", "wav", "mp3", "ogg", "flac"));
         fileChooser.setMultiSelectionEnabled(false);
         init();
 
@@ -256,8 +268,12 @@ public class CubeDesigner {
         spectrumAnalyzer = new AnimationSpectrumAnalyzer();
         loadAnimations();
 
-        serialThread = new SerialThread();
-        serialThread.start();
+        commThread = new CommThread();
+        commThread.start();
+        /*for (int i = 0; i < 64; i++) {
+            double j = i;
+            LogHelper.info(Math.round(MathHelper.cie1931(j/63)*63));
+        }*/
 
         screenList.add(screenMainControl = new ScreenMainControl());
 
@@ -324,6 +340,7 @@ public class CubeDesigner {
         addAnimation(new AnimationDrain());
         addAnimation(new AnimationFaucet());
         addAnimation(new AnimationMultiFaucet());
+        addAnimation(new AnimationFaucetFill());
         if (screenMainControl != null) {
             screenMainControl.populateAnimationList();
         }
@@ -405,6 +422,10 @@ public class CubeDesigner {
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();
+        File musicDir = new File("resampled");
+        for (File file : musicDir.listFiles()) {
+            file.delete();
+        }
     }
 
     private long getTime() {
@@ -656,7 +677,7 @@ public class CubeDesigner {
                 if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
                     Mouse.setGrabbed(!Mouse.isGrabbed());
                     if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
-                } else if (Keyboard.getEventKey() == Keyboard.KEY_R && serialThread.getCurrentSequence() == null) {
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_R && commThread.getCurrentSequence() == null) {
                     loadAnimations();
                 } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
                     camera.setPosition(new Vector3(-80, 85, 28));
@@ -795,6 +816,7 @@ public class CubeDesigner {
         projectionMatrix = Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, 1000);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_LIGHTING);
+        glEnable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         checkGLError("Pre render 3D");
@@ -809,6 +831,7 @@ public class CubeDesigner {
         glLoadIdentity();
         //glClear(GL_DEPTH_BUFFER_BIT);
         glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, 0);
         if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         checkGLError("Pre render 2D");
@@ -1052,8 +1075,11 @@ public class CubeDesigner {
             org.newdawn.slick.Color debugColor = org.newdawn.slick.Color.yellow;
             int y = 0;
             if (renderFPS || renderDebug) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (serialThread.isPortOpen() ? "open" : "closed"), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (commThread.isPortOpen() ? "open" : "closed"), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + commThread.getNumTCPClients(), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Current music: " + spectrumAnalyzer.getCurrentTrack(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Music time: " + spectrumAnalyzer.getPositionMillis(), debugColor);
+            if (convertingAudio) debugFont.drawString(5, 5 + y++ * 25, "Converting audio...", debugColor);
             if (renderDebug) {
                 Runtime runtime = Runtime.getRuntime();
                 debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);

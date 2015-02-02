@@ -2,6 +2,8 @@
 package com.techjar.cubedesigner.hardware.animation;
 
 import com.techjar.cubedesigner.CubeDesigner;
+import com.techjar.cubedesigner.hardware.LEDManager;
+import com.techjar.cubedesigner.util.Dimension3D;
 import com.techjar.cubedesigner.util.Timer;
 import java.io.BufferedReader;
 import java.io.File;
@@ -67,9 +69,20 @@ public class AnimationSequence {
 
     private void changeItem(SequenceItem item) {
         if (item.color != null) CubeDesigner.setPaintColor(item.color);
+        if (item.clear) {
+            LEDManager ledManager = CubeDesigner.getLEDManager();
+            Dimension3D dim = ledManager.getDimensions();
+            for (int x = 0; x < dim.x; x++) {
+                for (int y = 0; y < dim.y; y++) {
+                    for (int z = 0; z < dim.z; z++) {
+                        ledManager.setLEDColor(x, y, z, new Color());
+                    }
+                }
+            }
+        }
         Animation anim = CubeDesigner.getInstance().getAnimationByClassName("Animation" + item.animation);
         if (anim != null) {
-            CubeDesigner.getSerialThread().setCurrentAnimation(anim);
+            CubeDesigner.getCommThread().setCurrentAnimation(anim);
             CubeDesigner.getInstance().getScreenMainControl().animComboBox.setSelectedItem(anim.getName());
         }
     }
@@ -82,6 +95,11 @@ public class AnimationSequence {
         while ((line = br.readLine()) != null) {
             line = line.trim();
             if (line.length() < 1 || line.charAt(0) == '#') continue;
+            boolean clear = false;
+            if (line.charAt(0) == '!') {
+                clear = true;
+                line = line.substring(1);
+            }
             String[] split = line.split("\\s+", 6);
             if (first) {
                 String str = line;
@@ -95,11 +113,11 @@ public class AnimationSequence {
                     continue;
                 }
             } if (split.length == 5) {
-                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]))));
+                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear, new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]))));
             } else if (split.length > 5) {
-                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4])), split[5].split("\\s+")));
+                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear, new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4])), split[5].split("\\s+")));
             } else if (split.length >= 2) {
-                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1])));
+                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear));
             }
             first = false;
         }
@@ -109,26 +127,30 @@ public class AnimationSequence {
     private static class SequenceItem {
         public final String animation;
         public final long time;
+        public final boolean clear;
         public final Color color;
         public final String[] args;
 
-        public SequenceItem(String animation, long time) {
+        public SequenceItem(String animation, long time, boolean clear) {
             this.animation = animation;
             this.time = time;
+            this.clear = clear;
             this.color = null;
             this.args = null;
         }
         
-        public SequenceItem(String animation, long time, Color color) {
+        public SequenceItem(String animation, long time, boolean clear, Color color) {
             this.animation = animation;
             this.time = time;
+            this.clear = clear;
             this.color = color;
             this.args = null;
         }
 
-        public SequenceItem(String animation, long time, Color color, String[] args) {
+        public SequenceItem(String animation, long time, boolean clear, Color color, String[] args) {
             this.animation = animation;
             this.time = time;
+            this.clear = clear;
             this.color = color;
             this.args = args;
         }

@@ -18,6 +18,7 @@ import com.techjar.cubedesigner.hardware.animation.Animation;
 import com.techjar.cubedesigner.hardware.animation.AnimationSequence;
 import com.techjar.cubedesigner.util.Constants;
 import com.techjar.cubedesigner.util.Dimension3D;
+import com.techjar.cubedesigner.util.PrintStreamRelayer;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFileChooser;
@@ -115,8 +116,25 @@ public class ScreenMainControl extends Screen {
                     public void run() {
                         int option = CubeDesigner.getFileChooser().showOpenDialog(CubeDesigner.getFrame());
                         if (option == JFileChooser.APPROVE_OPTION) {
-                            File file = CubeDesigner.getFileChooser().getSelectedFile();
-                            CubeDesigner.getSpectrumAnalyzer().loadFile(file.getAbsolutePath());
+                            try {
+                                File file = CubeDesigner.getFileChooser().getSelectedFile();
+                                File file2 = new File("resampled/" + file.getName().substring(0, file.getName().lastIndexOf('.')) + ".wav");
+                                if (!file2.exists()) {
+                                    ProcessBuilder pb = new ProcessBuilder();
+                                    pb.directory(new File(System.getProperty("user.dir")));
+                                    pb.redirectErrorStream(true);
+                                    pb.command("ffmpeg", "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", "48000", file2.getAbsolutePath());
+                                    Process proc = pb.start();
+                                    CubeDesigner.setConvertingAudio(true);
+                                    Thread psrThread = new PrintStreamRelayer(proc.getInputStream(), System.out);
+                                    psrThread.setDaemon(true); psrThread.start();
+                                    proc.waitFor();
+                                    CubeDesigner.setConvertingAudio(false);
+                                }
+                                CubeDesigner.getSpectrumAnalyzer().loadFile(file2);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
                         }
                     }
                 }, "File Chooser").start();
@@ -153,8 +171,8 @@ public class ScreenMainControl extends Screen {
         togglePortBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                if (CubeDesigner.getSerialThread().isPortOpen()) CubeDesigner.getSerialThread().closePort();
-                else CubeDesigner.getSerialThread().openPort();
+                if (CubeDesigner.getCommThread().isPortOpen()) CubeDesigner.getCommThread().closePort();
+                else CubeDesigner.getCommThread().openPort();
             }
         });
         container.addComponent(togglePortBtn);
@@ -436,7 +454,7 @@ public class ScreenMainControl extends Screen {
                     try {
                         File file = new File("resources/sequences/" + item.toString() + ".sequence");
                         AnimationSequence sequence = AnimationSequence.loadFromFile(file);
-                        CubeDesigner.getSerialThread().setCurrentSequence(sequence);
+                        CubeDesigner.getCommThread().setCurrentSequence(sequence);
                         sequenceWindow.setVisible(false);
                         chooseFileBtn.setEnabled(!sequence.isMusicSynced());
                         progressSlider.setEnabled(!sequence.isMusicSynced());
@@ -454,7 +472,7 @@ public class ScreenMainControl extends Screen {
         sequenceStopBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                CubeDesigner.getSerialThread().setCurrentSequence(null);
+                CubeDesigner.getCommThread().setCurrentSequence(null);
                 chooseFileBtn.setEnabled(true);
                 progressSlider.setEnabled(true);
             }
@@ -472,7 +490,7 @@ public class ScreenMainControl extends Screen {
             public void run() {
                 if (animComboBox.getSelectedItem() != null) {
                     Animation animation = CubeDesigner.getInstance().getAnimations().get(animComboBox.getSelectedItem().toString());
-                    CubeDesigner.getSerialThread().setCurrentAnimation(animation);
+                    CubeDesigner.getCommThread().setCurrentAnimation(animation);
                 }
             }
         });

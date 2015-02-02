@@ -54,7 +54,12 @@ import ddf.minim.spi.AudioRecordingStream;
 import ddf.minim.spi.AudioStream;
 import ddf.minim.spi.MinimServiceProvider;
 import ddf.minim.spi.SampleRecorder;
+import java.io.File;
 import java.lang.reflect.Field;
+import javazoom.spi.vorbis.sampled.convert.VorbisFormatConversionProvider;
+import javazoom.spi.vorbis.sampled.file.VorbisAudioFileReader;
+import javazoom.spi.vorbis.sampled.file.VorbisAudioFormat;
+import lombok.SneakyThrows;
 import org.kc7bfi.jflac.metadata.StreamInfo;
 import org.kc7bfi.jflac.sound.spi.FlacAudioFileReader;
 import org.kc7bfi.jflac.sound.spi.FlacAudioFormat;
@@ -327,6 +332,25 @@ public class JSMinim implements MinimServiceProvider
                         BasicMetaData meta = new BasicMetaData(filename, length, -1);
                         mstream = new JSMPEGAudioRecordingStream(this, meta, ais, decAis, line, bufferSize);
                     }
+                } else if (format instanceof VorbisAudioFormat) {
+                    AudioFormat baseFormat = format;
+                    format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+                            baseFormat.getSampleRate(), 16,
+                            baseFormat.getChannels(),
+                            baseFormat.getChannels() * 2,
+                            baseFormat.getSampleRate(), false);
+                    // converts the stream to PCM audio from mp3 audio
+                    AudioInputStream decAis = getAudioInputStream(format, ais);
+                    // source data line is for sending the file audio out to the
+                    // speakers
+                    SourceDataLine line = getSourceDataLine(format, bufferSize);
+                    if (decAis != null && line != null) {
+                        com.jcraft.jorbis.Info info = getVorbisStreamInfo(filename);
+                        long length = 0; // TODO fix this somehow
+                        debug("VORNIS LENGTH!!!!! " + length);
+                        BasicMetaData meta = new BasicMetaData(filename, length, ais.getFrameLength());
+                        mstream = new JSMPEGAudioRecordingStream(this, meta, ais, decAis, line, bufferSize);
+                    }
                 } else {
                     // source data line is for sending the file audio out to the
                     // speakers
@@ -394,10 +418,56 @@ public class JSMinim implements MinimServiceProvider
 		{
 			FlacAudioFileReader reader = new FlacAudioFileReader();
 			InputStream stream = (InputStream)createInput.invoke(fileLoader, filename);
-                        AudioFileFormat format = reader.getAudioFileFormat(stream); // derp
+                        reader.getAudioFileFormat(stream); // derp
                         Field field = reader.getClass().getDeclaredField("streamInfo");
                         field.setAccessible(true);
 			StreamInfo streamInfo = (StreamInfo)field.get(reader);
+			stream.close();
+                        return streamInfo;
+			/*if (baseFileFormat instanceof TAudioFileFormat)
+			{
+				TAudioFileFormat fileFormat = (TAudioFileFormat)baseFileFormat;
+				props = (Map<String, Object>)fileFormat.properties();
+				if (props.size() == 0)
+				{
+					error("No file properties available for " + filename + ".");
+				}
+				else
+				{
+					debug("File properties: " + props.toString());
+				}
+			}*/
+		}
+		/*catch (UnsupportedAudioFileException e)
+		{
+			error("Couldn't get the file format for " + filename + ": "
+					+ e.getMessage());
+		}*/
+		catch (IOException e)
+		{
+			error("Couldn't access " + filename + ": " + e.getMessage());
+		}
+		catch( Exception e )
+		{
+			error("Error invoking createInput on the file loader object: " + e.getMessage());
+		}
+
+		return null;
+	}
+
+        @SuppressWarnings("unchecked")
+	private com.jcraft.jorbis.Info getVorbisStreamInfo(String filename)
+	{
+		debug("Getting the properties.");
+		//Map<String, Object> props = new HashMap<String, Object>();
+		try
+		{
+			VorbisAudioFileReader reader = new VorbisAudioFileReader();
+			InputStream stream = (InputStream)createInput.invoke(fileLoader, filename);
+                        reader.getAudioFileFormat(stream); // derp
+                        Field field = reader.getClass().getDeclaredField("vorbisInfo");
+                        field.setAccessible(true);
+			com.jcraft.jorbis.Info streamInfo = (com.jcraft.jorbis.Info)field.get(reader);
 			stream.close();
                         return streamInfo;
 			/*if (baseFileFormat instanceof TAudioFileFormat)
@@ -817,6 +887,8 @@ public class JSMinim implements MinimServiceProvider
 			debug("Using AppletMpegSPIWorkaround to get codec");
                         if ("flac".equals(ext.toLowerCase())) {
                             return new FlacAudioFileReader().getAudioInputStream(is);
+                        } else if ("ogg".equals(ext.toLowerCase())) {
+                            return new VorbisAudioFileReader().getAudioInputStream(is);
                         } else {
                             return new MpegAudioFileReader(this).getAudioInputStream(is);
                         }
@@ -853,6 +925,9 @@ public class JSMinim implements MinimServiceProvider
 				if (sourceStream.getFormat() instanceof FlacAudioFormat) {
                                     debug("WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO FLAC!!!!!!!!!!!!!!!!!");
                                     return new FlacFormatConversionProvider().getAudioInputStream(targetFormat, sourceStream);
+                                } else if (sourceStream.getFormat() instanceof VorbisAudioFormat) {
+                                    debug("WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO VORBIS!!!!!!!!!!!!!!!!!");
+                                    return new VorbisFormatConversionProvider().getAudioInputStream(targetFormat, sourceStream);
                                 }
                                 return new javazoom.spi.mpeg.sampled.convert.MpegFormatConversionProvider().getAudioInputStream(
 																																				targetFormat,
