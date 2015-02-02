@@ -28,13 +28,15 @@ import org.lwjgl.util.Color;
 public class AnimationSpectrumAnalyzer extends Animation {
     private final Minim minim;
     //private final FFTThread thread;
+    private final FFTHandler handler;
+    AudioPlayer player;
     @Setter public int updateRate = 60;
     @Getter private String currentTrack = "";
 
     public AnimationSpectrumAnalyzer() {
         super();
         this.minim = new Minim(this);
-        this.thread = new FFTThread();
+        this.handler = new FFTHandler();
         //this.minim.debugOn();
         //thread.player = minim.loadFile("resources/sounds/ui/click.wav");
         //thread.start();
@@ -47,12 +49,12 @@ public class AnimationSpectrumAnalyzer extends Animation {
 
     @Override
     public void refresh() {
-        thread.refresh();
+        handler.refresh();
     }
 
     @Override
     public void reset() {
-        thread.amplitudes = new float[64];
+        handler.amplitudes = new float[64];
     }
 
     public String sketchPath(String fileName) {
@@ -65,79 +67,76 @@ public class AnimationSpectrumAnalyzer extends Animation {
     }
 
     public boolean isPlaying() {
-        if (thread.player != null) return thread.player.isPlaying();
+        if (player != null) return player.isPlaying();
         return false;
     }
 
     public void play() {
-        if (thread.player != null) {
-            if (thread.player.isPlaying()) {
-                thread.player.rewind();
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.rewind();
             } else {
-                if (thread.player.position() >= thread.player.length() - 1) {
-                    thread.player.rewind();
+                if (player.position() >= player.length() - 1) {
+                    player.rewind();
                 }
-                thread.player.play();
+                player.play();
             }
         }
     }
 
     public void pause() {
-        if (thread.player != null) thread.player.pause();
+        if (player != null) player.pause();
     }
 
     public void stop() {
-        if (thread.player != null) {
-            thread.player.pause();
-            thread.player.rewind();
+        if (player != null) {
+            player.pause();
+            player.rewind();
         }
     }
 
     public void setVolume(float volume) {
-        if (thread.player != null) thread.player.setGain(volume > 0 ? (float)(20 * Math.log10(volume)) : -200);
+        if (player != null) player.setGain(volume > 0 ? (float)(20 * Math.log10(volume)) : -200);
     }
 
     public float getPosition() {
-        if (thread.player != null) {
-            return (float)thread.player.position() / (float)thread.player.length();
+        if (player != null) {
+            return (float)player.position() / (float)player.length();
         }
         return 0;
     }
 
     public int getPositionMillis() {
-        if (thread.player != null) {
-            return thread.player.position();
+        if (player != null) {
+            return player.position();
         }
         return 0;
     }
 
     public void setPosition(float position) {
-        if (thread.player != null) {
-            thread.player.rewind();
-            thread.player.skip(Math.round(thread.player.length() * position));
+        if (player != null) {
+            player.rewind();
+            player.skip(Math.round(player.length() * position));
         }
     }
 
     public void loadFile(String path) {
-        synchronized (thread.lock) {
-            try {
-                if (thread.player != null) {
-                    thread.player.close();
-                }
-                AudioPlayer player = minim.loadFile(path);
-                String path2 = path.replaceAll("\\\\", "/");
-                currentTrack = path2.contains("/") ? path2.substring(path2.lastIndexOf('/') + 1) : path2;
-                currentTrack = currentTrack.substring(0, currentTrack.lastIndexOf('.'));
-                //thread.fft = new FFT(player.bufferSize(), player.sampleRate());
-                if (thread.player != null) player.setGain(thread.player.getGain());
-                player.addListener(new FFTAudioListener(new FFT(player.bufferSize(), player.sampleRate())));
-                player.addListener(new StreamingAudioListener(false));
-                player.play();
-                thread.player = player;
-                if (!thread.isAlive()) thread.start();
-            } catch (Exception ex) {
-                ex.printStackTrace();
+        try {
+            if (player != null) {
+                player.close();
             }
+            AudioPlayer oldPlayer = player;
+            player = minim.loadFile(path);
+            String path2 = path.replaceAll("\\\\", "/");
+            currentTrack = path2.contains("/") ? path2.substring(path2.lastIndexOf('/') + 1) : path2;
+            currentTrack = currentTrack.substring(0, currentTrack.lastIndexOf('.'));
+            if (oldPlayer != null) player.setGain(oldPlayer.getGain());
+            handler.fft = new FFT(player.bufferSize(), player.sampleRate());
+            player.addListener(new FFTAudioListener(handler.fft));
+            player.addListener(new StreamingAudioListener(false));
+            player.play();
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -155,21 +154,13 @@ public class AnimationSpectrumAnalyzer extends Animation {
         @Override
         public void samples(float[] floats) {
             fft.forward(floats);
+            handler.process();
         }
 
         @Override
         public void samples(float[] floatsL, float[] floatsR) {
             fft.forward(floatsL, floatsR);
-        }
-
-        private void processFFT() {
-            //long updateInterval = 1000000000 / updateRate;
-            //fft.forward(player.mix);
-            for (int i = 0; i < 64; i++) {
-                float amplitude = fft.getBand(i * 4);
-                //if (amplitude > newAmplitudes[i]) newAmplitudes[i] = amplitude;
-                if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
-            }
+            handler.process();
         }
     }
 
@@ -226,42 +217,18 @@ public class AnimationSpectrumAnalyzer extends Animation {
         }
     }
 
-    private class FFTProcessor {
-        final Object lock = new Object();
-        FFT fft;
-        AudioPlayer player;
-        long updateTime;
+    private class FFTHandler {
+        private final Object lock = new Object();
+        private FFT fft;
         float[] amplitudes = new float[64];
-
-        public FFTProcessor() {
-            this.setName("Spectrum Analyzer FFT");
-            this.updateTime = System.nanoTime();
-        }
-
-        @Override
-        @SneakyThrows(InterruptedException.class)
-        public void run() {
-            while (true) {
-                synchronized (lock) {
-                    if (fft == null || player == null || !player.isPlaying()) {
-                        /*if (player != null) {
-                            if (player.position() >= player.length() - 1) {
-                                player.rewind();
-                            }
-                        }*/
-                        Thread.sleep(1);
-                        continue;
-                    }
-                    processFFT();
-                }
-            }
-        }
+        private boolean stale;
 
         public void refresh() {
-            synchronized (amplitudes) {
+            synchronized (lock) {
+                stale = true;
                 for (int i = 0; i < 64; i++) {
                     float amplitude = amplitudes[i] - 2;
-                    amplitudes[i] = 0;
+                    //amplitudes[i] = 0;
                     Vector2 pos = spiralPosition(i);
                     for (int j = 0; j < 8; j++) {
                         float increment = (2.0F * (j + 1)) * (1 - (i / 150F));
@@ -278,13 +245,17 @@ public class AnimationSpectrumAnalyzer extends Animation {
             }
         }
 
-        private void processFFT() {
+        private void process() {
             //long updateInterval = 1000000000 / updateRate;
             //fft.forward(player.mix);
-            for (int i = 0; i < 64; i++) {
-                float amplitude = fft.getBand(i * 4);
-                //if (amplitude > newAmplitudes[i]) newAmplitudes[i] = amplitude;
-                if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
+            synchronized (lock) {
+                for (int i = 0; i < 64; i++) {
+                    if (stale) amplitudes[i] = 0;
+                    float amplitude = fft.getBand(i * 4);
+                    //if (amplitude > newAmplitudes[i]) newAmplitudes[i] = amplitude;
+                    if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
+                }
+                stale = false;
             }
         }
 
