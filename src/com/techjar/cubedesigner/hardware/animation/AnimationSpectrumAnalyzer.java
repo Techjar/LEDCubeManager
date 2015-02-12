@@ -95,6 +95,13 @@ public class AnimationSpectrumAnalyzer extends Animation {
         }
     }
 
+    public void close() {
+        if (player != null) {
+            player.close();
+            player = null;
+        }
+    }
+
     public void setVolume(float volume) {
         if (player != null) player.setGain(volume > 0 ? (float)(20 * Math.log10(volume)) : -200);
     }
@@ -231,10 +238,10 @@ public class AnimationSpectrumAnalyzer extends Animation {
                     //amplitudes[i] = 0;
                     Vector2 pos = spiralPosition(i);
                     for (int j = 0; j < 8; j++) {
-                        float increment = (2.0F * (j + 1)) * (1 - (i / 150F));
-                        //float increment = 7F;
+                        float increment = (4.0F * (j + 1)) * (1 - (i / 70F));
+                        //float increment = 15F;
                         //ledManager.setLEDColor(i % 8, peak, i / 8, amplitude > 0 ? colorAtY(peak) : new Color());
-                        ledManager.setLEDColorRaw((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
+                        ledManager.setLEDColorReal((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
                         //if (amplitude <= 0) break;
                         amplitude -= increment;
                     }
@@ -250,10 +257,13 @@ public class AnimationSpectrumAnalyzer extends Animation {
             //fft.forward(player.mix);
             synchronized (lock) {
                 for (int i = 0; i < 64; i++) {
-                    if (stale) amplitudes[i] = 0;
+                    //if (stale) amplitudes[i] = 0;
+                    //System.out.println(fft.getBandWidth());
                     float amplitude = fft.getBand(i * 4);
                     //if (amplitude > newAmplitudes[i]) newAmplitudes[i] = amplitude;
                     if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
+                    else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / 7, 1F);
+                    //else amplitudes[i] -= 15F - (14F * multForBand(i));
                 }
                 stale = false;
             }
@@ -266,6 +276,24 @@ public class AnimationSpectrumAnalyzer extends Animation {
             if (y > 1) return new Color(0, Math.round(res * brightness), 0);
             return new Color(0, 0, Math.round(res * brightness));
         }
+
+        /*private float multForBand(int band) {
+            if (band > 55) {
+                return 1F;
+            } else if (band > 45) {
+                return 0.95F;
+            } else if (band > 30) {
+                return 0.9F;
+            } else if (band > 10) {
+                return 0.8F;
+            } else if (band > 5) {
+                return 0.4F;
+            } else if (band > 3) {
+                return 0.2F;
+            } else {
+                return 0.1F;
+            }
+        }*/
 
         private Vector2 spiralPosition(int index) {
             // (di, dj) is a vector - direction in which we move right now

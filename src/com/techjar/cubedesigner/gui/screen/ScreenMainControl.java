@@ -191,7 +191,7 @@ public class ScreenMainControl extends Screen {
         redColorSlider.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
         redColorSlider.setDimension(30, 150);
         redColorSlider.setPosition(-125, -10);
-        redColorSlider.setIncrement(1F / ledManager.getResolution());
+        redColorSlider.setIncrement(1F / 255F);
         redColorSlider.setValue(1);
         redColorSlider.setVertical(true);
         redColorSlider.setShowNotches(false);
@@ -206,7 +206,7 @@ public class ScreenMainControl extends Screen {
         greenColorSlider.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
         greenColorSlider.setDimension(30, 150);
         greenColorSlider.setPosition(-90, -10);
-        greenColorSlider.setIncrement(1F / ledManager.getResolution());
+        greenColorSlider.setIncrement(1F / 255F);
         greenColorSlider.setValue(1);
         greenColorSlider.setVertical(true);
         greenColorSlider.setShowNotches(false);
@@ -221,7 +221,7 @@ public class ScreenMainControl extends Screen {
         blueColorSlider.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
         blueColorSlider.setDimension(30, 150);
         blueColorSlider.setPosition(-55, -10);
-        blueColorSlider.setIncrement(1F / ledManager.getResolution());
+        blueColorSlider.setIncrement(1F / 255F);
         blueColorSlider.setValue(1);
         blueColorSlider.setVertical(true);
         blueColorSlider.setShowNotches(false);

@@ -206,6 +206,7 @@ public class GUISlider extends GUI {
 
     public void setIncrement(float increment) {
         this.increment = increment;
+        setValue(value);
     }
 
     public boolean getShowNotches() {

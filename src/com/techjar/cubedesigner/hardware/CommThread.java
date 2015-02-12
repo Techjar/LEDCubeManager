@@ -7,6 +7,7 @@ import com.techjar.cubedesigner.hardware.animation.AnimationSequence;
 import com.techjar.cubedesigner.hardware.tcp.TCPServer;
 import com.techjar.cubedesigner.util.Constants;
 import com.techjar.cubedesigner.util.MathHelper;
+import com.techjar.cubedesigner.util.Timer;
 import java.io.IOException;
 import jssc.SerialPort;
 import lombok.Getter;
@@ -27,6 +28,10 @@ public class CommThread extends Thread {
     @Getter private AnimationSequence currentSequence;
     private SerialPort port;
     @Getter private TCPServer tcpServer;
+    /*int numRecv;
+    Timer timer = new Timer();
+    int lastRecv = -1;
+    int numErr;*/
 
     public CommThread() throws IOException {
         this.setName("Animation / Communication");
@@ -41,6 +46,12 @@ public class CommThread extends Thread {
     @SneakyThrows(InterruptedException.class)
     public void run() {
         while (true) {
+            /*if (timer.getSeconds() >= 1) {
+                timer.restart();
+                System.out.println("Recv rate: " + numRecv);
+                System.out.println("Error count: " + numErr);
+                numRecv = 0;
+            }*/
             long interval = 1000000000 / refreshRate;
             long diff = System.nanoTime() - updateTime;
             if (diff >= interval) {
@@ -50,14 +61,27 @@ public class CommThread extends Thread {
                     if (currentSequence != null) currentSequence.update();
                     if (currentAnimation != null) currentAnimation.refresh();
                     byte[] data = ledManager.getCommData();
-                    //tcp.sendData(data);
+                    tcpServer.sendData(data);
                     try {
                         if (port.isOpened()) {
                             port.writeBytes(data);
-                            /*port.writeByte((byte)1);
-                            byte[] bytes = port.readBytes();
+                            //port.writeByte((byte)1);
+                            /*byte[] bytes = port.readBytes(1152, 1000);
                             if (bytes != null) {
-                                System.out.println(new String(bytes, "UTF-8"));
+                                //System.out.println(new String(bytes, "UTF-8"));
+                                for (int i = 0; i < 1152; i++) {
+                                    if (bytes[i] != data[i]) System.out.println("ERROR @ " + i);
+                                }
+                                for (byte b : bytes) {
+                                    int bb = b & 0xFF;
+                                    if (lastRecv != -1 && (lastRecv < 255 && bb != lastRecv + 1) || (lastRecv == 255 && bb != 0)) {
+                                        //System.out.println("ERROR!!!!!!!!!!!!!!!!!!!!");
+                                        numErr++;
+                                    }
+                                    lastRecv = bb;
+                                    //System.out.println("0x" + Integer.toHexString(b & 0xFF).toUpperCase());
+                                    numRecv++;
+                                }
                             }*/
                         }
                     } catch (Exception ex) {
@@ -92,7 +116,8 @@ public class CommThread extends Thread {
             if (!port.isOpened()) {
                 try {
                     port.openPort();
-                    port.setParams(1000000, 8, 1, 0);
+                    port.setParams(2000000, 8, 1, 0);
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }

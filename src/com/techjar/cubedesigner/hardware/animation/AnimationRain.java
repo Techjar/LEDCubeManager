@@ -15,11 +15,12 @@ public class AnimationRain extends Animation {
     private Timer timer = new Timer();
     private int[] drops = new int[64];
     private boolean[] floor = new boolean[64];
-    //private boolean[] lightning = new boolean[64];
+    private int[] lightning = new int[64];
     private boolean[] states = new boolean[512];
     private Random random = new Random();
     private Color topColor = new Color(0, 0, 255);
     private Color bottomColor = new Color(255, 0, 255);
+    private Color lightningColor = new Color(255, 255, 255);
 
     public AnimationRain() {
         super();
@@ -37,6 +38,21 @@ public class AnimationRain extends Animation {
             for (int x = 0; x < 8; x++) {
                 for (int z = 0; z < 8; z++) {
                     int index = x | (z << 3);
+                    if (lightning[index] > 0) {
+                        lightning[index]--;
+                        if (lightning[index] == 0) {
+                            for (int y = 0; y < 8; y++) {
+                                Color color = MathHelper.lerp(bottomColor, topColor, y / 7F);
+                                if (y == 0) ledManager.setLEDColor(x, y, z, floor[index] ? color: new Color());
+                                else ledManager.setLEDColor(x, y, z, checkBit(drops[index], y) ? color: new Color());
+                            }
+                        }
+                    } else if (random.nextInt(2000) == 0) {
+                        lightning[index] = random.nextInt(3) + 1;
+                        for (int y = 0; y < 8; y++) {
+                            ledManager.setLEDColor(x, y, z, lightningColor);
+                        }
+                    }
                     drops[index] >>= 1;
                     for (int y = 7; y >= 0; y--) {
                         int stateIndex = index | (y << 6);
@@ -55,13 +71,13 @@ public class AnimationRain extends Animation {
                         if (y == 0) {
                             if (floor[index] != states[stateIndex]) {
                                 states[stateIndex] = floor[index];
-                                ledManager.setLEDColor(x, y, z, states[stateIndex] ? color : new Color());
+                                if (lightning[index] < 1) ledManager.setLEDColor(x, y, z, states[stateIndex] ? color : new Color());
                             }
                         } else {
                             boolean bit = checkBit(drops[index], y);
                             if (bit != states[stateIndex]) {
                                 states[stateIndex] = bit;
-                                ledManager.setLEDColor(x, y, z, states[stateIndex] ? color : new Color());
+                                if (lightning[index] < 1) ledManager.setLEDColor(x, y, z, states[stateIndex] ? color : new Color());
                             }
                         }
                     }
@@ -74,7 +90,7 @@ public class AnimationRain extends Animation {
     public void reset() {
         drops = new int[64];
         floor = new boolean[64];
-        //lightning = new boolean[64];
+        lightning = new int[64];
         states = new boolean[512];
     }
 

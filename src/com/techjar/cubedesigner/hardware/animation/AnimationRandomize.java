@@ -25,8 +25,8 @@ public class AnimationRandomize extends Animation {
     public void refresh() {
         for (int i = 0; i < 30; i++) {
             int res = ledManager.getResolution();
-            if (random.nextInt(4) == 0) ledManager.setLEDColorRaw(random.nextInt(8), random.nextInt(8), random.nextInt(8), new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
-            else ledManager.setLEDColorRaw(random.nextInt(8), random.nextInt(8), random.nextInt(8), new Color());
+            if (random.nextInt(4) == 0) ledManager.setLEDColorReal(random.nextInt(8), random.nextInt(8), random.nextInt(8), new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)));
+            else ledManager.setLEDColorReal(random.nextInt(8), random.nextInt(8), random.nextInt(8), new Color());
         }
     }
 

@@ -17,6 +17,7 @@ public class ArduinoLEDManager implements LEDManager {
     private final int outBits;
     private final int resolution;
     private final int outResolution;
+    private final float factor;
     private boolean gammaCorrection;
     private byte[] red = new byte[512];
     private byte[] green = new byte[512];
@@ -30,6 +31,7 @@ public class ArduinoLEDManager implements LEDManager {
         this.outBits = outBits;
         this.resolution = RESOLUTIONS[bits];
         this.outResolution = OUT_RESOLUTIONS[outBits];
+        this.factor = 255F / resolution;
     }
 
     public ArduinoLEDManager(int bits, boolean gammaCorrection) {
@@ -43,6 +45,11 @@ public class ArduinoLEDManager implements LEDManager {
     @Override
     public int getResolution() {
         return resolution;
+    }
+
+    @Override
+    public float getFactor() {
+        return factor;
     }
 
     @Override
@@ -67,17 +74,16 @@ public class ArduinoLEDManager implements LEDManager {
             int[] red = new int[512];
             int[] green = new int[512];
             int[] blue = new int[512];
+            for (int i = 0; i < 512; i++) {
+                red[i] = Math.round(this.red[i] / factor);
+                green[i] = Math.round(this.green[i] / factor);
+                blue[i] = Math.round(this.blue[i] / factor);
+            }
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
                     red[i] = (byte)Math.round(MathHelper.cie1931((double)this.red[i] / resolution) * outResolution);
                     green[i] = (byte)Math.round(MathHelper.cie1931((double)this.green[i] / resolution) * outResolution);
                     blue[i] = (byte)Math.round(MathHelper.cie1931((double)this.blue[i] / resolution) * outResolution);
-                }
-            } else {
-                for (int i = 0; i < 512; i++) {
-                    red[i] = this.red[i];
-                    green[i] = this.green[i];
-                    blue[i] = this.blue[i];
                 }
             }
             for (int i = 0; i < bits; i++) {
@@ -95,7 +101,13 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
-    public Color getLEDColorRaw(int x, int y, int z) {
+    public Color getLEDColorReal(int x, int y, int z) {
+        ReadableColor color = getLEDColor(x, y, z);
+        return new Color(Math.round(color.getRed() / factor), Math.round(color.getGreen() / factor), Math.round(color.getBlue() / factor));
+    }
+
+    @Override
+    public Color getLEDColor(int x, int y, int z) {
         if (x < 0 || x > 7) throw new IllegalArgumentException("Invalid X coordinate: " + x);
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
@@ -105,13 +117,12 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
-    public Color getLEDColor(int x, int y, int z) {
-        ReadableColor color = getLEDColorRaw(x, y, z);
-        return new Color(Math.round(color.getRed() * (255F / resolution)), Math.round(color.getGreen() * (255F / resolution)), Math.round(color.getBlue() * (255F / resolution)));
+    public void setLEDColorReal(int x, int y, int z, ReadableColor color) {
+        setLEDColor(x, y, z, new Color(Math.round(color.getRed() * factor), Math.round(color.getGreen() * factor), Math.round(color.getBlue() * factor)));
     }
 
     @Override
-    public void setLEDColorRaw(int x, int y, int z, ReadableColor color) {
+    public void setLEDColor(int x, int y, int z, ReadableColor color) {
         if (x < 0 || x > 7) throw new IllegalArgumentException("Invalid X coordinate: " + x);
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
@@ -120,10 +131,5 @@ public class ArduinoLEDManager implements LEDManager {
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();
-    }
-
-    @Override
-    public void setLEDColor(int x, int y, int z, ReadableColor color) {
-        setLEDColorRaw(x, y, z, new Color(Math.round(color.getRed() / (255F / resolution)), Math.round(color.getGreen() / (255F / resolution)), Math.round(color.getBlue() / (255F / resolution))));
     }
 }

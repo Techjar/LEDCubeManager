@@ -20,7 +20,6 @@ import com.obj.WavefrontObject;
 import com.techjar.cubedesigner.gui.GUICallback;
 import com.techjar.cubedesigner.gui.screen.Screen;
 import com.techjar.cubedesigner.gui.screen.ScreenMainControl;
-import com.techjar.cubedesigner.hardware.OldArduinoLEDManager;
 import com.techjar.cubedesigner.hardware.LEDManager;
 import com.techjar.cubedesigner.hardware.ArduinoLEDManager;
 import com.techjar.cubedesigner.hardware.CommThread;
@@ -42,6 +41,7 @@ import com.techjar.cubedesigner.util.logging.LogHelper;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -159,6 +159,7 @@ public class CubeDesigner {
     // Arduino stuff
     private static LEDManager ledManager;
     private static boolean drawClick;
+    private static boolean trueColor;
     @Getter private static CommThread commThread;
     @Getter private static String serialPortName = "COM3";
     @Getter private static int serverPort = 7545;
@@ -366,6 +367,12 @@ public class CubeDesigner {
         frame.setResizable(false);
         frame.setAlwaysOnTop(false);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        List<Image> images = new ArrayList<>();
+        images.add(Toolkit.getDefaultToolkit().getImage("resources/textures/icon16.png"));
+        images.add(Toolkit.getDefaultToolkit().getImage("resources/textures/icon32.png"));
+        images.add(Toolkit.getDefaultToolkit().getImage("resources/textures/icon64.png"));
+        images.add(Toolkit.getDefaultToolkit().getImage("resources/textures/icon128.png"));
+        frame.setIconImages(images);
         canvas = new Canvas();
 
         /*canvas.addComponentListener(new ComponentAdapter() {
@@ -422,6 +429,7 @@ public class CubeDesigner {
         Keyboard.destroy();
         Mouse.destroy();
         Display.destroy();
+        spectrumAnalyzer.close();
         File musicDir = new File("resampled");
         for (File file : musicDir.listFiles()) {
             file.delete();
@@ -682,6 +690,12 @@ public class CubeDesigner {
                 } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
                     camera.setPosition(new Vector3(-80, 85, 28));
                     camera.setAngle(new Angle(-31, -90, 0));
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_H) {
+                    trueColor = !trueColor;
+                    float increment = trueColor ? 1F / ledManager.getResolution() : 1F / 255F;
+                    screenMainControl.redColorSlider.setIncrement(increment);
+                    screenMainControl.greenColorSlider.setIncrement(increment);
+                    screenMainControl.blueColorSlider.setIncrement(increment);
                 }
             }
             if (!camera.processKeyboardEvent()) continue;
@@ -927,7 +941,12 @@ public class CubeDesigner {
             for (int y = 0; y < height; y++) {
                 for (int z = 0; z < length; z++) {
                     for (int x = 0; x < width; x++) {
-                        colors[x | (y << 3) | (z << 6)] = ledManager.getLEDColor(x, y, z);
+                        if (trueColor) {
+                            Color color = ledManager.getLEDColorReal(x, y, z);
+                            colors[x | (y << 3) | (z << 6)] = new Color(Math.round(color.getRed() * ledManager.getFactor()), Math.round(color.getGreen() * ledManager.getFactor()), Math.round(color.getBlue() * ledManager.getFactor()));
+                        } else {
+                            colors[x | (y << 3) | (z << 6)] = ledManager.getLEDColor(x, y, z);
+                        }
                     }
 
                 }
@@ -1079,6 +1098,7 @@ public class CubeDesigner {
             debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + commThread.getNumTCPClients(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Current music: " + spectrumAnalyzer.getCurrentTrack(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Music time: " + spectrumAnalyzer.getPositionMillis(), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (trueColor ? "true" : "full"), debugColor);
             if (convertingAudio) debugFont.drawString(5, 5 + y++ * 25, "Converting audio...", debugColor);
             if (renderDebug) {
                 Runtime runtime = Runtime.getRuntime();
