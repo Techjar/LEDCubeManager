@@ -2,6 +2,7 @@
 package com.techjar.cubedesigner.hardware.animation;
 
 import com.techjar.cubedesigner.CubeDesigner;
+import com.techjar.cubedesigner.hardware.LEDUtil;
 import com.techjar.cubedesigner.util.Direction;
 import com.techjar.cubedesigner.util.Timer;
 import com.techjar.cubedesigner.util.Util;
@@ -16,7 +17,6 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationSnakeInfinite extends Animation {
-    private Timer timer = new Timer();
     private Random random = new Random();
     private LinkedList<Vector3> segments = new LinkedList<>();
     private boolean[] states = new boolean[512];
@@ -35,8 +35,7 @@ public class AnimationSnakeInfinite extends Animation {
 
     @Override
     public void refresh() {
-        if (dead || timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (dead || ticks % 3 == 0) {
             Color color = new Color();
             color.fromHSB(hue % 1, 1, 1);
             hue += 0.015F;

@@ -2,7 +2,6 @@
 package com.techjar.cubedesigner.hardware.animation;
 
 import com.techjar.cubedesigner.CubeDesigner;
-import com.techjar.cubedesigner.util.Timer;
 import org.lwjgl.util.Color;
 
 /**
@@ -10,7 +9,6 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationBlink extends Animation {
-    private long ticks;
     private boolean state;
 
     public AnimationBlink() {
@@ -34,13 +32,11 @@ public class AnimationBlink extends Animation {
                 }
             }
         }
-        ticks++;
     }
 
     @Override
     public void reset() {
         state = false;
-        ticks = 0;
     }
 
 }

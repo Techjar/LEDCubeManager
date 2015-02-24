@@ -64,6 +64,11 @@ public abstract class GUIContainer extends GUI {
                             if (lastTopWin != null) lastTopWin.setOnTop(false);
                             lastTopWin = win;
                         }
+                    } else if (gui instanceof GUIComboBox) {
+                        if (((GUIComboBox)gui).isOpened() && components.get(components.size() - 1) != gui) {
+                            it.remove();
+                            toAdd.add(gui);
+                        }
                     }
                 }
             }

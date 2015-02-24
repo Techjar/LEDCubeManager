@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -208,7 +209,7 @@ public final class Util {
 
     public static int encodeCubeVector(Vector3 vector) {
         // TODO: Base this on cube dimensions
-        return (int)vector.getX() | ((int)vector.getY() << 3) | ((int)vector.getZ() << 6);
+        return (int)vector.getX() | ((int)vector.getZ() << 3) | ((int)vector.getY() << 6);
     }
 
     public static int encodeCubeVector(int x, int y, int z) {
@@ -218,7 +219,16 @@ public final class Util {
 
     public static Vector3 decodeCubeVector(int number) {
         // TODO: Base this on cube dimensions
-        return new Vector3(number & 7, (number >> 3) & 7, (number >> 6) & 7);
+        return new Vector3(number & 7, (number >> 6) & 7, (number >> 3) & 7);
+    }
+
+    public static int getRequiredBits(long value) {
+        int i = 1;
+        for (; i < 64; i++) {
+            value >>= 1;
+            if (value == 0) break;
+        }
+        return i;
     }
 
     public static float getAxisValue(Controller con, String name) {

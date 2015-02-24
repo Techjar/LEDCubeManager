@@ -12,7 +12,6 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationCandyCaneStacker extends Animation {
-    private Timer timer = new Timer();
     private int layers;
     private int curLayer;
     private int curLayerNum;
@@ -32,8 +31,7 @@ public class AnimationCandyCaneStacker extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             if (layers != allLayers) {
                 if (curLayer == 0) {
                     curLayer |= topLayer;

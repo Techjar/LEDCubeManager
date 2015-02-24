@@ -15,7 +15,6 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationMultiFaucet extends Animation {
-    private Timer timer = new Timer();
     private Random random = new Random();
     private List<Vector2> faucets = new ArrayList<>();
     private List<Color> colors = new ArrayList<>();
@@ -31,8 +30,7 @@ public class AnimationMultiFaucet extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             for (int x = 0; x < 8; x++) {
                 for (int z = 0; z < 8; z++) {
                     for (int y = 1; y < 8; y++) {

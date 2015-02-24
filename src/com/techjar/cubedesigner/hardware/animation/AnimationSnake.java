@@ -19,7 +19,6 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationSnake extends Animation {
-    private Timer timer = new Timer();
     private Random random = new Random();
     private LinkedList<Vector3> segments = new LinkedList<>();
     private boolean[] states = new boolean[512];
@@ -37,8 +36,7 @@ public class AnimationSnake extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             Color color = CubeDesigner.getPaintColor();
             if (segments.isEmpty()) {
                 dead = false;

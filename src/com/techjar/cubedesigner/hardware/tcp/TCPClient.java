@@ -2,6 +2,7 @@
 package com.techjar.cubedesigner.hardware.tcp;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,7 +24,7 @@ public class TCPClient {
     @Getter private Socket socket;
     @Getter private InputStream inputStream;
     @Getter private OutputStream outputStream;
-    private Queue<byte[]> sendQueue = new ConcurrentLinkedQueue<>();
+    private Queue<Packet> sendQueue = new ConcurrentLinkedQueue<>();
 
     public TCPClient(Socket socket, int index) throws IOException {
         this.socket = socket;
@@ -50,11 +51,12 @@ public class TCPClient {
             @Override
             @SneakyThrows(InterruptedException.class)
             public void run() {
-                byte[] data;
+                Packet packet;
+                DataOutputStream out = new DataOutputStream(TCPClient.this.outputStream);
                 while (!TCPClient.this.socket.isClosed()) {
-                    while ((data = sendQueue.poll()) != null) {
+                    while ((packet = sendQueue.poll()) != null) {
                         try {
-                            TCPClient.this.outputStream.write(data);
+                            Packet.writePacket(out, packet);
                         } catch (IOException ex) {
                             ex.printStackTrace();
                             try {
@@ -88,7 +90,7 @@ public class TCPClient {
         return socket.isClosed();
     }
 
-    public void queueData(byte[] data) {
-        sendQueue.add(data);
+    public void queuePacket(Packet packet) {
+        sendQueue.add(packet);
     }
 }

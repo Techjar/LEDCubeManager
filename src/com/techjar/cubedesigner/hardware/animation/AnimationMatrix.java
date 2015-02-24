@@ -1,6 +1,7 @@
 
 package com.techjar.cubedesigner.hardware.animation;
 
+import com.techjar.cubedesigner.hardware.LEDUtil;
 import com.techjar.cubedesigner.util.MathHelper;
 import com.techjar.cubedesigner.util.Timer;
 import java.util.Random;
@@ -11,7 +12,6 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationMatrix extends Animation {
-    private Timer timer = new Timer();
     private int[] lines = new int[64];
     private Color[] colors = new Color[64];
     private boolean[] states = new boolean[512];
@@ -29,8 +29,7 @@ public class AnimationMatrix extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             for (int x = 0; x < 8; x++) {
                 for (int z = 0; z < 8; z++) {
                     int index = x | (z << 3);
@@ -62,13 +61,7 @@ public class AnimationMatrix extends Animation {
     public void reset() {
         lines = new int[64];
         states = new boolean[512];
-        for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                for (int z = 0; z < 8; z++) {
-                    ledManager.setLEDColor(x, y, z, new Color());
-                }
-            }
-        }
+        LEDUtil.clear(ledManager);
     }
 
     private boolean checkBit(int number, int bit) {

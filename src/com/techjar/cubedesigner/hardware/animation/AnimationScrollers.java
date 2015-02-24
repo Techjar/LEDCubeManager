@@ -12,7 +12,6 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationScrollers extends Animation {
-    private Timer timer = new Timer();
     private Random random = new Random();
     private int[] dots = new int[64];
     private boolean[] directions = new boolean[64];
@@ -28,8 +27,7 @@ public class AnimationScrollers extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             for (int x = 0; x < 8; x++) {
                 for (int z = 0; z < 8; z++) {
                     int index = x | (z << 3);

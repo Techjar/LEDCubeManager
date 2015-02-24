@@ -1,6 +1,7 @@
 
 package com.techjar.cubedesigner.hardware.tcp;
 
+import com.techjar.cubedesigner.CubeDesigner;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,7 +14,10 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.SneakyThrows;
 
 /**
@@ -25,6 +29,7 @@ public class TCPServer {
     private Thread watchThread;
     private ServerSocket socket;
     private List<TCPClient> clients = Collections.synchronizedList(new ArrayList<TCPClient>());
+    private Queue<Packet> sendQueue = new ConcurrentLinkedQueue<>();
     private int numClients;
     private int clientIndex = 1;
 
@@ -38,11 +43,13 @@ public class TCPServer {
                     final Socket client = socket.accept();
                     client.setTcpNoDelay(true);
                     BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                    /*if (!"MICRO".equals(br.readLine())) {
+                    if (!"LEDCUBE".equals(br.readLine())) {
                         client.close();
                         continue;
-                    }*/
-                    clients.add(new TCPClient(client, clientIndex++));
+                    }
+                    TCPClient tcpClient = new TCPClient(client, clientIndex++);
+                    if (CubeDesigner.getSpectrumAnalyzer().playerExists()) sendPacket(Packet.ID.AUDIO_INIT, CubeDesigner.getSpectrumAnalyzer().getAudioInit(), tcpClient);
+                    clients.add(tcpClient);
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -56,26 +63,45 @@ public class TCPServer {
             public void run() {
                 while (true) {
                     synchronized (clients) {
+                        Queue<Packet> queue = new LinkedList<>();
+                        Packet packet;
+                        while ((packet = sendQueue.poll()) != null) {
+                            queue.add(packet);
+                        }
                         numClients = clients.size();
                         Iterator<TCPClient> it = clients.iterator();
                         while (it.hasNext()) {
                             TCPClient client = it.next();
                             if (client.isClosed()) it.remove();
+                            else {
+                                for (Packet pkt : queue) {
+                                    client.queuePacket(pkt);
+                                }
+                            }
                         }
                     }
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                 }
             }
         };
         watchThread.start();
     }
 
-    public void sendData(byte[] data) {
-        synchronized (clients) {
+    public void sendPacket(Packet.ID id, byte[] data) {
+        Packet packet = new Packet(id);
+        packet.setData(data);
+        sendQueue.add(packet);
+        /*synchronized (clients) {
             for (TCPClient client : clients) {
-                client.queueData(data);
+                client.queuePacket(packet);
             }
-        }
+        }*/
+    }
+
+    public void sendPacket(Packet.ID id, byte[] data, TCPClient client) {
+        Packet packet = new Packet(id);
+        packet.setData(data);
+        client.queuePacket(packet);
     }
 
     public int getNumClients() {

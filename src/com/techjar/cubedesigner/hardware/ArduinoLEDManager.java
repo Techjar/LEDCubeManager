@@ -75,15 +75,15 @@ public class ArduinoLEDManager implements LEDManager {
             int[] green = new int[512];
             int[] blue = new int[512];
             for (int i = 0; i < 512; i++) {
-                red[i] = Math.round(this.red[i] / factor);
-                green[i] = Math.round(this.green[i] / factor);
-                blue[i] = Math.round(this.blue[i] / factor);
+                red[i] = Math.round((this.red[i] & 0xFF) / factor);
+                green[i] = Math.round((this.green[i] & 0xFF) / factor);
+                blue[i] = Math.round((this.blue[i] & 0xFF) / factor);
             }
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
-                    red[i] = (byte)Math.round(MathHelper.cie1931((double)this.red[i] / resolution) * outResolution);
-                    green[i] = (byte)Math.round(MathHelper.cie1931((double)this.green[i] / resolution) * outResolution);
-                    blue[i] = (byte)Math.round(MathHelper.cie1931((double)this.blue[i] / resolution) * outResolution);
+                    red[i] = (byte)Math.round(MathHelper.cie1931((double)red[i] / resolution) * outResolution);
+                    green[i] = (byte)Math.round(MathHelper.cie1931((double)green[i] / resolution) * outResolution);
+                    blue[i] = (byte)Math.round(MathHelper.cie1931((double)blue[i] / resolution) * outResolution);
                 }
             }
             for (int i = 0; i < bits; i++) {
@@ -112,7 +112,7 @@ public class ArduinoLEDManager implements LEDManager {
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (z << 6) | (y << 3) | x;
+        int index = (y << 6) | (z << 3) | x;
         return new Color(red[index], green[index], blue[index]);
     }
 
@@ -127,7 +127,7 @@ public class ArduinoLEDManager implements LEDManager {
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (z << 6) | (y << 3) | x;
+        int index = (y << 6) | (z << 3) | x;
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();

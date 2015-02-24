@@ -16,7 +16,6 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationSnakeBattle extends Animation {
-    private Timer timer = new Timer();
     private Random random = new Random();
     private LinkedList<Vector3>[] segmentArray;
     private boolean[] states = new boolean[512];
@@ -52,8 +51,7 @@ public class AnimationSnakeBattle extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             for (int i = 0; i < NUM_SNAKES; i++) {
                 LinkedList<Vector3> segments = segmentArray[i];
                 Color color = colors[i];

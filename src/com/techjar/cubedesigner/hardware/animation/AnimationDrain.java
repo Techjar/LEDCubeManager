@@ -10,7 +10,6 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationDrain extends Animation {
-    private Timer timer = new Timer();
     private int spread;
     private boolean state;
 
@@ -25,8 +24,7 @@ public class AnimationDrain extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 100) {
-            timer.restart();
+        if (ticks % 6 == 0) {
             if (state && spread < 4) spread++;
             state = !state;
             for (int x = 3; x > 3 - spread; x--) {

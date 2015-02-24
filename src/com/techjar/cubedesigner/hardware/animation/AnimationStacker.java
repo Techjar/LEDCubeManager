@@ -11,7 +11,6 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationStacker extends Animation {
-    private Timer timer = new Timer();
     private int layers;
     private int curLayer;
     private int topLayer;
@@ -30,8 +29,7 @@ public class AnimationStacker extends Animation {
 
     @Override
     public void refresh() {
-        if (timer.getMilliseconds() >= 50) {
-            timer.restart();
+        if (ticks % 3 == 0) {
             if (layers != allLayers) {
                 if (curLayer == 0) {
                     curLayer |= topLayer;

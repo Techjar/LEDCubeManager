@@ -13,6 +13,7 @@ import com.techjar.cubedesigner.util.Vector3;
 public abstract class Animation {
     protected final LEDManager ledManager;
     protected final Dimension3D dimension;
+    protected long ticks;
 
     public Animation() {
         this.ledManager = CubeDesigner.getLEDManager();
@@ -22,5 +23,18 @@ public abstract class Animation {
     public abstract String getName();
     public abstract void refresh();
     public abstract void reset();
-    public void setParameters(String[] args){}
+    
+    public AnimationOption[] getOptions() {
+        return new AnimationOption[0];
+    }
+
+    public void optionChanged(String name, Object value) {
+    }
+
+    public void setParameters(String[] args) {
+    }
+
+    public void incTicks() {
+        ticks++;
+    }
 }

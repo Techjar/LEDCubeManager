@@ -10,7 +10,6 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationStrobe extends Animation {
-    private long ticks;
     private boolean state;
 
     public AnimationStrobe() {
@@ -34,13 +33,11 @@ public class AnimationStrobe extends Animation {
                 }
             }
         }
-        ticks++;
     }
 
     @Override
     public void reset() {
         state = false;
-        ticks = 0;
     }
 
 }

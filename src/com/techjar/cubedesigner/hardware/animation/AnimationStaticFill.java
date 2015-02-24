@@ -2,6 +2,7 @@
 package com.techjar.cubedesigner.hardware.animation;
 
 import com.techjar.cubedesigner.CubeDesigner;
+import com.techjar.cubedesigner.hardware.LEDUtil;
 
 /**
  *
@@ -19,13 +20,7 @@ public class AnimationStaticFill extends Animation {
 
     @Override
     public void refresh() {
-        for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                for (int z = 0; z < 8; z++) {
-                    ledManager.setLEDColor(x, y, z, CubeDesigner.getPaintColor());
-                }
-            }
-        }
+        LEDUtil.fill(ledManager, CubeDesigner.getPaintColor());
     }
 
     @Override

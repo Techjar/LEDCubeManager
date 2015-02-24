@@ -31,6 +31,7 @@ import org.newdawn.slick.UnicodeFont;
  * @author Techjar
  */
 public class ScreenMainControl extends Screen {
+    public final UnicodeFont font;
     public final GUISlider progressSlider;
     public final GUIWindow layersWindow;
     public final GUIWindow sequenceWindow;
@@ -70,7 +71,7 @@ public class ScreenMainControl extends Screen {
         final LEDManager ledManager = CubeDesigner.getLEDManager();
         final Dimension3D ledDim = ledManager.getDimensions();
 
-        UnicodeFont font = CubeDesigner.getFontManager().getFont("chemrea", 30, false, false).getUnicodeFont();
+        font = CubeDesigner.getFontManager().getFont("chemrea", 30, false, false).getUnicodeFont();
         playBtn = new GUIButton(font, new Color(255, 255, 255), "Play", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
         playBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
         playBtn.setDimension(100, 40);
@@ -118,20 +119,7 @@ public class ScreenMainControl extends Screen {
                         if (option == JFileChooser.APPROVE_OPTION) {
                             try {
                                 File file = CubeDesigner.getFileChooser().getSelectedFile();
-                                File file2 = new File("resampled/" + file.getName().substring(0, file.getName().lastIndexOf('.')) + ".wav");
-                                if (!file2.exists()) {
-                                    ProcessBuilder pb = new ProcessBuilder();
-                                    pb.directory(new File(System.getProperty("user.dir")));
-                                    pb.redirectErrorStream(true);
-                                    pb.command("ffmpeg", "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", "48000", file2.getAbsolutePath());
-                                    Process proc = pb.start();
-                                    CubeDesigner.setConvertingAudio(true);
-                                    Thread psrThread = new PrintStreamRelayer(proc.getInputStream(), System.out);
-                                    psrThread.setDaemon(true); psrThread.start();
-                                    proc.waitFor();
-                                    CubeDesigner.setConvertingAudio(false);
-                                }
-                                CubeDesigner.getSpectrumAnalyzer().loadFile(file2);
+                                CubeDesigner.getSpectrumAnalyzer().loadFile(file);
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }

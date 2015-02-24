@@ -10,6 +10,11 @@
 <project name="CubeDesigner" default="default" basedir=".">
     <description>Builds, tests, and runs the project CubeDesigner.</description>
     <import file="nbproject/build-impl.xml"/>
+    
+    <target name="-post-jar">
+        <echo message="Removing lombok from dist..." />
+        <delete file="dist/lib/lombok.jar" />
+    </target>
     <!--
 
     There exist several targets which are by default empty and which can be 

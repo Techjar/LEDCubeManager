@@ -1,5 +1,6 @@
 package com.techjar.cubedesigner;
 
+import com.techjar.cubedesigner.hardware.SpectrumAnalyzer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -29,9 +30,11 @@ import com.techjar.cubedesigner.util.ArgumentParser;
 import com.techjar.cubedesigner.util.Axis;
 import com.techjar.cubedesigner.util.ConfigManager;
 import com.techjar.cubedesigner.util.Constants;
+import com.techjar.cubedesigner.util.Direction;
 import com.techjar.cubedesigner.util.LightSource;
 import com.techjar.cubedesigner.util.MathHelper;
 import com.techjar.cubedesigner.util.Model;
+import com.techjar.cubedesigner.util.OperatingSystem;
 import com.techjar.cubedesigner.util.Quaternion;
 import com.techjar.cubedesigner.util.ShaderProgram;
 import com.techjar.cubedesigner.util.Util;
@@ -111,7 +114,7 @@ public class CubeDesigner {
     @Getter private static SoundManager soundManager;
     @Getter private static Camera camera;
     @Getter private static Frustum frustum;
-    @Getter private static AnimationSpectrumAnalyzer spectrumAnalyzer;
+    @Getter private static SpectrumAnalyzer spectrumAnalyzer;
     @Getter private static JFileChooser fileChooser;
     private List<Screen> screenList = new ArrayList<>();
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
@@ -258,6 +261,7 @@ public class CubeDesigner {
         fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac)", "wav", "mp3", "ogg", "flac"));
         fileChooser.setMultiSelectionEnabled(false);
+        if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
         init();
 
         camera.setPosition(new Vector3(-80, 85, 28));
@@ -266,7 +270,7 @@ public class CubeDesigner {
         timeCounter = getTime();
         deltaTime = System.nanoTime();
 
-        spectrumAnalyzer = new AnimationSpectrumAnalyzer();
+        spectrumAnalyzer = new SpectrumAnalyzer();
         loadAnimations();
 
         commThread = new CommThread();
@@ -318,7 +322,9 @@ public class CubeDesigner {
         animations.clear();
         animationNames.clear();
         addAnimation(new AnimationNone());
-        addAnimation(spectrumAnalyzer);
+        addAnimation(new AnimationSpectrumBars());
+        addAnimation(new AnimationSpectrumShooters());
+        addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
         addAnimation(new AnimationPulsate());
         addAnimation(new AnimationPulsateHue());
@@ -342,6 +348,7 @@ public class CubeDesigner {
         addAnimation(new AnimationFaucet());
         addAnimation(new AnimationMultiFaucet());
         addAnimation(new AnimationFaucetFill());
+        addAnimation(new AnimationFaucetFillRainbow());
         if (screenMainControl != null) {
             screenMainControl.populateAnimationList();
         }
@@ -727,7 +734,7 @@ public class CubeDesigner {
                         for (int y= (int)led.getY(); y <= Math.min((int)led.getY() + (int)paintSize.getY(), 7); y++) {
                             for (int z = (int)led.getZ(); z <= Math.min((int)led.getZ() + (int)paintSize.getZ(), 7); z++) {
                                 if (isLEDWithinIsolation(x, y, z)) {
-                                    highlight[x | (y << 3) | (z << 6)] = true;
+                                    highlight[x | (z << 3) | (y << 6)] = true;
                                     if (drawClick) {
                                         ledManager.setLEDColor(x, y, z, paintColor);
                                     }
@@ -747,16 +754,9 @@ public class CubeDesigner {
                                 if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
                                     ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
                                     processed[Util.encodeCubeVector(current)] = true;
-                                    Vector3 offset = null;
+                                    //Vector3 offset = null;
                                     for (int i = 0; i < 6; i++) {
-                                        switch (i) {
-                                            case 0: offset = new Vector3(1, 0, 0); break;
-                                            case 1: offset = new Vector3(-1, 0, 0); break;
-                                            case 2: offset = new Vector3(0, 1, 0); break;
-                                            case 3: offset = new Vector3(0, -1, 0); break;
-                                            case 4: offset = new Vector3(0, 0, 1); break;
-                                            case 5: offset = new Vector3(0, 0, -1); break;
-                                        }
+                                        Vector3 offset = Direction.values()[i].getVector();
                                         Vector3 node = current.add(offset);
                                         if (node.getX() >= 0 && node.getX() <= 7 && node.getY() >= 0 && node.getY() <= 7 && node.getZ() >= 0 && node.getZ() <= 7) {
                                             if (!processed[Util.encodeCubeVector(node)]) {
@@ -884,16 +884,6 @@ public class CubeDesigner {
     public void render3D() {
         glPushMatrix();
 
-        // Position and orient the camera
-        //Vector3 camLook = camera.getAngle().forward();
-        //Vector3 camLookPos = camPos.add(camLook);
-        //glRotatef(camera.getAngle().getRoll(), 0, 0, 1);
-        //gluLookAt(camPos.getX(), camPos.getY(), camPos.getZ(), camLookPos.getX(), camLookPos.getY(), camLookPos.getZ(), 0, 1, 0);
-        /*glRotatef(camera.getAngle().getRoll(), 0, 0, -1);
-        glRotatef(camera.getAngle().getPitch(), -1, 0, 0);
-        glRotatef(camera.getAngle().getYaw(), 0, -1, 0);
-        glTranslatef(-camPos.getX(), -camPos.getY(), -camPos.getZ());
-        frustum.update();*/
         viewMatrix = new Matrix4f();
         modelMatrix = new Matrix4f();
         Vector3 camPos = camera.getPosition();
@@ -922,14 +912,9 @@ public class CubeDesigner {
         glLight(GL_LIGHT0, GL_POSITION, floatBuffer);*/
         
         faceCount = 0;
-        //String[] modelNames = new String[]{"golfball.model", "dentsphere.model", "cube.model", "led.model"};
         String modelName = "led.model";
         float mult = 8;
         Random rand = new Random();
-
-        //Vector3[] ray = getCursorRay();
-        //Vector3 pPos = ray[0].add(ray[1].normalized().multiply(100));
-        //modelManager.getModel(modelName).render(pPos, new Quaternion(), new Color(255, 255, 255), false);
 
         int width = 8;
         int length = 8;
@@ -943,9 +928,9 @@ public class CubeDesigner {
                     for (int x = 0; x < width; x++) {
                         if (trueColor) {
                             Color color = ledManager.getLEDColorReal(x, y, z);
-                            colors[x | (y << 3) | (z << 6)] = new Color(Math.round(color.getRed() * ledManager.getFactor()), Math.round(color.getGreen() * ledManager.getFactor()), Math.round(color.getBlue() * ledManager.getFactor()));
+                            colors[x | (z << 3) | (y << 6)] = new Color(Math.round(color.getRed() * ledManager.getFactor()), Math.round(color.getGreen() * ledManager.getFactor()), Math.round(color.getBlue() * ledManager.getFactor()));
                         } else {
-                            colors[x | (y << 3) | (z << 6)] = ledManager.getLEDColor(x, y, z);
+                            colors[x | (z << 3) | (y << 6)] = ledManager.getLEDColor(x, y, z);
                         }
                     }
 
@@ -959,43 +944,10 @@ public class CubeDesigner {
                     float yy = y * mult;
                     float zz = x * mult;
                     Vector3 pos = new Vector3(xx, yy, zz);
-                    //Model model = modelManager.getModel(modelNames[rand.nextInt(modelNames.length)]);
                     if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
-                        //posBuf.putFloat(xx);
-                        //posBuf.putFloat(yy);
-                        //posBuf.putFloat(zz);
-                        //Matrix4f matrix = new Matrix4f();
-                        //matrix.translate(new Vector3f(xx, yy, zz));
-                        //Util.storeMatrixInBuffer(matrix, matBuf);
                         faceCount += model.getFaceCount();
-                        //renderCount++;
-                        //rand.setSeed(x | (y << 8) | (z << 16));
-                        //rand.nextInt();
-                        /*if (rand.nextInt(1) == 0) {
-                            //ledManager.setLEDColor(x, y, z, new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)));
-                            //ledManager.setLEDColor(x, y, z, new Color(255, 255, 255));
-                            //ledManager.setLEDColor(x, y, z, new Color());
-                            Color color = new Color();
-                            color.fromHSB((1F / 512F) * i, 1, 1);
-                            ledManager.setLEDColor(x, y, z, color);
-                        }*/
-                        //ledManager.setLEDColor(x, y, z, new Color(x * 2, y * 2, z * 2));
-                        //Color color = colors[x | (y << 3) | (z << 6)];
-                        //model.render(pos, new Quaternion(), isLEDWithinIsolation(x, y, z) ? color : new Color(color.getRed(), color.getGreen(), color.getBlue(), 8), false);
-                        model.render(pos, new Quaternion(), colors[x | (y << 3) | (z << 6)], false);
-                        //model.render(pos, new Quaternion(Axis.YAW, 90), new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)), false);
+                        model.render(pos, new Quaternion(), colors[x | (z << 3) | (y << 6)], false);
                     }
-                    /*Vector3 center = model.getCenter();
-                    if (frustum.sphereInFrustum(center.getX() + xx, center.getY() + yy, center.getZ() + zz, model.getRadius()) > 0) {
-                        glTranslatef(xx, yy, zz);
-                        glRotatef(180, 0, 1, 0);
-                        model.render();
-                        faceCount += model.getFaceCount();
-                        glRotatef(-180, 0, 1, 0);
-                        glTranslatef(-xx, -yy, -zz);
-                    }*/
-                    //if (model.render(new Vector3(xx, yy, zz), new Quaternion()))
-                        //faceCount += model.getFaceCount();
                 }
             }
         }
@@ -1004,7 +956,7 @@ public class CubeDesigner {
         for (int y = 0; y < height; y++) {
             for (int z = 0; z < length; z++) {
                 for (int x = 0; x < width; x++) {
-                    if (highlight[x | (y << 3) | (z << 6)]) {
+                    if (highlight[x | (z << 3) | (y << 6)]) {
                         float xx = z * mult;
                         float yy = y * mult;
                         float zz = x * mult;
@@ -1017,67 +969,7 @@ public class CubeDesigner {
                 }
             }
         }
-
-        /*glBindBuffer(GL_ARRAY_BUFFER, model.getVBO());
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
-        glEnableVertexAttribArray(2);
-        glBindBuffer(GL_ARRAY_BUFFER, matVbo);
-        glBufferData(GL_ARRAY_BUFFER, matBuf, GL_STREAM_DRAW);
-        for (int i = 0; i < 4; i++) {
-            glVertexAttribPointer(3 + i, 4, GL_FLOAT, false, 64, 16 * i);
-            glEnableVertexAttribArray(3 + i);
-            glVertexAttribDivisor(3 + i, 1);
-        }
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        // Use program and send matrices
-        progInstanceDraw.use();
-        sendMatrixToProgram();
-        glDrawArraysInstanced(GL_TRIANGLES, 0, model.getIndices(), renderCount);
-        ShaderProgram.useNone();*/
-
         ShaderProgram.useNone();
-
-
-        /*
-        if (vbo == 0) throw new IllegalStateException("VBO not initialized");
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_NORMAL_ARRAY);
-        if (hasTexCoords) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexPointer(3, GL_FLOAT, hasTexCoords ? 22 : 18, 0);
-        glNormalPointer(GL_HALF_FLOAT, hasTexCoords ? 22 : 18, 12);
-        if (hasTexCoords) glTexCoordPointer(2, GL_HALF_FLOAT, 22, 18);
-        glDrawArrays(GL_TRIANGLES, 0, indices);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_NORMAL_ARRAY);
-        if (hasTexCoords) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        */
-
-        /*glTranslatef(0, 0, -5);
-        modelManager.getModel(model).render();
-        glTranslatef(0, 0, 10);
-        modelManager.getModel(model).render();
-        glTranslatef(-5, 0, -5);
-        modelManager.getModel(model).render();
-        glTranslatef(10, 0, 0);
-        modelManager.getModel(model).render();
-
-        glTranslatef(-30, 0, 0);
-        
-        glTranslatef(0, 0, -5);
-        modelManager.getModel(model).render();
-        glTranslatef(0, 0, 10);
-        modelManager.getModel(model).render();
-        glTranslatef(-5, 0, -5);
-        modelManager.getModel(model).render();
-        glTranslatef(10, 0, 0);
-        modelManager.getModel(model).render();*/
         
         glPopMatrix();
     }
