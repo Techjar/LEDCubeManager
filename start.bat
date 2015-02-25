@@ -1,2 +1,2 @@
 @echo off
-java -Xmx4096M -jar dist/CubeDesigner.jar
+java -Xmx4096M -jar dist/LEDCubeManager.jar

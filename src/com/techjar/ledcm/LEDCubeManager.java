@@ -1,7 +1,4 @@
 package com.techjar.ledcm;
-
-import com.techjar.ledcm.hardware.animation.*;
-import com.techjar.ledcm.hardware.SpectrumAnalyzer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -25,6 +22,8 @@ import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.hardware.ArduinoLEDManager;
 import com.techjar.ledcm.hardware.CommThread;
+import com.techjar.ledcm.hardware.SpectrumAnalyzer;
+import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;

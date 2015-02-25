@@ -8,12 +8,50 @@
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
 <project name="CubeDesigner" default="default" basedir=".">
-    <description>Builds, tests, and runs the project CubeDesigner.</description>
+    <description>Builds, tests, and runs the project LEDCubeManager.</description>
     <import file="nbproject/build-impl.xml"/>
+    <property environment="env" />
+    <condition property="exists.build_number">
+        <isset property="env.BUILD_NUMBER" />
+    </condition>
     
     <target name="-post-jar">
         <echo message="Removing lombok from dist..." />
         <delete file="dist/lib/lombok.jar" />
+    
+        <echo message="Copying natives..." />
+		<copy todir="dist/lib/native/">
+			<fileset dir="lib/native/">
+				<include name="**/**" />
+			</fileset>
+		</copy>
+        
+        <echo message="Copying resources..." />
+        <copy todir="dist/resources/">
+			<fileset dir="resources/">
+				<include name="**/**" />
+			</fileset>
+		</copy>
+        
+        <antcall target="archive" />
+    </target>
+    
+    <target name="-post-clean">
+        <delete includeEmptyDirs="true" failonerror="false">
+            <fileset dir="archive/" includes="**/*" defaultexcludes="no" />
+    	</delete>
+    </target>
+    
+    <target name="archive" if="exists.build_number">
+        <echo message="Archiving dist..." />
+        <zip destfile="archive/LEDCubeManager-build${env.BUILD_NUMBER}.zip">
+            <fileset dir=".">
+                <include name="*.bat" />
+                <include name="*.sh" />
+                <include name="dist/**" />
+                <exclude name="dist/README.TXT" />
+            </fileset>
+        </zip>
     </target>
     <!--
 
