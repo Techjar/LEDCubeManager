@@ -207,19 +207,23 @@ public final class Util {
         return new org.lwjgl.util.Color(MathHelper.clamp((int)Math.round(color1.getRed() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getGreen() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getBlue() * mult), 0, 255));
     }
 
+    public static Dimension3D getRequiredBits(Dimension3D dimension) {
+        return new Dimension3D(getRequiredBits(dimension.x - 1), getRequiredBits(dimension.y - 1), getRequiredBits(dimension.z - 1));
+    }
+
     public static int encodeCubeVector(Vector3 vector) {
-        // TODO: Base this on cube dimensions
-        return (int)vector.getX() | ((int)vector.getZ() << 3) | ((int)vector.getY() << 6);
+        Dimension3D bits = getRequiredBits(CubeDesigner.getLEDManager().getDimensions());
+        return (int)vector.getX() | ((int)vector.getZ() << bits.x) | ((int)vector.getY() << (bits.x + bits.z));
     }
 
     public static int encodeCubeVector(int x, int y, int z) {
-        // TODO: Base this on cube dimensions
         return encodeCubeVector(new Vector3(x, y, z));
     }
 
     public static Vector3 decodeCubeVector(int number) {
-        // TODO: Base this on cube dimensions
-        return new Vector3(number & 7, (number >> 6) & 7, (number >> 3) & 7);
+        Dimension3D dim = CubeDesigner.getLEDManager().getDimensions();
+        Dimension3D bits = getRequiredBits(dim);
+        return new Vector3(number & (dim.x - 1), (number >> (bits.x + bits.z)) & (dim.y - 1), (number >> bits.x) & (dim.z - 1));
     }
 
     public static int getRequiredBits(long value) {

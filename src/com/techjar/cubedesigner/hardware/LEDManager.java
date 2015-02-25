@@ -2,6 +2,7 @@
 package com.techjar.cubedesigner.hardware;
 
 import com.techjar.cubedesigner.util.Dimension3D;
+import com.techjar.cubedesigner.util.Vector3;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 

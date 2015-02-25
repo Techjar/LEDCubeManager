@@ -332,6 +332,7 @@ public class CubeDesigner {
         addAnimation(new AnimationRain());
         addAnimation(new AnimationMatrix());
         //addAnimation(new AnimationFolder());
+        addAnimation(new AnimationTwinkle());
         addAnimation(new AnimationBlink());
         addAnimation(new AnimationStrobe());
         addAnimation(new AnimationSnake());
