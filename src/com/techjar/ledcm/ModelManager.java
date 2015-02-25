@@ -86,7 +86,7 @@ public class ModelManager {
         List<Float> vertices = new ArrayList<>();
         List<Float> normals = new ArrayList<>();
         List<Float> texCoords = new ArrayList<>();
-        System.out.println(object.getCurrentGroup().getFaces().size() + " faces.");
+        LogHelper.info("%d faces.", object.getCurrentGroup().getFaces().size());
         for (Face face : object.getCurrentGroup().getFaces()) {
             if (face.getType() != Face.GL_TRIANGLES) throw new IOException("Quads are deprecated, convert the model to triangles");
             for (Vertex vertex : face.getVertices()) {
@@ -122,6 +122,7 @@ public class ModelManager {
         model.setCollisionMesh(collision);
         model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
         model.makeImmutable();
+        LogHelper.info("Finished loading %s", file);
         cache.put(file, model);
         return model;
     }

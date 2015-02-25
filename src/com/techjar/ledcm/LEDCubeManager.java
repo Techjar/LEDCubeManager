@@ -660,7 +660,7 @@ public class LEDCubeManager {
     }
     
     private void initShaders() {
-        progInstanceDraw = new ShaderProgram().loadShader("instancedraw").link();
+        progInstanceDraw = new ShaderProgram().loadShader("fragmentlighting").link();
     }
     
     private void postInit() {
