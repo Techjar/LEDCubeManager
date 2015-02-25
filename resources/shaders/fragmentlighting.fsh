@@ -56,9 +56,9 @@ void main(void) {
     vec4 totalDiffuse;
     vec4 totalSpecular;
 
-    for (int i = 0; i < num_lights; i++) {wut
+    for (int i = 0; i < num_lights; i++) {
         Light light = lights[i];
-        if (light.position.w == 0) {thefuckisthis
+        if (light.position.w == 0) {
             attenuation = 1;
             lightDirection = normalize(vec3(light.position));
         } else {
