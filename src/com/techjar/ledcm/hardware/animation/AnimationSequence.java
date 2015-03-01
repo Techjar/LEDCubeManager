@@ -85,6 +85,9 @@ public class AnimationSequence {
             LEDCubeManager.getCommThread().setCurrentAnimation(anim);
             LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setSelectedItem(anim.getName());
         }
+        for (SequenceItem.Option option : item.options) {
+            LEDCubeManager.getCommThread().getCurrentAnimation().optionChanged(option.name, option.value);
+        }
     }
 
     public static AnimationSequence loadFromFile(File file) throws IOException {
@@ -115,7 +118,13 @@ public class AnimationSequence {
             } if (split.length == 5) {
                 sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear, new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4]))));
             } else if (split.length > 5) {
-                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear, new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4])), split[5].split("\\s+")));
+                List<SequenceItem.Option> options = new ArrayList<>();
+                String[] args = split[5].split("\\s+");
+                for (int i = 0; i < args.length; i++) {
+                    String[] arg = args[i].split(":", 2);
+                    options.add(new SequenceItem.Option(arg[0], arg[1]));
+                }
+                sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear, new Color(Integer.parseInt(split[2]), Integer.parseInt(split[3]), Integer.parseInt(split[4])), options.toArray(new SequenceItem.Option[options.size()])));
             } else if (split.length >= 2) {
                 sequence.items.add(new SequenceItem(split[0], Long.parseLong(split[1]), clear));
             }
@@ -129,14 +138,14 @@ public class AnimationSequence {
         public final long time;
         public final boolean clear;
         public final Color color;
-        public final String[] args;
+        public final Option[] options;
 
         public SequenceItem(String animation, long time, boolean clear) {
             this.animation = animation;
             this.time = time;
             this.clear = clear;
             this.color = null;
-            this.args = null;
+            this.options = null;
         }
         
         public SequenceItem(String animation, long time, boolean clear, Color color) {
@@ -144,15 +153,25 @@ public class AnimationSequence {
             this.time = time;
             this.clear = clear;
             this.color = color;
-            this.args = null;
+            this.options = null;
         }
 
-        public SequenceItem(String animation, long time, boolean clear, Color color, String[] args) {
+        public SequenceItem(String animation, long time, boolean clear, Color color, Option[] options) {
             this.animation = animation;
             this.time = time;
             this.clear = clear;
             this.color = color;
-            this.args = args;
+            this.options = options;
+        }
+
+        public static class Option {
+            public final String name;
+            public final String value;
+
+            public Option(String name, String value) {
+                this.name = name;
+                this.value = value;
+            }
         }
     }
 }

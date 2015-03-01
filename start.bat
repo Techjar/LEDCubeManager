@@ -1,2 +1,2 @@
 @echo off
-java -Xmx4096M -jar dist/LEDCubeManager.jar
+java -Xmx2048M -jar dist/LEDCubeManager.jar --showfps

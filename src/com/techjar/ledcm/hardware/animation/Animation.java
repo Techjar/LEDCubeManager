@@ -28,10 +28,7 @@ public abstract class Animation {
         return new AnimationOption[0];
     }
 
-    public void optionChanged(String name, Object value) {
-    }
-
-    public void setParameters(String[] args) {
+    public void optionChanged(String name, String value) {
     }
 
     public void incTicks() {

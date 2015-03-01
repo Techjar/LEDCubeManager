@@ -12,8 +12,6 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class ArduinoLEDManager implements LEDManager {
-    private static final int[] RESOLUTIONS = {0, 1, 3, 7, 15, 31, 63, 127, 255};
-    private static final int[] OUT_RESOLUTIONS = {0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535};
     private final int bits;
     private final int outBits;
     private final int resolution;
@@ -25,13 +23,13 @@ public class ArduinoLEDManager implements LEDManager {
     private byte[] blue = new byte[512];
 
     public ArduinoLEDManager(int bits, boolean gammaCorrection, int outBits) {
-        if (bits < 1 || bits >= RESOLUTIONS.length) throw new IllegalArgumentException("Invalid bits: " + bits);
-        if (outBits < 1 || outBits >= OUT_RESOLUTIONS.length) throw new IllegalArgumentException("Invalid outBits: " + outBits);
+        if (bits < 1 || bits > 8) throw new IllegalArgumentException("Invalid bits: " + bits);
+        if (outBits < 1) throw new IllegalArgumentException("Invalid outBits: " + outBits);
         this.gammaCorrection = gammaCorrection;
         this.bits = bits;
         this.outBits = outBits;
-        this.resolution = RESOLUTIONS[bits];
-        this.outResolution = OUT_RESOLUTIONS[outBits];
+        this.resolution = (int)Math.pow(2, bits) - 1;
+        this.outResolution = (int)Math.pow(2, outBits) - 1;
         this.factor = 255F / resolution;
     }
 

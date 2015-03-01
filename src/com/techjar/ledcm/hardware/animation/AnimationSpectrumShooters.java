@@ -33,7 +33,7 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
             }
         }
         for (int i = 0; i < 64; i++) {
-            float amplitude = amplitudes[i];
+            float amplitude = amplitudes[i] - 2;
             if (amplitude > sensitivity * (1 - (i / 70F))) {
                 int x = i & 7;
                 int y = (i >> 3) & 7;

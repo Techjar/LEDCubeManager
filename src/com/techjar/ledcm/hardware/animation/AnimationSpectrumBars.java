@@ -22,7 +22,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     @Override
     public synchronized void refresh() {
         for (int i = 0; i < 64; i++) {
-            float amplitude = amplitudes[i];
+            float amplitude = amplitudes[i] - 2;
             Vector2 pos = spiralPosition(i);
             for (int j = 0; j < 8; j++) {
                 float increment = (4.0F * (j + 1)) * (1 - (i / 70F));
