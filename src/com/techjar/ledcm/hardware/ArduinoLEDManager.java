@@ -24,7 +24,7 @@ public class ArduinoLEDManager implements LEDManager {
 
     public ArduinoLEDManager(int bits, boolean gammaCorrection, int outBits) {
         if (bits < 1 || bits > 8) throw new IllegalArgumentException("Invalid bits: " + bits);
-        if (outBits < 1) throw new IllegalArgumentException("Invalid outBits: " + outBits);
+        if (outBits < bits || outBits < 1 || outBits > 31) throw new IllegalArgumentException("Invalid outBits: " + outBits);
         this.gammaCorrection = gammaCorrection;
         this.bits = bits;
         this.outBits = outBits;
@@ -70,29 +70,35 @@ public class ArduinoLEDManager implements LEDManager {
     public byte[] getCommData() {
         synchronized (this) {
             byte[] array = new byte[192 * outBits];
-            int[] red = new int[512];
-            int[] green = new int[512];
-            int[] blue = new int[512];
+            int[] red2 = new int[512];
+            int[] green2 = new int[512];
+            int[] blue2 = new int[512];
             for (int i = 0; i < 512; i++) {
-                red[i] = Math.round((this.red[i] & 0xFF) / factor);
-                green[i] = Math.round((this.green[i] & 0xFF) / factor);
-                blue[i] = Math.round((this.blue[i] & 0xFF) / factor);
+                red2[i] = Math.round((red[i] & 0xFF) / factor);
+                green2[i] = Math.round((green[i] & 0xFF) / factor);
+                blue2[i] = Math.round((blue[i] & 0xFF) / factor);
             }
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
-                    red[i] = (byte)Math.round(MathHelper.cie1931((double)red[i] / resolution) * outResolution);
-                    green[i] = (byte)Math.round(MathHelper.cie1931((double)green[i] / resolution) * outResolution);
-                    blue[i] = (byte)Math.round(MathHelper.cie1931((double)blue[i] / resolution) * outResolution);
+                    red2[i] = (int)Math.round(MathHelper.cie1931((double)red2[i] / resolution) * outResolution);
+                    green2[i] = (int)Math.round(MathHelper.cie1931((double)green2[i] / resolution) * outResolution);
+                    blue2[i] = (int)Math.round(MathHelper.cie1931((double)blue2[i] / resolution) * outResolution);
+                }
+            } else if (outBits != bits) {
+                for (int i = 0; i < 512; i++) {
+                    red2[i] = (int)Math.round(((double)red2[i] / resolution) * outResolution);
+                    green2[i] = (int)Math.round(((double)green2[i] / resolution) * outResolution);
+                    blue2[i] = (int)Math.round(((double)blue2[i] / resolution) * outResolution);
                 }
             }
-            for (int i = 0; i < bits; i++) {
+            for (int i = 0; i < outBits; i++) {
                 int mask = 1 << i;
                 int index = 192 * i;
                 for (int j = 0; j < 512; j++) {
                     int bit = j % 8;
-                    array[index + (j / 8)] |= ((red[j] & mask) >> i) << bit;
-                    array[index + (j / 8) + 64] |= ((green[j] & mask) >> i) << bit;
-                    array[index + (j / 8) + 128] |= ((blue[j] & mask) >> i) << bit;
+                    array[index + (j / 8)] |= ((red2[j] & mask) >> i) << bit;
+                    array[index + (j / 8) + 64] |= ((green2[j] & mask) >> i) << bit;
+                    array[index + (j / 8) + 128] |= ((blue2[j] & mask) >> i) << bit;
                 }
             }
             return array;
@@ -111,7 +117,7 @@ public class ArduinoLEDManager implements LEDManager {
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 6) | (z << 3) | x;
+        int index = (y << 6) | (x << 3) | z;
         return new Color(red[index], green[index], blue[index]);
     }
 
@@ -126,7 +132,7 @@ public class ArduinoLEDManager implements LEDManager {
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 6) | (z << 3) | x;
+        int index = (y << 6) | (x << 3) | z;
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();

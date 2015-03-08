@@ -68,7 +68,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     private Color colorAtY(int y, float brightness) {
         int res = ledManager.getResolution();
         if (y > 6) return new Color(Math.round(res * brightness), 0, 0);
-        if (y > 5) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
+        if (y > 4) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
         if (y > 1) return new Color(0, Math.round(res * brightness), 0);
         return new Color(0, 0, Math.round(res * brightness));
     }

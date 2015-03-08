@@ -692,8 +692,16 @@ public class LEDCubeManager {
                 if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
                     Mouse.setGrabbed(!Mouse.isGrabbed());
                     if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
-                } else if (Keyboard.getEventKey() == Keyboard.KEY_R && commThread.getCurrentSequence() == null) {
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_Y && commThread.getCurrentSequence() == null) {
                     loadAnimations();
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_R && commThread.getCurrentAnimation() != null) {
+                    Animation anim = commThread.getCurrentAnimation();
+                    try {
+                        animations.put(anim.getName(), anim.getClass().newInstance());
+                        commThread.setCurrentAnimation(animations.get(anim.getName()));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
                 } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
                     camera.setPosition(new Vector3(-80, 85, 28));
                     camera.setAngle(new Angle(-31, -90, 0));

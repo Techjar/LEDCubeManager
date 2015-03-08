@@ -36,11 +36,11 @@ public class AnimationTwinkle extends Animation {
             int z = random.nextInt(dimension.z);
             int index = Util.encodeCubeVector(x, y, z);
             twinkles[index] = 3 + random.nextInt(5);
-            colors[index] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
+            colors[index] = new Color(random.nextInt(ledManager.getResolution() + 1), random.nextInt(ledManager.getResolution() + 1), random.nextInt(ledManager.getResolution() + 1));
         }
         for (int i = 0; i < twinkles.length; i++) {
             Vector3 pos = Util.decodeCubeVector(i);
-            ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), twinkles[i]-- > 0 ? colors[i] : new Color());
+            ledManager.setLEDColorReal((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), twinkles[i]-- > 0 ? colors[i] : new Color());
         }
     }
 

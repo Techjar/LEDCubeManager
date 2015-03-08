@@ -213,7 +213,7 @@ public final class Util {
 
     public static int encodeCubeVector(Vector3 vector) {
         Dimension3D bits = getRequiredBits(LEDCubeManager.getLEDManager().getDimensions());
-        return (int)vector.getX() | ((int)vector.getZ() << bits.x) | ((int)vector.getY() << (bits.x + bits.z));
+        return (int)vector.getZ() | ((int)vector.getX() << bits.z) | ((int)vector.getY() << (bits.x + bits.z));
     }
 
     public static int encodeCubeVector(int x, int y, int z) {
@@ -223,7 +223,7 @@ public final class Util {
     public static Vector3 decodeCubeVector(int number) {
         Dimension3D dim = LEDCubeManager.getLEDManager().getDimensions();
         Dimension3D bits = getRequiredBits(dim);
-        return new Vector3(number & (dim.x - 1), (number >> (bits.x + bits.z)) & (dim.y - 1), (number >> bits.x) & (dim.z - 1));
+        return new Vector3(number & (dim.z - 1), (number >> (bits.x + bits.z)) & (dim.y - 1), (number >> bits.z) & (dim.x - 1));
     }
 
     public static int getRequiredBits(long value) {

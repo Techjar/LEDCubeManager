@@ -115,6 +115,7 @@ public class ScreenMainControl extends Screen {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
+                        if (LEDCubeManager.isConvertingAudio()) return;
                         int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
                         if (option == JFileChooser.APPROVE_OPTION) {
                             try {

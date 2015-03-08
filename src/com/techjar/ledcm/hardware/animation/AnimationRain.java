@@ -13,9 +13,10 @@ import org.lwjgl.util.Color;
  */
 public class AnimationRain extends Animation {
     private int[] drops = new int[64];
-    private boolean[] floor = new boolean[64];
+    private float[] floor = new float[64];
     private int[] lightning = new int[64];
     private boolean[] states = new boolean[512];
+    private float[] floorStates = new float[64];
     private Random random = new Random();
     private Color topColor = new Color(0, 0, 255);
     private Color bottomColor = new Color(255, 0, 255);
@@ -41,11 +42,11 @@ public class AnimationRain extends Animation {
                         if (lightning[index] == 0) {
                             for (int y = 0; y < 8; y++) {
                                 Color color = MathHelper.lerp(bottomColor, topColor, y / 7F);
-                                if (y == 0) ledManager.setLEDColor(x, y, z, floor[index] ? color: new Color());
+                                if (y == 0) ledManager.setLEDColor(x, y, z, floor[index] > 0 ? Util.multiplyColor(color, floor[index]) : new Color());
                                 else ledManager.setLEDColor(x, y, z, checkBit(drops[index], y) ? color: new Color());
                             }
                         }
-                    } else if (random.nextInt(3000) == 0) {
+                    } else if (random.nextInt(2000) == 0) {
                         lightning[index] = random.nextInt(30) + 1;
                     }
                     boolean lightningCheck = checkLightning(lightning[index]);
@@ -61,18 +62,16 @@ public class AnimationRain extends Animation {
                         if (y == 7) {
                             if (random.nextInt(20) == 0) drops[index] |= 0b10000000;
                         } else if (y == 0) {
-                            if (floor[index] && random.nextInt(30) == 0) {
-                                floor[index] = false;
-                            }
+                            floor[index] = Math.max(floor[index] - (random.nextFloat() * 0.1F), 0);
                             if (checkBit(drops[index], y)) {
-                                drops[index] &= 0b11111110;
-                                floor[index] = true;
+                                drops[index] &= ~0b1;
+                                floor[index] = 1;
                             }
                         }
                         if (y == 0) {
-                            if (floor[index] != states[stateIndex]) {
-                                states[stateIndex] = floor[index];
-                                if (!lightningCheck) ledManager.setLEDColor(x, y, z, states[stateIndex] ? color : new Color());
+                            if (floor[index] != floorStates[stateIndex]) {
+                                floorStates[stateIndex] = floor[index];
+                                if (!lightningCheck) ledManager.setLEDColor(x, y, z, floorStates[stateIndex] > 0 ? Util.multiplyColor(color, floorStates[stateIndex]) : new Color());
                             }
                         } else {
                             boolean bit = checkBit(drops[index], y);
@@ -90,9 +89,10 @@ public class AnimationRain extends Animation {
     @Override
     public void reset() {
         drops = new int[64];
-        floor = new boolean[64];
+        floor = new float[64];
         lightning = new int[64];
         states = new boolean[512];
+        floorStates = new float[64];
     }
 
     private boolean checkBit(int number, int bit) {

@@ -18,6 +18,7 @@
 
 package ddf.minim.javasound;
 
+import com.techjar.ledcm.util.Util;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +55,8 @@ import ddf.minim.spi.AudioRecordingStream;
 import ddf.minim.spi.AudioStream;
 import ddf.minim.spi.MinimServiceProvider;
 import ddf.minim.spi.SampleRecorder;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.lang.reflect.Field;
 import javazoom.spi.vorbis.sampled.convert.VorbisFormatConversionProvider;
@@ -817,7 +820,7 @@ public class JSMinim implements MinimServiceProvider
 			{
 				InputStream is = (InputStream)createInput.invoke(fileLoader, filename);
 				debug("Base input stream is: " + is.toString());
-				bis = new BufferedInputStream(is);
+                                bis = new BufferedInputStream(is);
 				ais = getAudioInputStream(bis, filename.substring(filename.lastIndexOf('.') + 1));
 				// don't mark it like this because it means the entire
 				// file will be loaded into memory as it plays. this 

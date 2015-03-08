@@ -23,7 +23,7 @@ public class AnimationStrobe extends Animation {
 
     @Override
     public void refresh() {
-        if (ticks % 3 == 0) {
+        if (ticks % 2 == 0) {
             state = !state;
             for (int x = 0; x < dimension.x; x++) {
                 for (int y = 0; y < dimension.y; y++) {

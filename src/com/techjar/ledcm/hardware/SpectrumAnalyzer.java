@@ -198,6 +198,10 @@ public class SpectrumAnalyzer {
                     anim.processFFT(fft);
                 }
                 if (anim.isBeatDetect()) {
+                    if (anim.getBeatDetectMode() != beatDetectMode) {
+                        beatDetectMode = anim.getBeatDetectMode();
+                        beatDetect.detectMode(beatDetectMode);
+                    }
                     beatDetect.detect(floats);
                     anim.processBeatDetect(beatDetect);
                 }
