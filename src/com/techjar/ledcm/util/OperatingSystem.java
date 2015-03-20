@@ -16,6 +16,9 @@ public final class OperatingSystem {
         else if (os.indexOf("sunos") >= 0 || os.indexOf("solaris") >= 0) osType = Type.SOLARIS;
         else osType = Type.UNKNOWN;
     }
+
+    private OperatingSystem() {
+    }
     
     public static boolean isWindows() {
         return osType == Type.WINDOWS;

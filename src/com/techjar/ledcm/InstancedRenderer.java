@@ -29,7 +29,7 @@ import org.lwjgl.util.vector.Matrix4f;
 public final class InstancedRenderer {
     private static final Map<Model, Queue<InstanceItem>> items = new HashMap<>();
     private static final int vboId;
-    private static ByteBuffer buffer = BufferUtils.createByteBuffer(4000000);
+    private static ByteBuffer buffer = BufferUtils.createByteBuffer(8000000);
 
     static {
         vboId = glGenBuffers();
@@ -85,7 +85,6 @@ public final class InstancedRenderer {
             glDrawArraysInstanced(GL_TRIANGLES, 0, model.getIndices(), count);
             for (int i = 0; i < 8; i++) glDisableVertexAttribArray(i);
         }
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         return total;
     }
 

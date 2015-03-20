@@ -23,8 +23,7 @@ layout(binding=0) uniform sampler2D model_texture;
 layout(location=0) uniform int num_lights;
 layout(location=1) uniform Light lights[10];
 
-// The view matrix and the projection matrix are constant
-// across a draw
+// The view matrix and the projection matrix are constant across a draw
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 

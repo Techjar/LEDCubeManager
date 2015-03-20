@@ -12,5 +12,5 @@ public final class Constants {
     }
 
     public static final String APP_TITLE = "LED Cube Manager";
-    public static final File DATA_DIRECTORY = OperatingSystem.getDataDirectory("cubedesigner");
+    public static final File DATA_DIRECTORY = OperatingSystem.getDataDirectory("ledcubemanager");
 }
