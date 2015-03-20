@@ -37,6 +37,11 @@ public class TLC5940LEDManager implements LEDManager {
     }
 
     @Override
+    public int getLEDCount() {
+        return 8 * 8 * 8;
+    }
+
+    @Override
     public boolean getGammaCorrection() {
         return gammaCorrection;
     }
@@ -55,22 +60,23 @@ public class TLC5940LEDManager implements LEDManager {
             int[] blue2 = new int[512];
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
-                    red2[i] = (int)Math.round(MathHelper.cie1931((double)red[i] / 255) * 4095);
-                    green2[i] = (int)Math.round(MathHelper.cie1931((double)green[i] / 255) * 4095);
-                    blue2[i] = (int)Math.round(MathHelper.cie1931((double)blue[i] / 255) * 4095);
+                    red2[i] = (int)Math.round(MathHelper.cie1931(red[i] / 255D) * 4095D);
+                    green2[i] = (int)Math.round(MathHelper.cie1931(green[i] / 255D) * 4095D);
+                    blue2[i] = (int)Math.round(MathHelper.cie1931(blue[i] / 255D) * 4095D);
                 }
             } else {
                 for (int i = 0; i < 512; i++) {
-                    red2[i] = (int)Math.round(((double)red[i] / 255) * 4095);
-                    green2[i] = (int)Math.round(((double)green[i] / 255) * 4095);
-                    blue2[i] = (int)Math.round(((double)blue[i] / 255) * 4095);
+                    red2[i] = (int)Math.round((red[i] / 255D) * 4095D);
+                    green2[i] = (int)Math.round((green[i] / 255D) * 4095D);
+                    blue2[i] = (int)Math.round((blue[i] / 255D) * 4095D);
                 }
             }
-            for (int y = 0, index = 0; y < 8; y++) {
+            for (int y = 0; y < 8; y++) {
+                int index = 285 + (288 * y);
                 int[][] arrs = {red2, green2, blue2};
                 for (int[] arr : arrs) {
-                    for (int i = 0; i < 64; i += 2, index += 3) {
-                        System.arraycopy(encode12BitValues(arr[i | (y << 6)], arr[(i + 1) | (y << 6)]), 0, array, index, 3);
+                    for (int i = 62; i >= 0; i -= 2, index -= 3) {
+                        System.arraycopy(encode12BitValues(arr[(i + 1) | (y << 6)], arr[i | (y << 6)]), 0, array, index, 3);
                     }
                 }
             }
@@ -113,7 +119,7 @@ public class TLC5940LEDManager implements LEDManager {
     private byte[] encode12BitValues(int value1, int value2) {
         byte[] bytes = new byte[3];
         bytes[0] = (byte)(value1 >> 4);
-        bytes[1] = (byte)((value1 & 0b1111) | ((value2 >> 4) & 0b11110000));
+        bytes[1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
         bytes[2] = (byte)value2;
         return bytes;
     }

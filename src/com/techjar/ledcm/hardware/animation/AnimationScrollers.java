@@ -30,7 +30,7 @@ public class AnimationScrollers extends Animation {
         if (ticks % 3 == 0) {
             for (int x = 0; x < 8; x++) {
                 for (int z = 0; z < 8; z++) {
-                    int index = x | (z << 3);
+                    int index = z | (x << 3);
                     int dot = dots[index];
                     if ((dot != 0b1 && dot != 0b10000000) || random.nextInt(500) == 0) {
                         if (directions[index]) dots[index] <<= 1;
@@ -47,7 +47,7 @@ public class AnimationScrollers extends Animation {
     public void reset() {
         for (int x = 0; x < 8; x++) {
             for (int z = 0; z < 8; z++) {
-                int index = x | (z << 3);
+                int index = z | (x << 3);
                 directions[index] = random.nextBoolean();
                 dots[index] = directions[index] ? 0b1 : 0b10000000;
             }
@@ -58,7 +58,7 @@ public class AnimationScrollers extends Animation {
     private void updateCube() {
         for (int x = 0; x < 8; x++) {
             for (int z = 0; z < 8; z++) {
-                int dot = dots[x | (z << 3)];
+                int dot = dots[z | (x << 3)];
                 for (int y = 0; y < 8; y++) {
                     ledManager.setLEDColor(x, y, z, checkBit(dot, y) ? LEDCubeManager.getPaintColor() : new Color());
                 }

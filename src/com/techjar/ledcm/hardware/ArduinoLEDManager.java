@@ -57,6 +57,11 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
+    public int getLEDCount() {
+        return 8 * 8 * 8;
+    }
+
+    @Override
     public boolean getGammaCorrection() {
         return gammaCorrection;
     }

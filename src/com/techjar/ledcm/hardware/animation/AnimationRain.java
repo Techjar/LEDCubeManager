@@ -18,8 +18,8 @@ public class AnimationRain extends Animation {
     private boolean[] states = new boolean[512];
     private float[] floorStates = new float[64];
     private Random random = new Random();
-    private Color topColor = new Color(0, 0, 255);
-    private Color bottomColor = new Color(255, 0, 255);
+    private Color topColor = new Color(0, 255, 0);
+    private Color bottomColor = new Color(255, 0, 0);
     private Color lightningColor = new Color(225, 255, 255);
 
     public AnimationRain() {
@@ -46,7 +46,7 @@ public class AnimationRain extends Animation {
                                 else ledManager.setLEDColor(x, y, z, checkBit(drops[index], y) ? color: new Color());
                             }
                         }
-                    } else if (random.nextInt(2000) == 0) {
+                    } else if (random.nextInt(2500) == 0) {
                         lightning[index] = random.nextInt(30) + 1;
                     }
                     boolean lightningCheck = checkLightning(lightning[index]);

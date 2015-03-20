@@ -20,7 +20,7 @@ public class Camera {
     @Getter @Setter private float rotateMultiplier;
     @Getter @Setter private Vector3 position;
     @Getter private Angle angle;
-    private boolean pW, pS, pA, pD, pShift;
+    private boolean pW, pS, pA, pD, pQ, pE, pShift;
 
     public Camera() {
         this.moveSpeed = 20;
@@ -43,6 +43,12 @@ public class Camera {
                 break;
             case Keyboard.KEY_D:
                 pD = pressed;
+                break;
+            case Keyboard.KEY_Q:
+                pQ = pressed;
+                break;
+            case Keyboard.KEY_E:
+                pE = pressed;
                 break;
             case Keyboard.KEY_LSHIFT:
                 pShift = pressed;
@@ -69,6 +75,12 @@ public class Camera {
         }
         if (pA) {
             position = position.subtract(angle.right().multiply(moveSpeed * moveMult * delta));
+        }
+        if (pQ) {
+            position = position.subtract(angle.up().multiply(moveSpeed * moveMult * delta));
+        }
+        if (pE) {
+            position = position.add(angle.up().multiply(moveSpeed * moveMult * delta));
         }
         if (Mouse.isGrabbed()) {
             Vector2 offset = Util.getMouseCenterOffset();

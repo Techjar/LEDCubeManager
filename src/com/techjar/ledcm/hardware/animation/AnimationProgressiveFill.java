@@ -15,7 +15,7 @@ import org.lwjgl.util.Color;
 public class AnimationProgressiveFill extends Animation {
     private Timer timer = new Timer();
     private Random random = new Random();
-    private boolean[] states = new boolean[512];
+    private boolean[] states;
     private int filledCount;
 
     public AnimationProgressiveFill() {
@@ -52,7 +52,7 @@ public class AnimationProgressiveFill extends Animation {
     @Override
     public void reset() {
         timer.restart();
-        states = new boolean[512];
+        states = new boolean[ledManager.getLEDCount()];
         filledCount = 0;
         for (int x = 0; x < dimension.x; x++) {
             for (int y = 0; y < dimension.y; y++) {

@@ -22,13 +22,17 @@ import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.hardware.ArduinoLEDManager;
 import com.techjar.ledcm.hardware.CommThread;
+import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
+import com.techjar.ledcm.hardware.TLC5940LEDManager;
+import com.techjar.ledcm.hardware.TestHugeLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;
 import com.techjar.ledcm.util.ConfigManager;
 import com.techjar.ledcm.util.Constants;
+import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Direction;
 import com.techjar.ledcm.util.LightSource;
 import com.techjar.ledcm.util.MathHelper;
@@ -166,7 +170,7 @@ public class LEDCubeManager {
     @Getter private static String serialPortName = "COM3";
     @Getter private static int serverPort = 7545;
     @Getter private static Color paintColor = new Color(255, 255, 255);
-    @Getter private static boolean[] highlight = new boolean[512];
+    @Getter private static boolean[] highlight;
     @Getter private static Vector3 paintSize = new Vector3(0, 0, 0);
     @Getter @Setter private static int layerIsolation = 0;
     @Getter @Setter private static int selectedLayer = 0;
@@ -257,6 +261,8 @@ public class LEDCubeManager {
         camera = new Camera();
         frustum = new Frustum();
         ledManager = new ArduinoLEDManager(4, false);
+        //ledManager = new TestHugeLEDManager(true);
+        highlight = new boolean[ledManager.getLEDCount()];
         fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac)", "wav", "mp3", "ogg", "flac"));
         fileChooser.setMultiSelectionEnabled(false);
@@ -323,7 +329,7 @@ public class LEDCubeManager {
         addAnimation(new AnimationNone());
         addAnimation(new AnimationSpectrumBars());
         addAnimation(new AnimationSpectrumShooters());
-        addAnimation(new AnimationIndividualTest());
+        //addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
         addAnimation(new AnimationPulsate());
         addAnimation(new AnimationPulsateHue());
@@ -349,6 +355,7 @@ public class LEDCubeManager {
         addAnimation(new AnimationMultiFaucet());
         addAnimation(new AnimationFaucetFill());
         addAnimation(new AnimationFaucetFillRainbow());
+        addAnimation(new AnimationSlidingBoxes());
         if (screenMainControl != null) {
             screenMainControl.populateAnimationList();
         }
@@ -711,6 +718,8 @@ public class LEDCubeManager {
                     screenMainControl.redColorSlider.setIncrement(increment);
                     screenMainControl.greenColorSlider.setIncrement(increment);
                     screenMainControl.blueColorSlider.setIncrement(increment);
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_C) {
+                    LEDUtil.clear(ledManager);
                 }
             }
             if (!camera.processKeyboardEvent()) continue;
@@ -732,17 +741,20 @@ public class LEDCubeManager {
                 if (screen.isVisible() && screen.isEnabled() && !screen.processMouseEvent()) continue toploop;
             //if (world != null && !world.processMouseEvent()) continue;
             //if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState() && !asteroids.containsKey(getMousePos())) asteroids.put(getMousePos(), AsteroidGenerator.generate());
-            highlight = new boolean[512];
+            for (int i = 0; i < highlight.length; i++) {
+                highlight[i] = false;
+            }
             if (Mouse.getEventButtonState() && Mouse.getEventButton() == 0) drawClick = true;
             else if (!Mouse.getEventButtonState() && Mouse.getEventButton() == 0) drawClick = false;
             if (!Mouse.isGrabbed()) {
                 Vector3 led = traceCursorToLED();
                 if (led != null) {
-                    for (int x = (int)led.getX(); x <= Math.min((int)led.getX() + (int)paintSize.getX(), 7); x++) {
-                        for (int y= (int)led.getY(); y <= Math.min((int)led.getY() + (int)paintSize.getY(), 7); y++) {
-                            for (int z = (int)led.getZ(); z <= Math.min((int)led.getZ() + (int)paintSize.getZ(), 7); z++) {
+                    Dimension3D dim = ledManager.getDimensions();
+                    for (int x = (int)led.getX(); x <= Math.min((int)led.getX() + (int)paintSize.getX(), dim.x - 1); x++) {
+                        for (int y = (int)led.getY(); y <= Math.min((int)led.getY() + (int)paintSize.getY(), dim.y - 1); y++) {
+                            for (int z = (int)led.getZ(); z <= Math.min((int)led.getZ() + (int)paintSize.getZ(), dim.z - 1); z++) {
                                 if (isLEDWithinIsolation(x, y, z)) {
-                                    highlight[x | (z << 3) | (y << 6)] = true;
+                                    highlight[Util.encodeCubeVector(x, y, z)] = true;
                                     if (drawClick) {
                                         ledManager.setLEDColor(x, y, z, paintColor);
                                     }
@@ -753,7 +765,7 @@ public class LEDCubeManager {
                     if (!drawClick && Mouse.getEventButtonState() && Mouse.getEventButton() == 1) {
                         Color targetColor = ledManager.getLEDColor((int)led.getX(), (int)led.getY(), (int)led.getZ());
                         if (!targetColor.equals(paintColor)) {
-                            boolean[] processed = new boolean[512];
+                            boolean[] processed = new boolean[ledManager.getLEDCount()];
                             LinkedList<Vector3> stack = new LinkedList<>();
                             stack.push(led);
                             while (!stack.isEmpty()) {
@@ -766,7 +778,7 @@ public class LEDCubeManager {
                                     for (int i = 0; i < 6; i++) {
                                         Vector3 offset = Direction.values()[i].getVector();
                                         Vector3 node = current.add(offset);
-                                        if (node.getX() >= 0 && node.getX() <= 7 && node.getY() >= 0 && node.getY() <= 7 && node.getZ() >= 0 && node.getZ() <= 7) {
+                                        if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z) {
                                             if (!processed[Util.encodeCubeVector(node)]) {
                                                 stack.push(node);
                                             }
@@ -924,59 +936,59 @@ public class LEDCubeManager {
         float mult = 8;
         Random rand = new Random();
 
-        int width = 8;
-        int length = 8;
-        int height = 8;
-        int size = width * length * height * 16 * 4;
+        Dimension3D dim = ledManager.getDimensions();
+        int size = dim.x * dim.y * dim.z * 16 * 4;
         Model model = modelManager.getModel(modelName);
-        Color[] colors = new Color[512];
+        Color[] colors = new Color[ledManager.getLEDCount()];
         synchronized (ledManager) {
-            for (int y = 0; y < height; y++) {
-                for (int z = 0; z < length; z++) {
-                    for (int x = 0; x < width; x++) {
+            for (int y = 0; y < dim.y; y++) {
+                for (int z = 0; z < dim.z; z++) {
+                    for (int x = 0; x < dim.x; x++) {
                         if (trueColor) {
                             Color color = ledManager.getLEDColorReal(x, y, z);
-                            colors[x | (z << 3) | (y << 6)] = new Color(Math.round(color.getRed() * ledManager.getFactor()), Math.round(color.getGreen() * ledManager.getFactor()), Math.round(color.getBlue() * ledManager.getFactor()));
+                            colors[Util.encodeCubeVector(x, y, z)] = new Color(Math.round(color.getRed() * ledManager.getFactor()), Math.round(color.getGreen() * ledManager.getFactor()), Math.round(color.getBlue() * ledManager.getFactor()));
                         } else {
-                            colors[x | (z << 3) | (y << 6)] = ledManager.getLEDColor(x, y, z);
+                            colors[Util.encodeCubeVector(x, y, z)] = ledManager.getLEDColor(x, y, z);
                         }
                     }
 
                 }
             }
         }
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < length; z++) {
-                for (int x = 0; x < width; x++) {
+        for (int y = 0; y < dim.y; y++) {
+            for (int z = 0; z < dim.z; z++) {
+                for (int x = 0; x < dim.x; x++) {
                     float xx = z * mult;
                     float yy = y * mult;
                     float zz = x * mult;
                     Vector3 pos = new Vector3(xx, yy, zz);
                     if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
                         faceCount += model.getFaceCount();
-                        model.render(pos, new Quaternion(), colors[x | (z << 3) | (y << 6)], false);
+                        InstancedRenderer.addItem(model, pos, new Quaternion(), colors[Util.encodeCubeVector(x, y, z)]);
                     }
                 }
             }
         }
 
         model = modelManager.getModel("led_larger.model");
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < length; z++) {
-                for (int x = 0; x < width; x++) {
-                    if (highlight[x | (z << 3) | (y << 6)]) {
+        for (int y = 0; y < dim.y; y++) {
+            for (int z = 0; z < dim.z; z++) {
+                for (int x = 0; x < dim.x; x++) {
+                    if (highlight[Util.encodeCubeVector(x, y, z)]) {
                         float xx = z * mult;
                         float yy = y * mult;
                         float zz = x * mult;
                         Vector3 pos = new Vector3(xx, yy, zz);
                         if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
                             faceCount += model.getFaceCount();
-                            model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), false);
+                            InstancedRenderer.addItem(model, pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32));
                         }
                     }
                 }
             }
         }
+
+        InstancedRenderer.renderAll();
         ShaderProgram.useNone();
         
         glPopMatrix();
@@ -998,7 +1010,7 @@ public class LEDCubeManager {
             debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + commThread.getNumTCPClients(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Current music: " + spectrumAnalyzer.getCurrentTrack(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Music time: " + spectrumAnalyzer.getPositionMillis(), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (trueColor ? "true" : "full"), debugColor);
+            if (ledManager.getResolution() < 255) debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (trueColor ? "true" : "full"), debugColor);
             if (convertingAudio) debugFont.drawString(5, 5 + y++ * 25, "Converting audio...", debugColor);
             if (renderDebug) {
                 Runtime runtime = Runtime.getRuntime();
@@ -1044,7 +1056,6 @@ public class LEDCubeManager {
     }
 
     public Vector3[] getCursorRay() {
-        //Vector2 cursorPos = Util.getMousePos();
         float nearClip = 0.1F;
         Vector3 look = camera.getAngle().forward();
         Vector3 lookH = camera.getAngle().right();
@@ -1067,15 +1078,13 @@ public class LEDCubeManager {
         Vector3 direction = ray[1].multiply(0.5F);
 
         float mult = 8;
-        int width = 8;
-        int length = 8;
-        int height = 8;
+        Dimension3D dim = ledManager.getDimensions();
         Model model = modelManager.getModel("led.model");
         for (float step = 1; step < 1000; step += 2) {
             Vector3 rayPos = position.add(direction.multiply(step));
-            for (int y = 0; y < height; y++) {
-                for (int z = 0; z < length; z++) {
-                    for (int x = 0; x < width; x++) {
+            for (int y = 0; y < dim.y; y++) {
+                for (int z = 0; z < dim.z; z++) {
+                    for (int x = 0; x < dim.x; x++) {
                         float xx = z * mult;
                         float yy = y * mult;
                         float zz = x * mult;

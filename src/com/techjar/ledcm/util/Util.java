@@ -207,10 +207,6 @@ public final class Util {
         return new org.lwjgl.util.Color(MathHelper.clamp((int)Math.round(color1.getRed() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getGreen() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getBlue() * mult), 0, 255));
     }
 
-    public static Dimension3D getRequiredBits(Dimension3D dimension) {
-        return new Dimension3D(getRequiredBits(dimension.x - 1), getRequiredBits(dimension.y - 1), getRequiredBits(dimension.z - 1));
-    }
-
     public static int encodeCubeVector(Vector3 vector) {
         Dimension3D bits = getRequiredBits(LEDCubeManager.getLEDManager().getDimensions());
         return (int)vector.getZ() | ((int)vector.getX() << bits.z) | ((int)vector.getY() << (bits.x + bits.z));
@@ -235,6 +231,10 @@ public final class Util {
         return i;
     }
 
+    public static Dimension3D getRequiredBits(Dimension3D dimension) {
+        return new Dimension3D(getRequiredBits(dimension.x - 1), getRequiredBits(dimension.y - 1), getRequiredBits(dimension.z - 1));
+    }
+
     public static float getAxisValue(Controller con, String name) {
         if (name == null) return 0;
         for (int i = 0; i < con.getAxisCount(); i++) {
@@ -253,6 +253,15 @@ public final class Util {
         for (int i = array.length - 1; i > 0; i--) {
             int index = random.nextInt(i + 1);
             Object obj = array[index];
+            array[index] = array[i];
+            array[i] = obj;
+        }
+    }
+
+    public static void shuffleArray(int[] array, Random random) {
+        for (int i = array.length - 1; i > 0; i--) {
+            int index = random.nextInt(i + 1);
+            int obj = array[index];
             array[index] = array[i];
             array[i] = obj;
         }

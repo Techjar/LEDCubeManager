@@ -16,6 +16,7 @@ public interface LEDManager {
      * For example, 4-bit brightness is 0-15, so the return value would be 15.
      */
     public int getResolution();
+
     /**
      * Returns the factor derived from the resolution. (255 / resolution)
      */
@@ -26,6 +27,11 @@ public interface LEDManager {
      * Currently, changing this from 8x8x8 is not supported.
      */
     public Dimension3D getDimensions();
+
+    /**
+     * Returns the number of LEDs in the cube.
+     */
+    public int getLEDCount();
 
     /**
      * Get gamma correction

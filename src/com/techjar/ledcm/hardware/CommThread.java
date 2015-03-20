@@ -56,14 +56,16 @@ public class CommThread extends Thread {
             if (diff >= interval) {
                 updateTime = System.nanoTime();
                 ticks++;
-                synchronized (lock) {
+                synchronized (ledManager) {
                     if (currentSequence != null) currentSequence.update();
                     if (currentAnimation != null) {
                         currentAnimation.refresh();
                         currentAnimation.incTicks();
                     }
-                    byte[] data = ledManager.getCommData();
-                    tcpServer.sendPacket(Packet.ID.CUBE_FRAME, data);
+                }
+                byte[] data = ledManager.getCommData();
+                tcpServer.sendPacket(Packet.ID.CUBE_FRAME, data);
+                synchronized (lock) {
                     try {
                         if (port.isOpened()) {
                             /*if (ticks % 30 == 0)*/ port.writeBytes(data);

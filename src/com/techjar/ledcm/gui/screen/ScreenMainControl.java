@@ -229,7 +229,7 @@ public class ScreenMainControl extends Screen {
         xScaleSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintSize().setX(Math.round(7 * xScaleSlider.getValue()));
+                LEDCubeManager.getPaintSize().setX(Math.round((ledDim.x - 1) * xScaleSlider.getValue()));
             }
         });
         container.addComponent(xScaleSlider);
@@ -246,7 +246,7 @@ public class ScreenMainControl extends Screen {
         yScaleSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintSize().setY(Math.round(7 * yScaleSlider.getValue()));
+                LEDCubeManager.getPaintSize().setY(Math.round((ledDim.y - 1) * yScaleSlider.getValue()));
             }
         });
         container.addComponent(yScaleSlider);
@@ -263,7 +263,7 @@ public class ScreenMainControl extends Screen {
         zScaleSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintSize().setZ(Math.round(7 * zScaleSlider.getValue()));
+                LEDCubeManager.getPaintSize().setZ(Math.round((ledDim.z - 1) * zScaleSlider.getValue()));
             }
         });
         container.addComponent(zScaleSlider);

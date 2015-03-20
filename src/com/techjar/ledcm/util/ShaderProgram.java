@@ -125,7 +125,7 @@ public class ShaderProgram {
         glValidateProgram(id);
         if (glGetProgrami(id, GL_LINK_STATUS) != GL_TRUE) {
             int length = glGetProgrami(id, GL_INFO_LOG_LENGTH);
-            String log = glGetShaderInfoLog(id, length);
+            String log = glGetProgramInfoLog(id, length);
             throw new RuntimeException("Program linking error: " + log);
         }
         for (int i : shaderIds) {
