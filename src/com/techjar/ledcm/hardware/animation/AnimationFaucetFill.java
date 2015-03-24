@@ -32,9 +32,9 @@ public class AnimationFaucetFill extends Animation {
     @Override
     public void refresh() {
         if (ticks % 3 == 0) {
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) {
-                    for (int z = 0; z < 8; z++) {
+            for (int y = 0; y < dimension.y; y++) {
+                for (int x = 0; x < dimension.x; x++) {
+                    for (int z = 0; z < dimension.z; z++) {
                         Color color = ledManager.getLEDColor(x, y, z);
                         if (color.equals(ReadableColor.BLACK)) continue;
                         if (y > 0 && ledManager.getLEDColor(x, y - 1, z).equals(ReadableColor.BLACK)) {
@@ -62,16 +62,16 @@ public class AnimationFaucetFill extends Animation {
                 }
             }
             if (random.nextInt(2) == 0) {
-                pos.setX(MathHelper.clamp(pos.getX() + (random.nextInt(3) - 1), 0, 7));
-                pos.setY(MathHelper.clamp(pos.getY() + (random.nextInt(3) - 1), 0, 7));
+                pos.setX(MathHelper.clamp(pos.getX() + (random.nextInt(3) - 1), 0, dimension.x - 1));
+                pos.setY(MathHelper.clamp(pos.getY() + (random.nextInt(3) - 1), 0, dimension.z - 1));
             }
-            ledManager.setLEDColor((int)pos.getX(), 7, (int)pos.getY(), LEDCubeManager.getPaintColor());
+            ledManager.setLEDColor((int)pos.getX(), dimension.y - 1, (int)pos.getY(), LEDCubeManager.getPaintColor());
         }
     }
 
     @Override
     public void reset() {
-        pos = new Vector2(random.nextInt(8), random.nextInt(8));
+        pos = new Vector2(random.nextInt(dimension.x), random.nextInt(dimension.z));
     }
 
     private boolean isValidPosition(Vector3 position) {

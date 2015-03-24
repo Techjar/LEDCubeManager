@@ -12,16 +12,16 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationCandyCaneStacker extends Animation {
-    private int layers;
-    private int curLayer;
+    private long layers;
+    private long curLayer;
     private int curLayerNum;
-    private int topLayer;
-    private int allLayers;
+    private long topLayer;
+    private long allLayers;
 
     public AnimationCandyCaneStacker() {
         super();
-        topLayer = (int)Math.pow(2, dimension.y - 1);
-        allLayers = (int)Math.pow(2, dimension.y) - 1;
+        topLayer = (long)Math.pow(2, dimension.y - 1);
+        allLayers = (long)Math.pow(2, dimension.y) - 1;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class AnimationCandyCaneStacker extends Animation {
         if (ticks % 3 == 0) {
             if (layers != allLayers) {
                 if (curLayer == 0) {
-                    curLayer |= topLayer;
+                    curLayer = topLayer;
                 } else if ((layers | (curLayer >> 1)) == layers) {
                     layers |= curLayer;
                     curLayer = 0;
@@ -60,8 +60,8 @@ public class AnimationCandyCaneStacker extends Animation {
         curLayerNum = 0;
     }
 
-    private boolean checkBit(int number, int bit) {
-        return (number & (1 << bit)) != 0;
+    private boolean checkBit(long number, int bit) {
+        return (number & (1L << bit)) != 0;
     }
 
     private Color getColorAtLayer(int layer) {

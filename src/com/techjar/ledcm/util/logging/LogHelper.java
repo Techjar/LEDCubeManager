@@ -42,6 +42,10 @@ public final class LogHelper {
         }
     }
 
+    public static Level getLevel() {
+        return logger.getLevel();
+    }
+
     public static void setLevel(Level level) {
         logger.setLevel(level);
     }

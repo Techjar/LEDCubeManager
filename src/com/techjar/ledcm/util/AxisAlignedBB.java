@@ -24,4 +24,8 @@ public class AxisAlignedBB {
         }
         return false;
     }
+
+    public boolean containsPoint(Vector3 point) {
+        return containsPoint(new Vector3(), point);
+    }
 }

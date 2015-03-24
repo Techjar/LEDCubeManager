@@ -15,7 +15,9 @@ import org.lwjgl.util.Color;
  */
 public class AnimationSlidingBoxes extends Animation {
     private Random random = new Random();
+    private int colorSeed;
     private int boxCount = 3;
+    private int boxSize = 4;
     private int[] moving = new int[boxCount];
     private Vector3[] offsets = new Vector3[boxCount];
     private Vector3[] directions = new Vector3[boxCount];
@@ -59,10 +61,10 @@ public class AnimationSlidingBoxes extends Animation {
                     int box = boxes[i];
                     if (boxCount > 1 && box == lastMoved) continue;
                     for (Direction dir : dirs) {
-                        Vector3 pos = offsets[box].add(dir.getVector().multiply(4));
+                        Vector3 pos = offsets[box].add(dir.getVector().multiply(boxSize));
                         if (isFreeSpace(pos)) {
                             directions[box] = dir.getVector();
-                            moving[box] = 4;
+                            moving[box] = boxSize;
                             lastMoved = box;
                             break boxloop;
                         }
@@ -75,11 +77,12 @@ public class AnimationSlidingBoxes extends Animation {
     @Override
     public void reset() {
         LEDUtil.clear(ledManager);
+        colorSeed = random.nextInt();
         for (int i = 0; i < boxCount; i++) {
             moving[i] = 0;
             directions[i] = new Vector3();
             do {
-                offsets[i] = new Vector3(random.nextInt(2) * 4, random.nextInt(2) * 4, random.nextInt(2) * 4);
+                offsets[i] = new Vector3(random.nextInt(dimension.x / boxSize) * boxSize, random.nextInt(dimension.x / boxSize) * boxSize, random.nextInt(dimension.x / boxSize) * boxSize);
             } while (!isFreeSpace(offsets[i]));
             drawBox(i, offsets[i]);
         }
@@ -93,15 +96,17 @@ public class AnimationSlidingBoxes extends Animation {
             case 3: return new Color(255, 255, 0);
             case 4: return new Color(255, 0, 255);
             case 5: return new Color(0, 255, 255);
+            case 6: return new Color(255, 255, 255);
         }
-        return new Color(255, 255, 255);
+        Random rand = new Random(colorSeed * index);
+        return new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256));
     }
 
     private void drawBox(int index, Vector3 offset) {
         Color color = getBoxColor(index);
-        for (int x = (int)offset.getX(); x < (int)offset.getX() + 4; x++) {
-            for (int y = (int)offset.getY(); y < (int)offset.getY() + 4; y++) {
-                for (int z = (int)offset.getZ(); z < (int)offset.getZ() + 4; z++) {
+        for (int x = (int)offset.getX(); x < (int)offset.getX() + boxSize; x++) {
+            for (int y = (int)offset.getY(); y < (int)offset.getY() + boxSize; y++) {
+                for (int z = (int)offset.getZ(); z < (int)offset.getZ() + boxSize; z++) {
                     ledManager.setLEDColor(x, y, z, color);
                 }
             }

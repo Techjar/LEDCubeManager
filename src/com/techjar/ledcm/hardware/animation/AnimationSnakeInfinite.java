@@ -19,13 +19,14 @@ import org.lwjgl.util.Color;
 public class AnimationSnakeInfinite extends Animation {
     private Random random = new Random();
     private LinkedList<Vector3> segments = new LinkedList<>();
-    private boolean[] states = new boolean[512];
+    private boolean[] states;
     private boolean dead;
     private Direction direction;
     private float hue;
 
     public AnimationSnakeInfinite() {
         super();
+        states = new boolean[ledManager.getLEDCount()];
     }
 
     @Override
@@ -84,7 +85,7 @@ public class AnimationSnakeInfinite extends Animation {
         segments.clear();
         dead = false;
         direction = null;
-        states = new boolean[512];
+        states = new boolean[ledManager.getLEDCount()];
         hue = 0;
     }
 

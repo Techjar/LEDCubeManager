@@ -18,7 +18,7 @@ import org.lwjgl.util.Color;
 public class AnimationSnakeBattle extends Animation {
     private Random random = new Random();
     private LinkedList<Vector3>[] segmentArray;
-    private boolean[] states = new boolean[512];
+    private boolean[] states;
     private boolean[] dead;
     private Direction[] direction;
     private Color[] colors;
@@ -26,6 +26,7 @@ public class AnimationSnakeBattle extends Animation {
 
     public AnimationSnakeBattle() {
         super();
+        states = new boolean[ledManager.getLEDCount()];
         NUM_SNAKES = 5;
         segmentArray = new LinkedList[NUM_SNAKES];
         for (int i = 0; i < NUM_SNAKES; i++) {
@@ -105,7 +106,7 @@ public class AnimationSnakeBattle extends Animation {
         }
         dead = new boolean[NUM_SNAKES];
         direction = new Direction[NUM_SNAKES];
-        states = new boolean[512];
+        states = new boolean[ledManager.getLEDCount()];
     }
 
     private boolean isValidPosition(Vector3 position) {

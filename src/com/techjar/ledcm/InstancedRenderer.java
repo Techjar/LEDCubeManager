@@ -8,26 +8,29 @@ import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL31.*;
 import static org.lwjgl.opengl.GL33.*;
 
-import com.techjar.ledcm.util.Model;
+import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import lombok.Value;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix4f;
 
 /**
+ * Handles OpenGL instanced rendering, which offers up to or exceeding an order of magnitude better performance.
  *
  * @author Techjar
  */
 public final class InstancedRenderer {
-    private static final Map<Model, Queue<InstanceItem>> items = new HashMap<>();
+    private static final Map<ModelMesh, LinkedList<InstanceItem>> itemsNormal = new HashMap<>();
+    private static final Map<ModelMesh, LinkedList<InstanceItem>> itemsAlpha = new HashMap<>();
     private static final int vboId;
     private static ByteBuffer buffer = BufferUtils.createByteBuffer(8000000);
 
@@ -46,16 +49,29 @@ public final class InstancedRenderer {
     private InstancedRenderer() {
     }
 
-    public static void addItem(Model model, Vector3 position, Quaternion rotation, Color color) {
+    public static void addItem(ModelMesh model, Vector3 position, Quaternion rotation, Color color) {
+        Map<ModelMesh, LinkedList<InstanceItem>> items;
+        if (model.getTexture().hasAlpha() || color.getAlpha() < 255) items = itemsAlpha;
+        else items = itemsNormal;
         if (!items.containsKey(model)) items.put(model, new LinkedList<InstanceItem>());
         items.get(model).add(new InstanceItem(model, position, rotation, color));
     }
 
     public static int renderAll() {
         int total = 0;
-        for (Map.Entry<Model, Queue<InstanceItem>> entry : items.entrySet()) {
-            Model model = entry.getKey();
-            Queue<InstanceItem> queue = entry.getValue();
+        /*for (LinkedList<InstanceItem> items : itemsAlpha.values()) {
+            Collections.sort(items, new AlphaSorter());
+        }*/
+        total += renderItems(itemsNormal);
+        total += renderItems(itemsAlpha);
+        return total;
+    }
+
+    private static int renderItems(Map<ModelMesh, LinkedList<InstanceItem>> items) {
+        int total = 0;
+        for (Map.Entry<ModelMesh, LinkedList<InstanceItem>> entry : items.entrySet()) {
+            ModelMesh model = entry.getKey();
+            LinkedList<InstanceItem> queue = entry.getValue();
             int count = queue.size();
             total += count;
             int dataSize = count * 80;
@@ -88,8 +104,25 @@ public final class InstancedRenderer {
         return total;
     }
 
+    private static class AlphaSorter implements Comparator<InstanceItem> {
+        private final Vector3 cameraPos;
+
+        public AlphaSorter() {
+            this.cameraPos = LEDCubeManager.getCamera().getPosition();
+        }
+
+        @Override
+        public int compare(InstanceItem o1, InstanceItem o2) {
+            float dist1 = cameraPos.distanceSquared(o1.getPosition());
+            float dist2 = cameraPos.distanceSquared(o2.getPosition());
+            if (dist1 < dist2) return 1;
+            if (dist1 > dist2) return -1;
+            return 0;
+        }
+    }
+
     @Value private static class InstanceItem {
-        private final Model model;
+        private final ModelMesh model;
         private final Vector3 position;
         private final Quaternion rotation;
         private final Color color;

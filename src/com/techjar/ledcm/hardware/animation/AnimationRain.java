@@ -12,11 +12,11 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationRain extends Animation {
-    private int[] drops = new int[64];
-    private float[] floor = new float[64];
-    private int[] lightning = new int[64];
-    private boolean[] states = new boolean[512];
-    private float[] floorStates = new float[64];
+    private long[] drops;
+    private float[] floor;
+    private int[] lightning;
+    private boolean[] states;
+    private float[] floorStates;
     private Random random = new Random();
     private Color topColor = new Color(0, 255, 0);
     private Color bottomColor = new Color(255, 0, 0);
@@ -34,14 +34,14 @@ public class AnimationRain extends Animation {
     @Override
     public void refresh() {
         if (ticks % 3 == 0) {
-            for (int x = 0; x < 8; x++) {
-                for (int z = 0; z < 8; z++) {
-                    int index = x | (z << 3);
+            for (int x = 0; x < dimension.x; x++) {
+                for (int z = 0; z < dimension.z; z++) {
+                    int index = x | (z << Util.getRequiredBits(dimension.x - 1));
                     if (lightning[index] > 0) {
                         lightning[index]--;
                         if (lightning[index] == 0) {
-                            for (int y = 0; y < 8; y++) {
-                                Color color = MathHelper.lerp(bottomColor, topColor, y / 7F);
+                            for (int y = 0; y < dimension.y; y++) {
+                                Color color = MathHelper.lerp(bottomColor, topColor, y / (dimension.y - 1F));
                                 if (y == 0) ledManager.setLEDColor(x, y, z, floor[index] > 0 ? Util.multiplyColor(color, floor[index]) : new Color());
                                 else ledManager.setLEDColor(x, y, z, checkBit(drops[index], y) ? color: new Color());
                             }
@@ -51,16 +51,16 @@ public class AnimationRain extends Animation {
                     }
                     boolean lightningCheck = checkLightning(lightning[index]);
                     if (lightning[index] > 0) {
-                        for (int y = 0; y < 8; y++) {
+                        for (int y = 0; y < dimension.y; y++) {
                             ledManager.setLEDColor(x, y, z, lightningCheck ? lightningColor : new Color());
                         }
                     }
                     drops[index] >>= 1;
-                    for (int y = 7; y >= 0; y--) {
-                        int stateIndex = index | (y << 6);
-                        Color color = MathHelper.lerp(bottomColor, topColor, y / 7F);
-                        if (y == 7) {
-                            if (random.nextInt(20) == 0) drops[index] |= 0b10000000;
+                    for (int y = dimension.y - 1; y >= 0; y--) {
+                        int stateIndex = index | (y << (Util.getRequiredBits(dimension.x - 1) + Util.getRequiredBits(dimension.z - 1)));
+                        Color color = MathHelper.lerp(bottomColor, topColor, y / (dimension.y - 1F));
+                        if (y == dimension.y - 1) {
+                            if (random.nextInt(20) == 0) drops[index] |= 1L << (dimension.y - 1);
                         } else if (y == 0) {
                             floor[index] = Math.max(floor[index] - (random.nextFloat() * 0.1F), 0);
                             if (checkBit(drops[index], y)) {
@@ -88,15 +88,15 @@ public class AnimationRain extends Animation {
 
     @Override
     public void reset() {
-        drops = new int[64];
-        floor = new float[64];
-        lightning = new int[64];
-        states = new boolean[512];
-        floorStates = new float[64];
+        drops = new long[dimension.x * dimension.z];
+        floor = new float[dimension.x * dimension.z];
+        lightning = new int[dimension.x * dimension.z];
+        states = new boolean[dimension.x * dimension.y * dimension.z];
+        floorStates = new float[dimension.x * dimension.z];
     }
 
-    private boolean checkBit(int number, int bit) {
-        return (number & (1 << bit)) != 0;
+    private boolean checkBit(long number, int bit) {
+        return (number & (1L << bit)) != 0;
     }
 
     private boolean checkLightning(int value) {

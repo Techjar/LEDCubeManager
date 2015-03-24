@@ -30,13 +30,16 @@ import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;
+import com.techjar.ledcm.util.AxisAlignedBB;
 import com.techjar.ledcm.util.ConfigManager;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Direction;
+import com.techjar.ledcm.util.LEDCubeOctreeNode;
 import com.techjar.ledcm.util.LightSource;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Model;
+import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
@@ -136,7 +139,7 @@ public class LEDCubeManager {
     private boolean screenshot;
     private boolean regrab;
     public boolean renderFPS;
-    public boolean renderDebug;
+    public boolean debugMode;
     public boolean wireframe;
     public final boolean antiAliasingSupported;
     public final int antiAliasingMaxSamples;
@@ -149,6 +152,7 @@ public class LEDCubeManager {
     private int shadowMapSize = 1024;
     private int depthFBO;
     private int depthTexture;
+    private int ledSpaceMult = 8;
 
     // Screens
     @Getter private ScreenMainControl screenMainControl;
@@ -164,6 +168,7 @@ public class LEDCubeManager {
 
     // Arduino stuff
     private static LEDManager ledManager;
+    private static LEDCubeOctreeNode octree;
     private static boolean drawClick;
     private static boolean trueColor;
     @Getter private static CommThread commThread;
@@ -195,7 +200,7 @@ public class LEDCubeManager {
         }, new ArgumentParser.Argument(false, "--debug") {
             @Override
             public void runAction(String parameter) {
-                renderDebug = true;
+                debugMode = true;
             }
         }, new ArgumentParser.Argument(false, "--wireframe") {
             @Override
@@ -267,6 +272,7 @@ public class LEDCubeManager {
         fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac)", "wav", "mp3", "ogg", "flac"));
         fileChooser.setMultiSelectionEnabled(false);
         if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
+        initOctree();
         init();
 
         camera.setPosition(new Vector3(-80, 85, 28));
@@ -296,7 +302,7 @@ public class LEDCubeManager {
 
     private void addAnimation(Animation animation) {
         animations.put(animation.getName(), animation);
-        animationNames.add(animation.getName());
+        if (!animation.isHidden()) animationNames.add(animation.getName());
     }
 
     public Map<String, Animation> getAnimations() {
@@ -321,6 +327,51 @@ public class LEDCubeManager {
         instance.screenMainControl.redColorSlider.setValue(color.getRed() / 255F);
         instance.screenMainControl.greenColorSlider.setValue(color.getGreen() / 255F);
         instance.screenMainControl.blueColorSlider.setValue(color.getBlue() / 255F);
+    }
+
+    private void initOctree() {
+        Dimension3D dim =  ledManager.getDimensions();
+        if (dim.x != dim.y || dim.x != dim.z || dim.y != dim.z || dim.x % 2 != 0 || dim.y % 2 != 0 || dim.z % 2 != 0) return; // Non-cubes and non-powers-of-two need special handling here
+        int minDim = Math.min(dim.x, Math.min(dim.y, dim.z));
+        float octreeSize = ledSpaceMult * minDim;
+        octree = new LEDCubeOctreeNode(new AxisAlignedBB(new Vector3(-ledSpaceMult / 2, -ledSpaceMult / 2, -ledSpaceMult / 2), new Vector3(octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2))));
+        recursiveFillOctree(octree, octreeSize / 2, minDim, new Vector3());
+    }
+
+    private void recursiveFillOctree(LEDCubeOctreeNode node, float size, int count, Vector3 ledPos) {
+        Model model = modelManager.getModel("led.model");
+        AxisAlignedBB nodeAABB = node.getAABB();
+        for (int i = 0; i < 8; i++) {
+            int x = (i & 1);
+            int y = ((i >> 1) & 1);
+            int z = ((i >> 2) & 1);
+            float xOffset = x * size;
+            float yOffset = y * size;
+            float zOffset = z * size;
+            if (count > 1) {
+                LEDCubeOctreeNode newNode = new LEDCubeOctreeNode(new AxisAlignedBB(nodeAABB.getMinPoint().add(new Vector3(xOffset, yOffset, zOffset)), nodeAABB.getMinPoint().add(new Vector3(xOffset + size, yOffset + size, zOffset + size))));
+                node.setNode(i, newNode);
+                recursiveFillOctree(newNode, size / 2, count / 2, ledPos.add(new Vector3((count / 2) * x, (count / 2) * y, (count / 2) * z)));
+            } else {
+                AxisAlignedBB modelAABB = model.getAABB();
+                node.setNode(i, new LEDCubeOctreeNode(new AxisAlignedBB(modelAABB.getMinPoint().add(ledPos.multiply(ledSpaceMult)), modelAABB.getMaxPoint().add(ledPos.multiply(ledSpaceMult))), new Vector3(ledPos.getZ(), ledPos.getY(), ledPos.getX())));
+            }
+        }
+    }
+
+    private Vector3 recursiveIntersectOctree(LEDCubeOctreeNode node, Vector3 point) {
+        if (node.getNode(0) != null) {
+            for (int i = 0; i < 8; i++) {
+                LEDCubeOctreeNode nextNode = node.getNode(i);
+                if (nextNode.getAABB().containsPoint(point)) {
+                    Vector3 ret = recursiveIntersectOctree(nextNode, point);
+                    if (ret != null) return ret;
+                }
+            }
+        } else {
+            return node.getLEDPosition();
+        }
+        return null;
     }
 
     public void loadAnimations() {
@@ -595,7 +646,7 @@ public class LEDCubeManager {
             antiAliasingSamples = 4;
             config.setProperty("display.antialiasingsamples", 4);
         }
-        if (fieldOfView < 10 || fieldOfView > 170) {
+        if (fieldOfView < 10 || fieldOfView > 179) {
             fieldOfView = 45;
             config.setProperty("display.fieldofview", 45F);
         }
@@ -671,13 +722,13 @@ public class LEDCubeManager {
     }
     
     private void postInit() {
-        glBindBuffer(GL_ARRAY_BUFFER, modelManager.getModel("golfball.model").getVBO());
+        /*glBindBuffer(GL_ARRAY_BUFFER, modelManager.getModel("golfball.model").getVBO());
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
-        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(2);*/
     }
 
     public void resizeGL(int width, int height) {
@@ -852,6 +903,7 @@ public class LEDCubeManager {
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, 0);
+        //wireframe = true;
         if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         checkGLError("Pre render 3D");
         render3D();
@@ -932,13 +984,13 @@ public class LEDCubeManager {
         glLight(GL_LIGHT0, GL_POSITION, floatBuffer);*/
         
         faceCount = 0;
-        String modelName = "led.model";
-        float mult = 8;
+        float mult = ledSpaceMult;
         Random rand = new Random();
 
         Dimension3D dim = ledManager.getDimensions();
         int size = dim.x * dim.y * dim.z * 16 * 4;
-        Model model = modelManager.getModel(modelName);
+        Random rkek = new Random(214545);
+        Model model = modelManager.getModel("led.model");
         Color[] colors = new Color[ledManager.getLEDCount()];
         synchronized (ledManager) {
             for (int y = 0; y < dim.y; y++) {
@@ -962,9 +1014,8 @@ public class LEDCubeManager {
                     float yy = y * mult;
                     float zz = x * mult;
                     Vector3 pos = new Vector3(xx, yy, zz);
-                    if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
-                        faceCount += model.getFaceCount();
-                        InstancedRenderer.addItem(model, pos, new Quaternion(), colors[Util.encodeCubeVector(x, y, z)]);
+                    if (isLEDWithinIsolation(x, y, z)) {
+                        faceCount += model.render(pos, new Quaternion(), colors[Util.encodeCubeVector(x, y, z)]);
                     }
                 }
             }
@@ -972,16 +1023,15 @@ public class LEDCubeManager {
 
         model = modelManager.getModel("led_larger.model");
         for (int y = 0; y < dim.y; y++) {
-            for (int z = 0; z < dim.z; z++) {
-                for (int x = 0; x < dim.x; x++) {
+            for (int x = 0; x < dim.x; x++) {
+                for (int z = 0; z < dim.z; z++) {
                     if (highlight[Util.encodeCubeVector(x, y, z)]) {
                         float xx = z * mult;
                         float yy = y * mult;
                         float zz = x * mult;
                         Vector3 pos = new Vector3(xx, yy, zz);
-                        if (model.isInFrustum(pos) && isLEDWithinIsolation(x, y, z)) {
-                            faceCount += model.getFaceCount();
-                            InstancedRenderer.addItem(model, pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32));
+                        if (isLEDWithinIsolation(x, y, z)) {
+                            faceCount += model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32));
                         }
                     }
                 }
@@ -1005,14 +1055,14 @@ public class LEDCubeManager {
             UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
             org.newdawn.slick.Color debugColor = org.newdawn.slick.Color.yellow;
             int y = 0;
-            if (renderFPS || renderDebug) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
+            if (renderFPS || debugMode) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (commThread.isPortOpen() ? "open" : "closed"), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + commThread.getNumTCPClients(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Current music: " + spectrumAnalyzer.getCurrentTrack(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Music time: " + spectrumAnalyzer.getPositionMillis(), debugColor);
             if (ledManager.getResolution() < 255) debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (trueColor ? "true" : "full"), debugColor);
             if (convertingAudio) debugFont.drawString(5, 5 + y++ * 25, "Converting audio...", debugColor);
-            if (renderDebug) {
+            if (debugMode) {
                 Runtime runtime = Runtime.getRuntime();
                 debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);
                 //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), debugColor);
@@ -1032,11 +1082,12 @@ public class LEDCubeManager {
     }
 
     private void checkGLError(String stage) {
-        int error;
-        while ((error = glGetError()) != GL_NO_ERROR) {
-            LogHelper.severe("########## GL ERROR ##########");
-            LogHelper.severe("@ %s", stage);
-            LogHelper.severe("%d: %s", error, gluErrorString(error));
+        if (debugMode) {
+            for (int error = glGetError(); error != GL_NO_ERROR; error = glGetError()) {
+                LogHelper.severe("########## GL ERROR ##########");
+                LogHelper.severe("@ %s", stage);
+                LogHelper.severe("%d: %s", error, gluErrorString(error));
+            }
         }
     }
 
@@ -1077,21 +1128,30 @@ public class LEDCubeManager {
         Vector3 position = ray[0];
         Vector3 direction = ray[1].multiply(0.5F);
 
-        float mult = 8;
+        float mult = ledSpaceMult;
         Dimension3D dim = ledManager.getDimensions();
         Model model = modelManager.getModel("led.model");
         for (float step = 1; step < 1000; step += 2) {
             Vector3 rayPos = position.add(direction.multiply(step));
-            for (int y = 0; y < dim.y; y++) {
-                for (int z = 0; z < dim.z; z++) {
-                    for (int x = 0; x < dim.x; x++) {
-                        float xx = z * mult;
-                        float yy = y * mult;
-                        float zz = x * mult;
-                        Vector3 pos = new Vector3(xx, yy, zz);
-                        if (model.getAABB().containsPoint(pos, rayPos) && isLEDWithinIsolation(x, y, z)) {
-                            return new Vector3(x, y, z);
+            if (octree == null) {
+                for (int y = 0; y < dim.y; y++) {
+                    for (int z = 0; z < dim.z; z++) {
+                        for (int x = 0; x < dim.x; x++) {
+                            float xx = z * mult;
+                            float yy = y * mult;
+                            float zz = x * mult;
+                            Vector3 pos = new Vector3(xx, yy, zz);
+                            if (model.getAABB().containsPoint(pos, rayPos) && isLEDWithinIsolation(x, y, z)) {
+                                return new Vector3(x, y, z);
+                            }
                         }
+                    }
+                }
+            } else {
+                Vector3 ret = recursiveIntersectOctree(octree, rayPos);
+                if (ret != null) {
+                    if (isLEDWithinIsolation((int)ret.getX(), (int)ret.getY(), (int)ret.getZ())) {
+                        return ret;
                     }
                 }
             }

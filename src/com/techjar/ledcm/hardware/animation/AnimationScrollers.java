@@ -3,6 +3,7 @@ package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Timer;
+import com.techjar.ledcm.util.Util;
 import java.util.Random;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
@@ -13,11 +14,13 @@ import org.lwjgl.util.ReadableColor;
  */
 public class AnimationScrollers extends Animation {
     private Random random = new Random();
-    private int[] dots = new int[64];
-    private boolean[] directions = new boolean[64];
+    private long[] dots;
+    private boolean[] directions;
 
     public AnimationScrollers() {
         super();
+        dots = new long[dimension.x * dimension.z];
+        directions = new boolean[dimension.x * dimension.z];
     }
 
     @Override
@@ -28,14 +31,14 @@ public class AnimationScrollers extends Animation {
     @Override
     public void refresh() {
         if (ticks % 3 == 0) {
-            for (int x = 0; x < 8; x++) {
-                for (int z = 0; z < 8; z++) {
-                    int index = z | (x << 3);
-                    int dot = dots[index];
-                    if ((dot != 0b1 && dot != 0b10000000) || random.nextInt(500) == 0) {
+            for (int x = 0; x < dimension.x; x++) {
+                for (int z = 0; z < dimension.z; z++) {
+                    int index = z | (x << Util.getRequiredBits(dimension.y - 1));
+                    long dot = dots[index];
+                    if ((dot != 0b1 && dot != (1L << (dimension.y - 1))) || random.nextInt(500 * (dots.length / 64)) == 0) {
                         if (directions[index]) dots[index] <<= 1;
                         else dots[index] >>= 1;
-                        if (dots[index] == 0b1 || dots[index] == 0b10000000) directions[index] = !directions[index];
+                        if (dots[index] == 0b1 || dots[index] == (1L << (dimension.y - 1))) directions[index] = !directions[index];
                     }
                 }
             }
@@ -45,28 +48,28 @@ public class AnimationScrollers extends Animation {
 
     @Override
     public void reset() {
-        for (int x = 0; x < 8; x++) {
-            for (int z = 0; z < 8; z++) {
-                int index = z | (x << 3);
+        for (int x = 0; x < dimension.x; x++) {
+            for (int z = 0; z < dimension.z; z++) {
+                int index = z | (x << Util.getRequiredBits(dimension.y - 1));
                 directions[index] = random.nextBoolean();
-                dots[index] = directions[index] ? 0b1 : 0b10000000;
+                dots[index] = directions[index] ? 0b1 : (1L << (dimension.y - 1));
             }
         }
         updateCube();
     }
 
     private void updateCube() {
-        for (int x = 0; x < 8; x++) {
-            for (int z = 0; z < 8; z++) {
-                int dot = dots[z | (x << 3)];
-                for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < dimension.x; x++) {
+            for (int z = 0; z < dimension.z; z++) {
+                long dot = dots[z | (x << Util.getRequiredBits(dimension.y - 1))];
+                for (int y = 0; y < dimension.y; y++) {
                     ledManager.setLEDColor(x, y, z, checkBit(dot, y) ? LEDCubeManager.getPaintColor() : new Color());
                 }
             }
         }
     }
 
-    private boolean checkBit(int number, int bit) {
-        return (number & (1 << bit)) != 0;
+    private boolean checkBit(long number, int bit) {
+        return (number & (1L << bit)) != 0;
     }
 }

@@ -21,12 +21,13 @@ import org.lwjgl.util.ReadableColor;
 public class AnimationSnake extends Animation {
     private Random random = new Random();
     private LinkedList<Vector3> segments = new LinkedList<>();
-    private boolean[] states = new boolean[512];
+    private boolean[] states;
     private boolean dead;
     private Direction direction;
 
     public AnimationSnake() {
         super();
+        states = new boolean[ledManager.getLEDCount()];
     }
 
     @Override
@@ -82,7 +83,7 @@ public class AnimationSnake extends Animation {
         segments.clear();
         dead = false;
         direction = null;
-        states = new boolean[512];
+        states = new boolean[ledManager.getLEDCount()];
     }
 
     private boolean isValidPosition(Vector3 position) {

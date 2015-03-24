@@ -41,7 +41,8 @@ public class ModelManager {
     public Model getModel(String file) {
         Model cached = cache.get(file);
         if (cached != null) return cached;
-        File objectFile = null;
+        ArrayList<File> objectFiles = null;
+        ArrayList<Float> objectLODDists = new ArrayList<>();
         File collisionFile = null;
         Texture texture = textureManager.getTexture("white.png");
         Vector3 scale = new Vector3(1, 1, 1);
@@ -53,9 +54,16 @@ public class ModelManager {
             String[] subsplit = split[1].split(" ");
             switch (split[0].toLowerCase()) {
                 case "render":
-                    if (objectFile != null) throw new IOException("Duplicate \"render\" entry in model file");
-                    //object = new WavefrontObject(new File(modelFile.getParent(), split[1]).getAbsolutePath());
-                    objectFile = new File(modelFile.getParent(), split[1]);
+                    if (objectFiles != null) throw new IOException("Duplicate \"render\" entry in model file");
+                    else objectFiles = new ArrayList<>();
+                    for (int i = 0; i < subsplit.length; i++) {
+                        objectFiles.add(new File(modelFile.getParent(), subsplit[i]));
+                        if (i + 1 < subsplit.length) {
+                            objectLODDists.add(Float.parseFloat(subsplit[i++ + 1]));
+                        } else {
+                            objectLODDists.add(Float.MAX_VALUE);
+                        }
+                    }
                     break;
                 case "texture":
                     texture = textureManager.getTexture(split[1]);
@@ -79,48 +87,49 @@ public class ModelManager {
                     break;
             }
         }
-        if (objectFile == null) throw new IOException("Missing \"render\" entry in model file");
-        WavefrontObject object = new WavefrontObject(objectFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
-        WavefrontObject collision = null;
-        if (collisionFile != null) collision = new WavefrontObject(collisionFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
-        List<Float> vertices = new ArrayList<>();
-        List<Float> normals = new ArrayList<>();
-        List<Float> texCoords = new ArrayList<>();
-        LogHelper.info("%d faces.", object.getCurrentGroup().getFaces().size());
-        for (Face face : object.getCurrentGroup().getFaces()) {
-            if (face.getType() != Face.GL_TRIANGLES) throw new IOException("Quads are deprecated, convert the model to triangles");
-            for (Vertex vertex : face.getVertices()) {
-                vertices.add(vertex.getX());
-                vertices.add(vertex.getY());
-                vertices.add(vertex.getZ());
-            }
-            for (Vertex vertex : face.getNormals()) {
-                normals.add(vertex.getX());
-                normals.add(vertex.getY());
-                normals.add(vertex.getZ());
-            }
-            for (TextureCoordinate texCoord : face.getTextures()) {
-                if (texCoord != null) {
-                    texCoords.add(texCoord.getU());
-                    texCoords.add(texCoord.getV());
+        if (objectFiles == null) throw new IOException("Missing \"render\" entry in model file");
+        Model model = new Model(objectFiles.size(), texture);
+        for (int i = 0; i < objectFiles.size(); i++) {
+            File objectFile = objectFiles.get(i);
+            WavefrontObject object = new WavefrontObject(objectFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
+            List<Float> vertices = new ArrayList<>();
+            List<Float> normals = new ArrayList<>();
+            List<Float> texCoords = new ArrayList<>();
+            LogHelper.info("%d faces.", object.getCurrentGroup().getFaces().size());
+            for (Face face : object.getCurrentGroup().getFaces()) {
+                if (face.getType() != Face.GL_TRIANGLES) throw new IOException("Quads are deprecated, convert the model to triangles");
+                for (Vertex vertex : face.getVertices()) {
+                    vertices.add(vertex.getX());
+                    vertices.add(vertex.getY());
+                    vertices.add(vertex.getZ());
+                }
+                for (Vertex vertex : face.getNormals()) {
+                    normals.add(vertex.getX());
+                    normals.add(vertex.getY());
+                    normals.add(vertex.getZ());
+                }
+                for (TextureCoordinate texCoord : face.getTextures()) {
+                    if (texCoord != null) {
+                        texCoords.add(texCoord.getU());
+                        texCoords.add(texCoord.getV());
+                    }
                 }
             }
+            Vector3 minVertex = new Vector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+            Vector3 maxVertex = new Vector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+            for (Vertex vertex : object.getVertices()) {
+                if (vertex.getX() < minVertex.getX()) minVertex.setX(vertex.getX());
+                if (vertex.getY() < minVertex.getY()) minVertex.setY(vertex.getY());
+                if (vertex.getZ() < minVertex.getZ()) minVertex.setZ(vertex.getZ());
+                if (vertex.getX() > maxVertex.getX()) maxVertex.setX(vertex.getX());
+                if (vertex.getY() > maxVertex.getY()) maxVertex.setY(vertex.getY());
+                if (vertex.getZ() > maxVertex.getZ()) maxVertex.setZ(vertex.getZ());
+            }
+            Vector3 center = minVertex.add(maxVertex).divide(2);
+            if (model.getAABB() == null) model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
+            model.loadMesh(i, objectLODDists.get(i), vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size());
         }
-        Vector3 minVertex = new Vector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
-        Vector3 maxVertex = new Vector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
-        for (Vertex vertex : object.getVertices()) {
-            if (vertex.getX() < minVertex.getX()) minVertex.setX(vertex.getX());
-            if (vertex.getY() < minVertex.getY()) minVertex.setY(vertex.getY());
-            if (vertex.getZ() < minVertex.getZ()) minVertex.setZ(vertex.getZ());
-            if (vertex.getX() > maxVertex.getX()) maxVertex.setX(vertex.getX());
-            if (vertex.getY() > maxVertex.getY()) maxVertex.setY(vertex.getY());
-            if (vertex.getZ() > maxVertex.getZ()) maxVertex.setZ(vertex.getZ());
-        }
-        Vector3 center = minVertex.add(maxVertex).divide(2);
-        Model model = new Model(vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size());
-        model.setTexture(texture);
-        model.setCollisionMesh(collision);
-        model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
+        if (collisionFile != null) model.setCollisionMesh(new WavefrontObject(collisionFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ()));
         model.makeImmutable();
         LogHelper.info("Finished loading %s", file);
         cache.put(file, model);

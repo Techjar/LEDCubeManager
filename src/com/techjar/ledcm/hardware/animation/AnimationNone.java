@@ -1,8 +1,7 @@
 
 package com.techjar.ledcm.hardware.animation;
 
-import com.techjar.ledcm.LEDCubeManager;
-import org.lwjgl.util.Color;
+import com.techjar.ledcm.hardware.LEDUtil;
 
 /**
  *
@@ -24,12 +23,6 @@ public class AnimationNone extends Animation {
 
     @Override
     public void reset() {
-        for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                for (int z = 0; z < 8; z++) {
-                    ledManager.setLEDColor(x, y, z, new Color());
-                }
-            }
-        }
+        LEDUtil.clear(ledManager);
     }
 }

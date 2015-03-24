@@ -23,6 +23,10 @@ public abstract class Animation {
     public abstract String getName();
     public abstract void refresh();
     public abstract void reset();
+
+    public boolean isHidden() {
+        return false;
+    }
     
     public AnimationOption[] getOptions() {
         return new AnimationOption[0];
