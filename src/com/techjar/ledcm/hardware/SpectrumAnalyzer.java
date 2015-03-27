@@ -145,7 +145,7 @@ public class SpectrumAnalyzer {
             }
             AudioPlayer oldPlayer = player;
             player = minim.loadFile(path);
-            LEDCubeManager.getCommThread().getTcpServer().sendPacket(Packet.ID.AUDIO_INIT, getAudioInit());
+            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(Packet.ID.AUDIO_INIT, getAudioInit());
             String path2 = path.replaceAll("\\\\", "/");
             currentTrack = path2.contains("/") ? path2.substring(path2.lastIndexOf('/') + 1) : path2;
             currentTrack = currentTrack.substring(0, currentTrack.lastIndexOf('.'));
@@ -190,7 +190,7 @@ public class SpectrumAnalyzer {
 
         @Override
         public void samples(float[] floats) {
-            Animation animation = LEDCubeManager.getCommThread().getCurrentAnimation();
+            Animation animation = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
             if (animation instanceof AnimationSpectrumAnalyzer) {
                 AnimationSpectrumAnalyzer anim = (AnimationSpectrumAnalyzer)animation;
                 if (anim.isFFT()) {
@@ -210,7 +210,7 @@ public class SpectrumAnalyzer {
 
         @Override
         public void samples(float[] floatsL, float[] floatsR) {
-            Animation animation = LEDCubeManager.getCommThread().getCurrentAnimation();
+            Animation animation = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
             if (animation instanceof AnimationSpectrumAnalyzer) {
                 AnimationSpectrumAnalyzer anim = (AnimationSpectrumAnalyzer)animation;
                 if (anim.isFFT()) {
@@ -284,7 +284,7 @@ public class SpectrumAnalyzer {
             for (int i = 0; i < samples.length; i++) {
                 buf.putShort(samples[i]);
             }
-            LEDCubeManager.getCommThread().getTcpServer().sendPacket(Packet.ID.AUDIO_DATA, buf.array());
+            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(Packet.ID.AUDIO_DATA, buf.array());
         }
     }
 }

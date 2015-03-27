@@ -1,5 +1,6 @@
 package com.techjar.ledcm.util;
 
+import com.techjar.ledcm.LEDCubeManager;
 import lombok.Value;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Keyboard;
@@ -23,7 +24,7 @@ public class InputInfo {
                 if (Mouse.getButtonName(button) == null) return "";
                 return Mouse.getButtonName(button);
             /*case CONTROLLER:
-                Controller con = CubeDesigner.getInstance().getController(Client.getInstance().getConfigManager().getString("controls.controller"));
+                Controller con = LEDCubeManager.getInstance().getController(LEDCubeManager.getConfig().getString("controls.controller"));
                 if (con == null || con.getButtonName(button) == null) return "";
                 return con.getButtonName(button);*/
         }
@@ -43,8 +44,8 @@ public class InputInfo {
                 if (code != -1)
                     return new InputInfo(type, code);
             /*case CONTROLLER:
-                Controller con = Client.getInstance().getController(Client.getInstance().getConfigManager().getString("controls.controller"));
-                if (code != -1)
+                Controller con = LEDCubeManager.getInstance().getController(LEDCubeManager.getConfig().getString("controls.controller"));
+                if (code != -1) {
                     return new InputInfo(type, code);
                 else {
                     

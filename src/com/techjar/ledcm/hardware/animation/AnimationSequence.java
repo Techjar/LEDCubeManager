@@ -37,8 +37,8 @@ public class AnimationSequence {
             changeItem(item);
         }
         if (musicSynced) {
-            if (LEDCubeManager.getSpectrumAnalyzer().isPlaying()) {
-                int time = LEDCubeManager.getSpectrumAnalyzer().getPositionMillis();
+            if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying()) {
+                int time = LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getPositionMillis();
                 int lastItem = currentItem;
                 for (int i = items.size() - 1; i >= 0; i--) {
                     SequenceItem item = items.get(i);
@@ -64,7 +64,7 @@ public class AnimationSequence {
     public void start() {
         timer.restart();
         currentItem = -1;
-        if (musicFile != null) LEDCubeManager.getSpectrumAnalyzer().loadFile(musicFile.getAbsolutePath());
+        if (musicFile != null) LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(musicFile.getAbsolutePath());
     }
 
     private void changeItem(SequenceItem item) {
@@ -80,13 +80,13 @@ public class AnimationSequence {
                 }
             }
         }
-        Animation anim = LEDCubeManager.getInstance().getAnimationByClassName("Animation" + item.animation);
+        Animation anim = LEDCubeManager.getLEDCube().getAnimationByClassName("Animation" + item.animation);
         if (anim != null) {
-            LEDCubeManager.getCommThread().setCurrentAnimation(anim);
+            LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(anim);
             LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setSelectedItem(anim.getName());
         }
         for (SequenceItem.Option option : item.options) {
-            LEDCubeManager.getCommThread().getCurrentAnimation().optionChanged(option.name, option.value);
+            LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().optionChanged(option.name, option.value);
         }
     }
 

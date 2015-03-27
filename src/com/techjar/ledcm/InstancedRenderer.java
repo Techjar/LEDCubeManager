@@ -10,6 +10,7 @@ import static org.lwjgl.opengl.GL33.*;
 
 import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.Quaternion;
+import com.techjar.ledcm.util.Tuple;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
 import java.nio.ByteBuffer;
@@ -30,7 +31,9 @@ import org.lwjgl.util.vector.Matrix4f;
  */
 public final class InstancedRenderer {
     private static final Map<ModelMesh, LinkedList<InstanceItem>> itemsNormal = new HashMap<>();
-    private static final Map<ModelMesh, LinkedList<InstanceItem>> itemsAlpha = new HashMap<>();
+    private static final LinkedList<InstanceItem> itemsAlpha = new LinkedList<>();
+    private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedNormal = new LinkedList<>();
+    private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedAlpha = new LinkedList<>();
     private static final int vboId;
     private static ByteBuffer buffer = BufferUtils.createByteBuffer(8000000);
 
@@ -50,28 +53,54 @@ public final class InstancedRenderer {
     }
 
     public static void addItem(ModelMesh model, Vector3 position, Quaternion rotation, Color color) {
-        Map<ModelMesh, LinkedList<InstanceItem>> items;
-        if (model.getTexture().hasAlpha() || color.getAlpha() < 255) items = itemsAlpha;
-        else items = itemsNormal;
-        if (!items.containsKey(model)) items.put(model, new LinkedList<InstanceItem>());
-        items.get(model).add(new InstanceItem(model, position, rotation, color));
+        if (model.getTexture().hasAlpha() || color.getAlpha() < 255) {
+            itemsAlpha.add(new InstanceItem(model, position, rotation, color));
+        } else {
+            if (!itemsNormal.containsKey(model)) itemsNormal.put(model, new LinkedList<InstanceItem>());
+            itemsNormal.get(model).add(new InstanceItem(model, position, rotation, color));
+        }
+    }
+
+    public static void prepareItems() {
+        for (ModelMesh key : itemsNormal.keySet()) {
+            LinkedList<InstanceItem> list = itemsNormal.get(key);
+            groupedNormal.add(new Tuple<>(key, list));
+        }
+        itemsNormal.clear();
+        Collections.sort(itemsAlpha, new AlphaSorter());
+        LinkedList<InstanceItem> currentList = null;
+        ModelMesh currentMesh = null;
+        for (InstanceItem item = itemsAlpha.poll(); item != null; item = itemsAlpha.poll()) {
+            if (item.getModel() != currentMesh) {
+                currentMesh = item.getModel();
+                currentList = new LinkedList<>();
+                groupedAlpha.add(new Tuple<>(item.getModel(), currentList));
+            }
+            currentList.add(item);
+        }
+    }
+
+    public static void resetItems() {
+        itemsNormal.clear();
+        itemsAlpha.clear();
+        groupedNormal.clear();
+        groupedAlpha.clear();
     }
 
     public static int renderAll() {
         int total = 0;
-        /*for (LinkedList<InstanceItem> items : itemsAlpha.values()) {
-            Collections.sort(items, new AlphaSorter());
-        }*/
-        total += renderItems(itemsNormal);
-        total += renderItems(itemsAlpha);
+        for (int i = 0; i < 8; i++) glEnableVertexAttribArray(i);
+        total += renderItems(groupedNormal);
+        total += renderItems(groupedAlpha);
+        for (int i = 0; i < 8; i++) glDisableVertexAttribArray(i);
         return total;
     }
 
-    private static int renderItems(Map<ModelMesh, LinkedList<InstanceItem>> items) {
+    private static int renderItems(LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> items) {
         int total = 0;
-        for (Map.Entry<ModelMesh, LinkedList<InstanceItem>> entry : items.entrySet()) {
-            ModelMesh model = entry.getKey();
-            LinkedList<InstanceItem> queue = entry.getValue();
+        for (Tuple<ModelMesh, LinkedList<InstanceItem>> entry : items) {
+            ModelMesh model = entry.getA();
+            LinkedList<InstanceItem> queue = entry.getB();
             int count = queue.size();
             total += count;
             int dataSize = count * 80;
@@ -81,7 +110,7 @@ public final class InstancedRenderer {
                 buffer.rewind();
                 buffer.limit(dataSize);
             }
-            for (InstanceItem item = queue.poll(); item != null; item = queue.poll()) {
+            for (InstanceItem item : queue) {
                 Util.storeColorInBuffer(item.getColor(), buffer);
                 Matrix4f matrix = new Matrix4f();
                 matrix.translate(Util.convertVector(item.getPosition()));
@@ -97,9 +126,7 @@ public final class InstancedRenderer {
             glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
             glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
-            for (int i = 0; i < 8; i++) glEnableVertexAttribArray(i);
             glDrawArraysInstanced(GL_TRIANGLES, 0, model.getIndices(), count);
-            for (int i = 0; i < 8; i++) glDisableVertexAttribArray(i);
         }
         return total;
     }

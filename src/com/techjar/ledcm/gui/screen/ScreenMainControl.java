@@ -79,7 +79,7 @@ public class ScreenMainControl extends Screen {
         playBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getSpectrumAnalyzer().play();
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
             }
         });
         container.addComponent(playBtn);
@@ -90,7 +90,7 @@ public class ScreenMainControl extends Screen {
         pauseBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getSpectrumAnalyzer().pause();
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().pause();
             }
         });
         container.addComponent(pauseBtn);
@@ -101,7 +101,7 @@ public class ScreenMainControl extends Screen {
         stopBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getSpectrumAnalyzer().stop();
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
             }
         });
         container.addComponent(stopBtn);
@@ -120,7 +120,7 @@ public class ScreenMainControl extends Screen {
                         if (option == JFileChooser.APPROVE_OPTION) {
                             try {
                                 File file = LEDCubeManager.getFileChooser().getSelectedFile();
-                                LEDCubeManager.getSpectrumAnalyzer().loadFile(file);
+                                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -138,7 +138,7 @@ public class ScreenMainControl extends Screen {
         volumeSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getSpectrumAnalyzer().setVolume(volumeSlider.getValue());
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setVolume(volumeSlider.getValue());
             }
         });
         container.addComponent(volumeSlider);
@@ -149,7 +149,7 @@ public class ScreenMainControl extends Screen {
         progressSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getSpectrumAnalyzer().setPosition(progressSlider.getValue());
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setPosition(progressSlider.getValue());
             }
         });
         container.addComponent(progressSlider);
@@ -160,8 +160,8 @@ public class ScreenMainControl extends Screen {
         togglePortBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                if (LEDCubeManager.getCommThread().isPortOpen()) LEDCubeManager.getCommThread().closePort();
-                else LEDCubeManager.getCommThread().openPort();
+                if (LEDCubeManager.getLEDCube().getCommThread().isPortOpen()) LEDCubeManager.getLEDCube().getCommThread().closePort();
+                else LEDCubeManager.getLEDCube().getCommThread().openPort();
             }
         });
         container.addComponent(togglePortBtn);
@@ -229,7 +229,7 @@ public class ScreenMainControl extends Screen {
         xScaleSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintSize().setX(Math.round((ledDim.x - 1) * xScaleSlider.getValue()));
+                LEDCubeManager.getLEDCube().getPaintSize().setX(Math.round((ledDim.x - 1) * xScaleSlider.getValue()));
             }
         });
         container.addComponent(xScaleSlider);
@@ -246,7 +246,7 @@ public class ScreenMainControl extends Screen {
         yScaleSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintSize().setY(Math.round((ledDim.y - 1) * yScaleSlider.getValue()));
+                LEDCubeManager.getLEDCube().getPaintSize().setY(Math.round((ledDim.y - 1) * yScaleSlider.getValue()));
             }
         });
         container.addComponent(yScaleSlider);
@@ -263,7 +263,7 @@ public class ScreenMainControl extends Screen {
         zScaleSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintSize().setZ(Math.round((ledDim.z - 1) * zScaleSlider.getValue()));
+                LEDCubeManager.getLEDCube().getPaintSize().setZ(Math.round((ledDim.z - 1) * zScaleSlider.getValue()));
             }
         });
         container.addComponent(zScaleSlider);
@@ -298,7 +298,7 @@ public class ScreenMainControl extends Screen {
         radioOff.setSelectHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.setLayerIsolation(0);
+                LEDCubeManager.getLEDCube().setLayerIsolation(0);
                 layerSlider.setEnabled(false);
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(0);
@@ -316,14 +316,14 @@ public class ScreenMainControl extends Screen {
         radioX.setSelectHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.setLayerIsolation(1);
+                LEDCubeManager.getLEDCube().setLayerIsolation(1);
                 layerSlider.setEnabled(true);
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(1F / (ledDim.x - 1));
                 layerSlider.setChangeHandler(new GUICallback() {
                     @Override
                     public void run() {
-                        LEDCubeManager.setSelectedLayer(Math.round((ledDim.x - 1) * layerSlider.getValue()));
+                        LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.x - 1) * layerSlider.getValue()));
                     }
                 });
             }
@@ -340,14 +340,14 @@ public class ScreenMainControl extends Screen {
         radioY.setSelectHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.setLayerIsolation(2);
+                LEDCubeManager.getLEDCube().setLayerIsolation(2);
                 layerSlider.setEnabled(true);
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(1F / (ledDim.y - 1));
                 layerSlider.setChangeHandler(new GUICallback() {
                     @Override
                     public void run() {
-                        LEDCubeManager.setSelectedLayer(Math.round((ledDim.y - 1) * layerSlider.getValue()));
+                        LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.y - 1) * layerSlider.getValue()));
                     }
                 });
             }
@@ -364,14 +364,14 @@ public class ScreenMainControl extends Screen {
         radioZ.setSelectHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.setLayerIsolation(3);
+                LEDCubeManager.getLEDCube().setLayerIsolation(3);
                 layerSlider.setEnabled(true);
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(1F / (ledDim.z - 1));
                 layerSlider.setChangeHandler(new GUICallback() {
                     @Override
                     public void run() {
-                        LEDCubeManager.setSelectedLayer(Math.round((ledDim.z - 1) * layerSlider.getValue()));
+                        LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.z - 1) * layerSlider.getValue()));
                     }
                 });
             }
@@ -443,7 +443,7 @@ public class ScreenMainControl extends Screen {
                     try {
                         File file = new File("resources/sequences/" + item.toString() + ".sequence");
                         AnimationSequence sequence = AnimationSequence.loadFromFile(file);
-                        LEDCubeManager.getCommThread().setCurrentSequence(sequence);
+                        LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(sequence);
                         sequenceWindow.setVisible(false);
                         chooseFileBtn.setEnabled(!sequence.isMusicSynced());
                         progressSlider.setEnabled(!sequence.isMusicSynced());
@@ -461,7 +461,7 @@ public class ScreenMainControl extends Screen {
         sequenceStopBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getCommThread().setCurrentSequence(null);
+                LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(null);
                 chooseFileBtn.setEnabled(true);
                 progressSlider.setEnabled(true);
             }
@@ -478,30 +478,30 @@ public class ScreenMainControl extends Screen {
             @Override
             public void run() {
                 if (animComboBox.getSelectedItem() != null) {
-                    Animation animation = LEDCubeManager.getInstance().getAnimations().get(animComboBox.getSelectedItem().toString());
-                    LEDCubeManager.getCommThread().setCurrentAnimation(animation);
+                    Animation animation = LEDCubeManager.getLEDCube().getAnimations().get(animComboBox.getSelectedItem().toString());
+                    LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(animation);
                 }
             }
         });
-        populateAnimationList();
+        //populateAnimationList();
         container.addComponent(animComboBox);
     }
 
     @Override
     public void update(float delta) {
         super.update(delta);
-        progressSlider.setValueWithoutNotify(LEDCubeManager.getSpectrumAnalyzer().getPosition());
+        progressSlider.setValueWithoutNotify(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getPosition());
     }
 
     @Override
     public void render() {
         super.render();
-        RenderHelper.drawSquare(LEDCubeManager.getWidth() - 40 - 10, LEDCubeManager.getHeight() - 150 - 10, 40, 150, LEDCubeManager.getPaintColor());
+        RenderHelper.drawSquare(LEDCubeManager.getWidth() - 40 - 10, LEDCubeManager.getHeight() - 150 - 10, 40, 150, LEDCubeManager.getLEDCube().getPaintColor());
     }
 
     public final void populateAnimationList() {
         animComboBox.clearItems();
-        for (String name : LEDCubeManager.getInstance().getAnimationNames()) {
+        for (String name : LEDCubeManager.getLEDCube().getAnimationNames()) {
             animComboBox.addItem(name);
         }
         animComboBox.setSelectedItem(1);
