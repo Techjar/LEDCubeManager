@@ -13,6 +13,7 @@ import org.lwjgl.util.Color;
  */
 public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     private float[] amplitudes = new float[64];
+    private int bandIncrement = 4;
 
     @Override
     public String getName() {
@@ -25,7 +26,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
             float amplitude = amplitudes[i] - 2;
             Vector2 pos = spiralPosition(i);
             for (int j = 0; j < 8; j++) {
-                float increment = (4.0F * (j + 1)) * (1 - (i / 70F));
+                float increment = (5.0F * (j + 1)) * (1 - (i / 70F));
                 ledManager.setLEDColorReal((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
                 amplitude -= increment;
             }
@@ -55,7 +56,11 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     @Override
     public synchronized void processFFT(FFT fft) {
         for (int i = 0; i < 64; i++) {
-            float amplitude = fft.getBand(i * 4);
+            float amplitude = 0;
+            for (int j = 0; j < bandIncrement; j++) {
+                float band = fft.getBand(i * bandIncrement + j);
+                if (band > amplitude) amplitude = band;
+            }
             if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
             else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / 7, 1F);
         }

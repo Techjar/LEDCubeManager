@@ -24,7 +24,7 @@ public class AnimationProgressiveFill extends Animation {
 
     @Override
     public String getName() {
-        return "Progressive Fill";
+        return "Dissolve";
     }
 
     @Override
@@ -54,12 +54,5 @@ public class AnimationProgressiveFill extends Animation {
         timer.restart();
         states = new boolean[ledManager.getLEDCount()];
         filledCount = 0;
-        for (int x = 0; x < dimension.x; x++) {
-            for (int y = 0; y < dimension.y; y++) {
-                for (int z = 0; z < dimension.z; z++) {
-                    ledManager.setLEDColor(x, y, z, new Color());
-                }
-            }
-        }
     }
 }

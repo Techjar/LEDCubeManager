@@ -14,6 +14,7 @@ import org.lwjgl.util.Color;
  */
 public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     private float[] amplitudes = new float[64];
+    private int bandIncrement = 4;
     private boolean rainbow = true;
     private float sensitivity = 20.0F;
 
@@ -68,7 +69,11 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     @Override
     public synchronized void processFFT(FFT fft) {
         for (int i = 0; i < 64; i++) {
-            float amplitude = fft.getBand(i * 4);
+            float amplitude = 0;
+            for (int j = 0; j < bandIncrement; j++) {
+                float band = fft.getBand(i * bandIncrement + j);
+                if (band > amplitude) amplitude = band;
+            }
             if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
             else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / 7, 1F);
         }
