@@ -6,6 +6,7 @@ import com.obj.TextureCoordinate;
 import com.obj.Vertex;
 import com.obj.WavefrontObject;
 import com.techjar.ledcm.util.AxisAlignedBB;
+import com.techjar.ledcm.util.Material;
 import com.techjar.ledcm.util.Model;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
+import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.opengl.Texture;
 
 /**
@@ -45,6 +47,9 @@ public class ModelManager {
         ArrayList<Float> objectLODDists = new ArrayList<>();
         File collisionFile = null;
         Texture texture = textureManager.getTexture("white.png");
+        Material material = new Material();
+        boolean translucent = false;
+        float mass = 0;
         Vector3 scale = new Vector3(1, 1, 1);
         File modelFile = new File(modelPath, file);
         @Cleanup BufferedReader br = new BufferedReader(new FileReader(modelFile));
@@ -68,6 +73,29 @@ public class ModelManager {
                 case "texture":
                     texture = textureManager.getTexture(split[1]);
                     break;
+                case "material":
+                    for (int i = 0; i < Math.min(subsplit.length, 4); i++) {
+                        if ("default".equals(subsplit[i].toLowerCase())) continue;
+                        String[] subsubsplit = subsplit[i].split(",", 3);
+                        switch (i) {
+                            case 0:
+                                material = new Material(new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.diffuse, material.specular, material.shininess);
+                                break;
+                            case 1:
+                                material = new Material(material.ambient, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.specular, material.shininess);
+                                break;
+                            case 2:
+                                material = new Material(material.ambient, material.diffuse, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.shininess);
+                                break;
+                            case 3:
+                                material = new Material(material.ambient, material.diffuse, material.specular, Float.parseFloat(subsplit[i]));
+                                break;
+                        }
+                    }
+                    break;
+                case "translucent":
+                    translucent = true;
+                    break;
                 case "scale":
                     if (subsplit.length == 1) {
                         scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]));
@@ -80,15 +108,17 @@ public class ModelManager {
                 case "collision":
                     switch (subsplit[1].toLowerCase()) {
                         case "mesh":
-                            //collision = new WavefrontObject(new File(modelPath, subsplit[2]).getAbsolutePath());
                             collisionFile = new File(modelPath, subsplit[2]);
                             break;
                     }
                     break;
+                case "mass":
+                    mass = Float.parseFloat(split[1]);
+                    break;
             }
         }
         if (objectFiles == null) throw new IOException("Missing \"render\" entry in model file");
-        Model model = new Model(objectFiles.size(), texture);
+        Model model = new Model(objectFiles.size(), texture, material, translucent);
         for (int i = 0; i < objectFiles.size(); i++) {
             File objectFile = objectFiles.get(i);
             WavefrontObject object = new WavefrontObject(objectFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
@@ -129,7 +159,7 @@ public class ModelManager {
             if (model.getAABB() == null) model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
             model.loadMesh(i, objectLODDists.get(i), vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size());
         }
-        if (collisionFile != null) model.setCollisionMesh(new WavefrontObject(collisionFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ()));
+        model.setPhysicsInfo(collisionFile != null ? new WavefrontObject(collisionFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ()) : null, mass);
         model.makeImmutable();
         LogHelper.info("Finished loading %s", file);
         cache.put(file, model);

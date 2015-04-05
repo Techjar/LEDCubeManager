@@ -85,8 +85,10 @@ public class AnimationSequence {
             LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(anim);
             LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setSelectedItem(anim.getName());
         }
-        for (SequenceItem.Option option : item.options) {
-            LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().optionChanged(option.name, option.value);
+        if (item.options != null) {
+            for (SequenceItem.Option option : item.options) {
+                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().optionChanged(option.name, option.value);
+            }
         }
     }
 

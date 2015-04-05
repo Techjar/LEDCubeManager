@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL15.*;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.logging.LogHelper;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import lombok.Getter;
 import org.lwjgl.BufferUtils;
 import org.newdawn.slick.opengl.Texture;
@@ -22,14 +23,14 @@ public class ModelMesh {
     private final Vector3 center;
     @Getter private final float radius;
     @Getter private final int faceCount;
-    @Getter private final Texture texture;
+    @Getter private final Model model;
     //private float[] vertices;
     //private float[] normals;
     //private float[] texCoords;
 
-    public ModelMesh(float lodDistance, Texture texture, int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {
+    public ModelMesh(float lodDistance, Model model, int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {
         this.lodDistance = lodDistance;
-        this.texture = texture;
+        this.model = model;
         this.indices = indices;
         //this.vertices = vertices;
         //this.normals = normals;

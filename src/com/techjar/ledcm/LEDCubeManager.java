@@ -162,10 +162,9 @@ public class LEDCubeManager {
     private Matrix4f viewMatrix;
     public Matrix4f modelMatrix;
 
-    // Shaders
+    @Getter private LightingHandler lightingHandler;
     private ShaderProgram spMain;
     private ShaderProgram spDepthDraw; // TODO
-    private int sampler0;
 
     public LEDCubeManager(String[] args) throws LWJGLException {
         instance = this;
@@ -249,6 +248,7 @@ public class LEDCubeManager {
         modelManager = new ModelManager(textureManager);
         fontManager = new FontManager();
         soundManager = new SoundManager();
+        lightingHandler = new LightingHandler();
         camera = new Camera();
         frustum = new Frustum();
         fileChooser = new JFileChooser();
@@ -256,6 +256,10 @@ public class LEDCubeManager {
         fileChooser.setMultiSelectionEnabled(false);
         if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
         init();
+
+        LightSource light = new LightSource();
+        light.position = new Vector4f(0, 0, 0, 1);
+        lightingHandler.addLight(light);
 
         ledCube = new LEDCube();
         ledCube.postInit();
@@ -533,31 +537,6 @@ public class LEDCubeManager {
         glAlphaFunc(GL_GREATER, 0);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        //glCullFace(GL_FRONT); // What
-
-        // Setup lighting
-        floatBuffer.rewind();
-        floatBuffer.put(new float[]{1, 1, 1, 1});
-        floatBuffer.rewind();
-        glMaterial(GL_FRONT, GL_SPECULAR, floatBuffer);
-        glMaterialf(GL_FRONT, GL_SHININESS, 50);
-
-        floatBuffer.rewind();
-        floatBuffer.put(new float[]{1, 1, 1, 0});
-        floatBuffer.rewind();
-        glLight(GL_LIGHT0, GL_POSITION, floatBuffer);
-
-        //glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-        //glEnable(GL_COLOR_MATERIAL);
-
-        glEnable(GL_LIGHT0);
-
-        // Setup samplers
-        sampler0 = glGenSamplers();
-        glSamplerParameteri(sampler0, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glSamplerParameteri(sampler0, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glSamplerParameteri(sampler0, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glSamplerParameteri(sampler0, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         // Shader init, catch errors and exit
         try {
@@ -590,6 +569,13 @@ public class LEDCubeManager {
                     continue;
                 } else if (Keyboard.getEventKey() == Keyboard.KEY_F2) {
                     screenshot = true;
+                    continue;
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_F5) {
+                    ShaderProgram.cleanup();
+                    initShaders();
+                    continue;
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
+                    wireframe = !wireframe;
                     continue;
                 }
             }
@@ -636,6 +622,8 @@ public class LEDCubeManager {
         camera.update(delta);
         textureManager.update(delta);
         ledCube.update(delta);
+
+        lightingHandler.getLight(0).position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
 
         Iterator<Screen> it = screenList.iterator();
         while (it.hasNext()) {
@@ -730,27 +718,11 @@ public class LEDCubeManager {
 
     public void render3D() {
         glPushMatrix();
-
-        viewMatrix = new Matrix4f();
-        modelMatrix = new Matrix4f();
-        Vector3 camPos = camera.getPosition();
-        Angle camAngle = camera.getAngle();
-        viewMatrix.rotate((float)Math.toRadians(camAngle.getRoll()), new Vector3f(0, 0, -1));
-        viewMatrix.rotate((float)Math.toRadians(camAngle.getPitch()), new Vector3f(-1, 0, 0));
-        viewMatrix.rotate((float)Math.toRadians(camAngle.getYaw()), new Vector3f(0, -1, 0));
-        viewMatrix.translate(Util.convertVector(camPos.negate()));
-        frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
         
         spMain.use();
+        setupView(camera.getPosition(), camera.getAngle());
         sendMatrixToProgram();
-        glActiveTexture(GL_TEXTURE0);
-        glBindSampler(0, sampler0);
-        
-        LightSource light = new LightSource();
-        //light.position = new Vector4f(0, 1, 0, 0);
-        light.position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
-        light.sendToShader(1, 0);
-        glUniform1i(0, 1);
+        lightingHandler.sendToShader();
         
         faceCount = ledCube.render();
 
@@ -807,6 +779,24 @@ public class LEDCubeManager {
                 LogHelper.severe("%d: %s", error, gluErrorString(error));
             }
         }
+    }
+
+    private void setupView(Vector3 position, Quaternion rotation) {
+        viewMatrix = new Matrix4f();
+        modelMatrix = new Matrix4f();
+        Matrix4f.mul(viewMatrix, rotation.getMatrix(), viewMatrix);
+        viewMatrix.translate(Util.convertVector(position.negate()));
+        frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
+    }
+
+    private void setupView(Vector3 position, Angle angle) {
+        viewMatrix = new Matrix4f();
+        modelMatrix = new Matrix4f();
+        viewMatrix.rotate((float)Math.toRadians(angle.getRoll()), new Vector3f(0, 0, -1));
+        viewMatrix.rotate((float)Math.toRadians(angle.getPitch()), new Vector3f(-1, 0, 0));
+        viewMatrix.rotate((float)Math.toRadians(angle.getYaw()), new Vector3f(0, -1, 0));
+        viewMatrix.translate(Util.convertVector(position.negate()));
+        frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
     }
 
     private void sendMatrixToProgram() {

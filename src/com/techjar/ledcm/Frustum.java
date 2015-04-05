@@ -13,11 +13,11 @@ import org.lwjgl.BufferUtils;
  */
 public class Frustum {
     @Getter private float[][] frustum = new float[6][4];
-    private FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
+    //private FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
 
     public void update(float[] projection, float[] view) {
-        //float[] proj = new float[16];
-        //float[] modl = new float[16];
+        //float[] projection = new float[16];
+        //float[] view = new float[16];
         float[] clip = new float[16];
         float t;
 
@@ -26,13 +26,13 @@ public class Frustum {
         buffer.rewind();
         glGetFloat(GL_PROJECTION_MATRIX, buffer);
         buffer.rewind();
-        for (int i = 0; i < 16; i++) proj[i] = buffer.get();
+        for (int i = 0; i < 16; i++) projection[i] = buffer.get();
 
         // Get the current MODELVIEW matrix from OpenGL
         buffer.rewind();
         glGetFloat(GL_MODELVIEW_MATRIX, buffer);
         buffer.rewind();
-        for (int i = 0; i < 16; i++) modl[i] = buffer.get();
+        for (int i = 0; i < 16; i++) view[i] = buffer.get();
         */
 
         // Combine the two matrices (multiply projection by view)

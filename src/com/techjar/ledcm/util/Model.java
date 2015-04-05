@@ -18,12 +18,17 @@ public class Model {
     private boolean mutable = true;
     private ModelMesh[] meshes;
     @Getter private final Texture texture;
+    @Getter private final Material material;
+    @Getter private final boolean translucent;
     @Getter private WavefrontObject collisionMesh;
+    @Getter private float mass;
     private AxisAlignedBB aabb;
 
-    public Model(int meshCount, Texture texture) {
+    public Model(int meshCount, Texture texture, Material material, boolean translucent) {
         this.meshes = new ModelMesh[meshCount];
         this.texture = texture;
+        this.material = material;
+        this.translucent = translucent;
     }
 
     /**
@@ -44,7 +49,7 @@ public class Model {
 
     public void loadMesh(int lod, float lodDistance, int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {
         checkMutable();
-        meshes[lod] = new ModelMesh(lodDistance, texture, indices, vertices, normals, texCoords, center, radius, faceCount);
+        meshes[lod] = new ModelMesh(lodDistance, this, indices, vertices, normals, texCoords, center, radius, faceCount);
     }
 
     public ModelMesh getMesh(int lod) {
@@ -60,9 +65,10 @@ public class Model {
         return meshes[meshes.length - 1];
     }
 
-    public void setCollisionMesh(WavefrontObject collisionMesh) {
+    public void setPhysicsInfo(WavefrontObject collisionMesh, float mass) {
         checkMutable();
         this.collisionMesh = collisionMesh;
+        this.mass = mass;
     }
 
     public AxisAlignedBB getAABB() {
@@ -83,6 +89,7 @@ public class Model {
     }
 
     public void release() {
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         for (ModelMesh mesh : meshes) {
             glDeleteBuffers(mesh.getVBO());
         }

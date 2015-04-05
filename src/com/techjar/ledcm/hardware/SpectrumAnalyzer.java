@@ -99,7 +99,7 @@ public class SpectrumAnalyzer {
     }
 
     public void setVolume(float volume) {
-        if (player != null) player.setGain(volume > 0 ? (float)(Math.log10(volume) * 20) : -200);
+        if (player != null) player.setGain(volume > 0 ? (float)(Math.log(volume) * 20) : -200);
     }
 
     public float getPosition() {
@@ -112,6 +112,13 @@ public class SpectrumAnalyzer {
     public int getPositionMillis() {
         if (player != null) {
             return player.position();
+        }
+        return 0;
+    }
+
+    public int getLengthMillis() {
+        if (player != null) {
+            return player.length();
         }
         return 0;
     }

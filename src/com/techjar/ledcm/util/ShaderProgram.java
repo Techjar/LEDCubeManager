@@ -28,13 +28,14 @@ public class ShaderProgram {
     private static final File shaderPath = new File("resources/shaders/");
     private static final Map<String, Integer> types;
     private static final Map<String, Integer> typeBitLookup;
-    private static Map<String, ArrayList<Integer>> shaderCache = new HashMap<>();
+    private static Map<String, List<Integer>> shaderCache = new HashMap<>();
+    private static List<ShaderProgram> programCache = new ArrayList<>();
     private static ShaderProgram activeProgram;
     @Getter private int id;
     private List<Integer> shaderIds;
     private Map<String, Integer> attribs;
     private Map<String, Integer> uniforms;
-    private boolean linked;
+    @Getter private boolean linked;
 
     static {
         Map<String, Integer> typeMap = new HashMap<>();
@@ -60,6 +61,7 @@ public class ShaderProgram {
         this.attribs = new HashMap<>();
         this.uniforms = new HashMap<>();
         id = glCreateProgram();
+        programCache.add(this);
         //glProgramParameteri(id, GL_PROGRAM_SEPARABLE, GL_TRUE);
     }
 
@@ -142,6 +144,11 @@ public class ShaderProgram {
         activeProgram = this;
     }
 
+    public void release() {
+        if (activeProgram == this) useNone();
+        glDeleteProgram(id);
+    }
+
     public static void useNone() {
         glUseProgram(0);
         activeProgram = null;
@@ -152,12 +159,16 @@ public class ShaderProgram {
     }
 
     public static void cleanup() {
-        for (ArrayList<Integer> list : shaderCache.values()) {
+        for (ShaderProgram program : programCache) {
+            program.release();
+        }
+        for (List<Integer> list : shaderCache.values()) {
             for (int shaderId : list) {
                 glDeleteShader(shaderId);
             }
         }
         shaderCache.clear();
+        programCache.clear();
     }
 
     private void checkLinked(boolean errorCondition) {

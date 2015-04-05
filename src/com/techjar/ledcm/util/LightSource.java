@@ -10,28 +10,25 @@ import org.lwjgl.util.vector.Vector4f;
  * @author Techjar
  */
 public class LightSource {
-    public Vector4f ambient = new Vector4f(0, 0, 0, 1);
-    public Vector4f diffuse = new Vector4f(1, 1, 1, 1);
-    public Vector4f specular = new Vector4f(1, 1, 1, 1);
-    public Vector4f position = new Vector4f(0, 0, 1, 0);
-    public Vector3f spotDirection = new Vector3f(0, 0, -1);
-    public float spotExponent = 0;
-    public float spotCutoff = 180;
-    public float constantAttenuation = 1;
-    public float linearAttenuation = 0;
-    public float quadraticAttenuation = 0;
+    public Vector3f diffuse = new Vector3f(1.0F, 1.0F, 1.0F);
+    public Vector3f specular = new Vector3f(1.0F, 1.0F, 1.0F);
+    public Vector4f position = new Vector4f(0.0F, 0.0F, 1.0F, 0.0F);
+    public Vector3f spotDirection = new Vector3f(0.0F, 0.0F, -1.0F);
+    public float spotExponent = 0.0F;
+    public float spotCutoff = 180.0F;
+    public float constantAttenuation = 1.0F;
+    public float linearAttenuation = 0.0F;
+    public float quadraticAttenuation = 0.0F;
+    public float brightness = 1.0F;
 
     public void sendToShader(int index, int arrayIndex) {
         index += arrayIndex * 10;
-        glUniform4f(index++, ambient.x, ambient.y, ambient.z, ambient.w);
-        glUniform4f(index++, diffuse.x, diffuse.y, diffuse.z, diffuse.w);
-        glUniform4f(index++, specular.x, specular.y, specular.z, specular.w);
+        brightness = Math.max(brightness, Float.MIN_VALUE);
+        glUniform3f(index++, diffuse.x, diffuse.y, diffuse.z);
+        glUniform3f(index++, specular.x, specular.y, specular.z);
         glUniform4f(index++, position.x, position.y, position.z, position.w);
         glUniform3f(index++, spotDirection.x, spotDirection.y, spotDirection.z);
-        glUniform1f(index++, spotExponent);
-        glUniform1f(index++, spotCutoff);
-        glUniform1f(index++, constantAttenuation);
-        glUniform1f(index++, linearAttenuation);
-        glUniform1f(index++, quadraticAttenuation);
+        glUniform2f(index++, spotExponent, spotCutoff);
+        glUniform3f(index++, constantAttenuation / brightness, linearAttenuation / brightness, quadraticAttenuation / brightness);
     }
 }

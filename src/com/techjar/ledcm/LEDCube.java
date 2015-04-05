@@ -148,10 +148,8 @@ public class LEDCube {
                                 for (int i = 0; i < 6; i++) {
                                     Vector3 offset = Direction.values()[i].getVector();
                                     Vector3 node = current.add(offset);
-                                    if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z) {
-                                        if (!processed[Util.encodeCubeVector(node)]) {
-                                            stack.push(node);
-                                        }
+                                    if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[Util.encodeCubeVector(node)]) {
+                                        stack.push(node);
                                     }
                                 }
                             }
@@ -174,11 +172,8 @@ public class LEDCube {
     public int render() {
         int faceCount = 0;
         float mult = ledSpaceMult;
-        Random rand = new Random();
 
         Dimension3D dim = ledManager.getDimensions();
-        int size = dim.x * dim.y * dim.z * 16 * 4;
-        Random rkek = new Random(214545);
         Model model = LEDCubeManager.getModelManager().getModel("led.model");
         Color[] colors = new Color[ledManager.getLEDCount()];
         synchronized (ledManager) {
@@ -199,11 +194,8 @@ public class LEDCube {
         for (int y = 0; y < dim.y; y++) {
             for (int z = 0; z < dim.z; z++) {
                 for (int x = 0; x < dim.x; x++) {
-                    float xx = z * mult;
-                    float yy = y * mult;
-                    float zz = x * mult;
-                    Vector3 pos = new Vector3(xx, yy, zz);
                     if (isLEDWithinIsolation(x, y, z)) {
+                        Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
                         faceCount += model.render(pos, new Quaternion(), colors[Util.encodeCubeVector(x, y, z)]);
                     }
                 }
@@ -215,11 +207,8 @@ public class LEDCube {
             for (int x = 0; x < dim.x; x++) {
                 for (int z = 0; z < dim.z; z++) {
                     if (highlight[Util.encodeCubeVector(x, y, z)]) {
-                        float xx = z * mult;
-                        float yy = y * mult;
-                        float zz = x * mult;
-                        Vector3 pos = new Vector3(xx, yy, zz);
                         if (isLEDWithinIsolation(x, y, z)) {
+                            Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
                             faceCount += model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32));
                         }
                     }

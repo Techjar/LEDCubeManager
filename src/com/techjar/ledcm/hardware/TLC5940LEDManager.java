@@ -38,7 +38,7 @@ public class TLC5940LEDManager implements LEDManager {
 
     @Override
     public int getLEDCount() {
-        return 8 * 8 * 8;
+        return 512;
     }
 
     @Override
