@@ -475,6 +475,7 @@ public class LEDCubeManager {
     }
 
     private void initConfig() {
+        if (displayMode == null) displayMode = new DisplayMode(1024, 768);
         config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"));
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
