@@ -83,7 +83,7 @@ void main(void) {
         if (normalLightDot < 0) {
             specular = vec3(0, 0, 0);
         } else {
-            specular = attenuation * light.specular * front_material.specular * pow(max(0, dot(reflect(-lightDirection, normalDirection), viewDirection)), front_material.shininess);
+            specular = attenuation * light.specular * front_material.specular * pow(max(0, dot(-normalize(reflect(lightDirection, normalDirection)), viewDirection)), front_material.shininess);
         }
         totalDiffuse += diffuse;
         totalSpecular += specular;
