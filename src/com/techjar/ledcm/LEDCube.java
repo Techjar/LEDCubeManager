@@ -7,6 +7,7 @@ import com.techjar.ledcm.hardware.CommThread;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
+import com.techjar.ledcm.hardware.StripLEDManager;
 import com.techjar.ledcm.hardware.TLC5940LEDManager;
 import com.techjar.ledcm.hardware.TestHugeLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
@@ -57,11 +58,12 @@ public class LEDCube {
     @Getter private Model model;
 
     public LEDCube() {
-        ledManager = new ArduinoLEDManager(4, false);
+        //ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
         //ledManager = new TestHugeLEDManager(true);
+        ledManager = new StripLEDManager(110, false);
         highlight = new boolean[ledManager.getLEDCount()];
-        model = LEDCubeManager.getModelManager().getModel("led.model");
+        model = LEDCubeManager.getModelManager().getModel("flatled.model");
         //initOctree();
         /*for (int i = 0; i < 64; i++) {
             double j = i;
@@ -75,8 +77,8 @@ public class LEDCube {
         spectrumAnalyzer = new SpectrumAnalyzer();
         commThread = new CommThread();
         commThread.start();
-        LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
-        LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
+        LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 25));
+        LEDCubeManager.getCamera().setAngle(new Angle(-90, -90, 0));
     }
 
     public boolean processKeyboardEvent() {
@@ -95,8 +97,8 @@ public class LEDCube {
                 }
                 return false;
             } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
-                LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
-                LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
+                LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 25));
+                LEDCubeManager.getCamera().setAngle(new Angle(-90, -90, 0));
                 return false;
             } else if (Keyboard.getEventKey() == Keyboard.KEY_H) {
                 trueColor = !trueColor;
@@ -285,7 +287,7 @@ public class LEDCube {
         float mult = ledSpaceMult;
         Dimension3D dim = ledManager.getDimensions();
         Model model = LEDCubeManager.getModelManager().getModel("led.model");
-        for (float step = 1; step < 1000; step += 2) {
+        for (float step = 1; step < 3000; step += 2) {
             Vector3 rayPos = position.add(direction.multiply(step));
             if (octree == null) {
                 for (int y = 0; y < dim.y; y++) {

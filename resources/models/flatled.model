@@ -1,0 +1,2 @@
+render flatled.obj
+collision mesh flatled.obj
