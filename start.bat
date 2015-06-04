@@ -1,3 +1,3 @@
 @echo off
 cd dist
-java -Xmx2048M -jar LEDCubeManager.jar --showfps --loglevel FINEST
+java -Xmx2048M -jar LEDCubeManager.jar --showfps
