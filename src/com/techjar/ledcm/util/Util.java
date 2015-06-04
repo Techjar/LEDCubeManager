@@ -223,10 +223,10 @@ public final class Util {
     }
 
     public static int getRequiredBits(long value) {
-        int i = 1;
+        int i = 0;
         for (; i < 64; i++) {
-            value >>= 1;
             if (value == 0) break;
+            value >>= 1;
         }
         return i;
     }

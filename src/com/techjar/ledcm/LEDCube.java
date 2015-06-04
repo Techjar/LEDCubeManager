@@ -54,13 +54,15 @@ public class LEDCube {
     @Getter private Vector3 paintSize = new Vector3(0, 0, 0);
     @Getter @Setter private int layerIsolation = 0;
     @Getter @Setter private int selectedLayer = 0;
+    @Getter private Model model;
 
     public LEDCube() {
         ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
         //ledManager = new TestHugeLEDManager(true);
         highlight = new boolean[ledManager.getLEDCount()];
-        initOctree();
+        model = LEDCubeManager.getModelManager().getModel("led.model");
+        //initOctree();
         /*for (int i = 0; i < 64; i++) {
             double j = i;
             LogHelper.info(Math.round(MathHelper.cie1931(j/63)*63));
@@ -174,7 +176,6 @@ public class LEDCube {
         float mult = ledSpaceMult;
 
         Dimension3D dim = ledManager.getDimensions();
-        Model model = LEDCubeManager.getModelManager().getModel("led.model");
         Color[] colors = new Color[ledManager.getLEDCount()];
         synchronized (ledManager) {
             for (int y = 0; y < dim.y; y++) {
@@ -202,14 +203,13 @@ public class LEDCube {
             }
         }
 
-        model = LEDCubeManager.getModelManager().getModel("led_larger.model");
         for (int y = 0; y < dim.y; y++) {
             for (int x = 0; x < dim.x; x++) {
                 for (int z = 0; z < dim.z; z++) {
                     if (highlight[Util.encodeCubeVector(x, y, z)]) {
                         if (isLEDWithinIsolation(x, y, z)) {
                             Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
-                            faceCount += model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32));
+                            faceCount += model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), new Vector3(1.2F, 1.2F, 1.2F));
                         }
                     }
                 }
@@ -243,7 +243,6 @@ public class LEDCube {
     }
 
     private void recursiveFillOctree(LEDCubeOctreeNode node, float size, int count, Vector3 ledPos) {
-        Model model = LEDCubeManager.getModelManager().getModel("led.model");
         AxisAlignedBB nodeAABB = node.getAABB();
         for (int i = 0; i < 8; i++) {
             int x = (i & 1);

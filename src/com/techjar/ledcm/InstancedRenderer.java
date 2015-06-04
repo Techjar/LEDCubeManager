@@ -55,12 +55,12 @@ public final class InstancedRenderer {
     private InstancedRenderer() {
     }
 
-    public static void addItem(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color) {
+    public static void addItem(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
         if (mesh.getModel().getTexture().hasAlpha() || color.getAlpha() < 255) {
-            itemsAlpha.add(new InstanceItem(mesh, position, rotation, color));
+            itemsAlpha.add(new InstanceItem(mesh, position, rotation, color, scale));
         } else {
             if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedList<InstanceItem>());
-            itemsNormal.get(mesh).add(new InstanceItem(mesh, position, rotation, color));
+            itemsNormal.get(mesh).add(new InstanceItem(mesh, position, rotation, color, scale));
         }
     }
 
@@ -117,6 +117,7 @@ public final class InstancedRenderer {
                 Util.storeColorInBuffer(item.getColor(), buffer);
                 Matrix4f matrix = new Matrix4f();
                 matrix.translate(Util.convertVector(item.getPosition()));
+                matrix.scale(Util.convertVector(item.getScale()));
                 Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
                 Util.storeMatrixInBuffer(matrix, buffer);
             }
@@ -160,5 +161,6 @@ public final class InstancedRenderer {
         private final Vector3 position;
         private final Quaternion rotation;
         private final Color color;
+        private final Vector3 scale;
     }
 }
