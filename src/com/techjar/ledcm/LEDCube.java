@@ -62,7 +62,7 @@ public class LEDCube {
         //ledManager = new TestHugeLEDManager(true);
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("led.model");
-        //initOctree();
+        initOctree();
         /*for (int i = 0; i < 64; i++) {
             double j = i;
             LogHelper.info(Math.round(MathHelper.cie1931(j/63)*63));
