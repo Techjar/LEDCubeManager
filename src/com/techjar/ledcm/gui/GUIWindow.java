@@ -23,7 +23,8 @@ public class GUIWindow extends GUIContainer {
     protected Dimension minSize = new Dimension(50, 50);
     protected Dimension maxSize = new Dimension();
     protected boolean canMove = true;
-    protected boolean canResize = true;
+    protected boolean canResizeX = true;
+    protected boolean canResizeY = true;
     protected int closeAction = HIDE_ON_CLOSE;
     protected boolean onTop;
     
@@ -65,30 +66,30 @@ public class GUIWindow extends GUIContainer {
         if (Mouse.getEventButton() == 0) {
             if (!onTop && checkMouseIntersect(getComponentBox())) setToBePutOnTop(true);
             if (Mouse.getEventButtonState()) {
-                if (canResize) {
+                if (canResizeX || canResizeY) {
                     Rectangle[] boxes = getBoxes();
-                    if (checkMouseIntersect(boxes[0])) {
+                    if (canResizeY && checkMouseIntersect(boxes[0])) {
                         resizeY = -1;
-                        if (checkMouseIntersect(boxes[1])) {
+                        if (canResizeX && checkMouseIntersect(boxes[1])) {
                             resizeX = -1;
                         }
-                        else if (checkMouseIntersect(boxes[3])) {
+                        else if (canResizeX && checkMouseIntersect(boxes[3])) {
                             resizeX = 1;
                         }
                     }
-                    else if (checkMouseIntersect(boxes[2])) {
+                    else if (canResizeY && checkMouseIntersect(boxes[2])) {
                         resizeY = 1;
-                        if (checkMouseIntersect(boxes[1])) {
+                        if (canResizeX && checkMouseIntersect(boxes[1])) {
                             resizeX = -1;
                         }
-                        else if (checkMouseIntersect(boxes[3])) {
+                        else if (canResizeX && checkMouseIntersect(boxes[3])) {
                             resizeX = 1;
                         }
                     }
-                    else if (checkMouseIntersect(boxes[1])) {
+                    else if (canResizeX && checkMouseIntersect(boxes[1])) {
                         resizeX = -1;
                     }
-                    else if (checkMouseIntersect(boxes[3])) {
+                    else if (canResizeX && checkMouseIntersect(boxes[3])) {
                         resizeX = 1;
                     }
                     if (isResizing()) startResize = true;
@@ -122,7 +123,7 @@ public class GUIWindow extends GUIContainer {
         else if (wasMousePressed && !checkMouseButtons()) {
             wasMousePressed = false;
         }*/
-        if (canResize && !Util.getMousePos().equals(mouseLast)) {
+        if ((canResizeX || canResizeY) && !Util.getMousePos().equals(mouseLast)) {
             if (isResizing()) {
                 Vector2 mouseDiff = Util.getMousePos().subtract(mouseLast);
                 Vector2 newPos = position.copy();
@@ -158,7 +159,7 @@ public class GUIWindow extends GUIContainer {
             if (!Mouse.isButtonDown(0) || startResize) {
                 startResize = false;
                 Rectangle[] boxes = getBoxes();
-                if (checkMouseIntersect(boxes[0])) {
+                if (canResizeY && checkMouseIntersect(boxes[0])) {
                     if (checkMouseIntersect(boxes[1])) {
                         currentCursor = Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR);
                     }
@@ -169,21 +170,21 @@ public class GUIWindow extends GUIContainer {
                         currentCursor = Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR);
                     }
                 }
-                else if (checkMouseIntersect(boxes[2])) {
-                    if (checkMouseIntersect(boxes[1])) {
+                else if (canResizeY && checkMouseIntersect(boxes[2])) {
+                    if (canResizeX && checkMouseIntersect(boxes[1])) {
                         currentCursor = Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR);
                     }
-                    else if (checkMouseIntersect(boxes[3])) {
+                    else if (canResizeX && checkMouseIntersect(boxes[3])) {
                         currentCursor = Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR);
                     }
                     else {
                         currentCursor = Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR);
                     }
                 }
-                else if (checkMouseIntersect(boxes[1])) {
+                else if (canResizeX && checkMouseIntersect(boxes[1])) {
                     currentCursor = Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR);
                 }
-                else if (checkMouseIntersect(boxes[3])) {
+                else if (canResizeX && checkMouseIntersect(boxes[3])) {
                     currentCursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
                 }
                 else {
@@ -241,11 +242,33 @@ public class GUIWindow extends GUIContainer {
     }
 
     public boolean isResizable() {
-        return canResize;
+        return canResizeX || canResizeY;
+    }
+
+    public boolean isResizableX() {
+        return canResizeX;
+    }
+
+    public boolean isResizableY() {
+        return canResizeY;
     }
 
     public void setResizable(boolean canResize) {
-        this.canResize = canResize;
+        this.canResizeX = canResize;
+        this.canResizeY = canResize;
+    }
+
+    public void setResizable(boolean canResizeX, boolean canResizeY) {
+        this.canResizeX = canResizeX;
+        this.canResizeY = canResizeY;
+    }
+
+    public void setResizableX(boolean canResize) {
+        this.canResizeX = canResize;
+    }
+
+    public void setResizableY(boolean canResize) {
+        this.canResizeY = canResize;
     }
 
     public int getCloseAction() {

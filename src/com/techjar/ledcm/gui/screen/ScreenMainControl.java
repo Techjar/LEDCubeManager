@@ -10,6 +10,7 @@ import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.GUIComboBox;
 import com.techjar.ledcm.gui.GUILabel;
 import com.techjar.ledcm.gui.GUIRadioButton;
+import com.techjar.ledcm.gui.GUIScrollBox;
 import com.techjar.ledcm.gui.GUISlider;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.GUIWindow;
@@ -35,6 +36,9 @@ public class ScreenMainControl extends Screen {
     public final GUISlider progressSlider;
     public final GUIWindow layersWindow;
     public final GUIWindow sequenceWindow;
+    public final GUIWindow animOptionsWindow;
+    public final GUIScrollBox animOptionsScrollBox;
+    public final GUIButton animOptionsBtn;
     public final GUISlider layerSlider;
     public final GUIComboBox animComboBox;
     public final GUISlider redColorSlider;
@@ -280,6 +284,7 @@ public class ScreenMainControl extends Screen {
             @Override
             public void run() {
                 layersWindow.setVisible(!layersWindow.isVisible());
+                if (layersWindow.isVisible()) layersWindow.setToBePutOnTop(true);
             }
         });
         container.addComponent(layersBtn);
@@ -304,12 +309,12 @@ public class ScreenMainControl extends Screen {
                 layerSlider.setIncrement(0);
             }
         });
-        layersWindow.addComponent(radioOff);
         radioOffLabel = new GUILabel(font, new Color(255, 255, 255), "Off");
         radioOffLabel.setDimension(60, 30);
         radioOffLabel.setPosition(40, 5);
         radioOff.setLabel(radioOffLabel);
         layersWindow.addComponent(radioOffLabel);
+        layersWindow.addComponent(radioOff);
         radioX = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         radioX.setDimension(30, 30);
         radioX.setPosition(5, 40);
@@ -328,12 +333,12 @@ public class ScreenMainControl extends Screen {
                 });
             }
         });
-        layersWindow.addComponent(radioX);
         radioXLabel = new GUILabel(font, new Color(255, 255, 255), "X");
         radioXLabel.setDimension(20, 30);
         radioXLabel.setPosition(40, 40);
         radioX.setLabel(radioXLabel);
         layersWindow.addComponent(radioXLabel);
+        layersWindow.addComponent(radioX);
         radioY = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         radioY.setDimension(30, 30);
         radioY.setPosition(5, 75);
@@ -352,12 +357,12 @@ public class ScreenMainControl extends Screen {
                 });
             }
         });
-        layersWindow.addComponent(radioY);
         radioYLabel = new GUILabel(font, new Color(255, 255, 255), "Y");
         radioYLabel.setDimension(20, 30);
         radioYLabel.setPosition(40, 75);
         radioY.setLabel(radioYLabel);
         layersWindow.addComponent(radioYLabel);
+        layersWindow.addComponent(radioY);
         radioZ = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         radioZ.setDimension(30, 30);
         radioZ.setPosition(5, 110);
@@ -376,12 +381,12 @@ public class ScreenMainControl extends Screen {
                 });
             }
         });
-        layersWindow.addComponent(radioZ);
         radioZLabel = new GUILabel(font, new Color(255, 255, 255), "Z");
         radioZLabel.setDimension(20, 30);
         radioZLabel.setPosition(40, 110);
         radioZ.setLabel(radioZLabel);
         layersWindow.addComponent(radioZLabel);
+        layersWindow.addComponent(radioZ);
         layerSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
         layerSlider.setDimension(30, 125);
         layerSlider.setPosition(105, 10);
@@ -411,6 +416,7 @@ public class ScreenMainControl extends Screen {
             public void run() {
                 sequenceWindow.setVisible(!sequenceWindow.isVisible());
                 if (sequenceWindow.isVisible()) {
+                    sequenceWindow.setToBePutOnTop(true);
                     sequenceComboBox.setSelectedItem(-1);
                     sequenceComboBox.clearItems();
                     File dir = new File("resources/sequences/");
@@ -468,6 +474,37 @@ public class ScreenMainControl extends Screen {
         });
         sequenceWindow.addComponent(sequenceStopBtn);
         sequenceWindow.addComponent(sequenceComboBox);
+
+        animOptionsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
+        animOptionsWindow.setDimension(700, 500);
+        animOptionsWindow.setPosition(container.getWidth() / 2 - animOptionsWindow.getWidth() / 2, container.getHeight() / 2 - animOptionsWindow.getHeight() / 2);
+        animOptionsWindow.setResizable(false, true);
+        animOptionsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
+        animOptionsWindow.setVisible(false);
+        container.addComponent(animOptionsWindow);
+        animOptionsScrollBox = new GUIScrollBox(new Color(255, 0, 0));
+        animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
+        animOptionsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
+        animOptionsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
+        animOptionsWindow.setDimensionChangeHandler(new GUICallback() {
+            @Override
+            public void run() {
+                animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
+            }
+        });
+        animOptionsWindow.addComponent(animOptionsScrollBox);
+        animOptionsBtn = new GUIButton(font, new Color(255, 255, 255), "Options", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        animOptionsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        animOptionsBtn.setDimension(140, 35);
+        animOptionsBtn.setPosition(-605, 5);
+        animOptionsBtn.setClickHandler(new GUICallback() {
+            @Override
+            public void run() {
+                animOptionsWindow.setVisible(!animOptionsWindow.isVisible());
+                if (animOptionsWindow.isVisible()) animOptionsWindow.setToBePutOnTop(true);
+            }
+        });
+        container.addComponent(animOptionsBtn);
         
         animComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         animComboBox.setParentAlignment(GUIAlignment.TOP_RIGHT);

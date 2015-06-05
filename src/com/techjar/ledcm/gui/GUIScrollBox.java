@@ -209,7 +209,7 @@ public class GUIScrollBox extends GUIContainer {
             maxOffset[1] = (int)MathHelper.clamp(bottom.getRawPosition().getY() + bottom.getDimension().getHeight() - dimension.getHeight() + (getScrollX(false) ? 10 : 0), 0, Integer.MAX_VALUE);
         }
         if (getScrollX(false) && right != null) {
-            maxOffset[0] = (int)MathHelper.clamp(bottom.getRawPosition().getX() + bottom.getDimension().getWidth() - dimension.getWidth() + (getScrollY(false) ? 10 : 0), 0, Integer.MAX_VALUE);
+            maxOffset[0] = (int)MathHelper.clamp(right.getRawPosition().getX() + right.getDimension().getWidth() - dimension.getWidth() + (getScrollY(false) ? 10 : 0), 0, Integer.MAX_VALUE);
         }
         return maxOffset;
     }

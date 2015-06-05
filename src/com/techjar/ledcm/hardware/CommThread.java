@@ -97,7 +97,10 @@ public class CommThread extends Thread {
     public void setCurrentAnimation(Animation currentAnimation) {
         synchronized (lock) {
             this.currentAnimation = currentAnimation;
-            if (currentAnimation != null) currentAnimation.reset();
+            if (currentAnimation != null) {
+                currentAnimation.reset();
+                currentAnimation.loadOptions();
+            }
         }
     }
 

@@ -66,12 +66,12 @@ public class GUICheckBox extends GUI {
             guiBg.render();
             guiBg.setBorderColor(color2);
 
-            if (label != null) {
+            /*if (label != null) {
                 color2 = label.getColor();
                 label.setColor(Util.addColors(color2, new Color(50, 50, 50)));
                 label.render();
                 label.setColor(color2);
-            }
+            }*/
         }
         else {
             guiBg.render();
@@ -109,5 +109,13 @@ public class GUICheckBox extends GUI {
 
     public void setLabel(GUILabel label) {
         this.label = label;
+    }
+
+    public GUICallback getChangeHandler() {
+        return changeHandler;
+    }
+
+    public void setChangeHandler(GUICallback changeHandler) {
+        this.changeHandler = changeHandler;
     }
 }

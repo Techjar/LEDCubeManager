@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.Dimension;
 import org.newdawn.slick.UnicodeFont;
 
 /**
@@ -18,14 +19,17 @@ import org.newdawn.slick.UnicodeFont;
 public class GUIComboButton extends GUI {
     protected UnicodeFont font;
     protected Color color;
+    protected GUIBackground guiBg;
     protected List<Object> items = new ArrayList<>();
     protected GUICallback changeHandler;
 
     protected int selectedItem = -1;
 
-    public GUIComboButton(UnicodeFont font, Color color) {
+    public GUIComboButton(UnicodeFont font, Color color, GUIBackground guiBg) {
         this.font = font;
         this.color = color;
+        this.guiBg = guiBg;
+        if (guiBg != null) guiBg.setParent(this);
     }
 
     @Override
@@ -71,8 +75,28 @@ public class GUIComboButton extends GUI {
 
     @Override
     public void render() {
-        if (getSelectedItem() != null) font.drawString(getPosition().getX(), getPosition().getY(), getSelectedItem().toString(), Util.convertColor(hovered ? Util.addColors(color, new Color(50, 50, 50)) : color));
-    } 
+        if (guiBg != null) {
+            if (hovered) {
+                Color color2 = guiBg.getBorderColor(), color3 = guiBg.getBackgroundColor();
+                guiBg.setBorderColor(Util.addColors(color2, new Color(50, 50, 50)));
+                guiBg.setBackgroundColor(Util.addColors(color3, new Color(50, 50, 50)));
+                guiBg.render();
+                guiBg.setBorderColor(color2);
+                guiBg.setBackgroundColor(color3);
+            }
+            else guiBg.render();
+        }
+        if (getSelectedItem() != null) {
+            String text = getSelectedItem().toString();
+            if (getSelectedItem() != null) font.drawString(getPosition().getX() + ((dimension.getWidth() - font.getWidth(text.toString())) / 2), getPosition().getY() + ((dimension.getHeight() - font.getHeight(text.toString())) / 2), text, Util.convertColor(color));
+        }
+    }
+
+    @Override
+    public void setDimension(Dimension dimension) {
+        super.setDimension(dimension);
+        if (guiBg != null) guiBg.setDimension(dimension);
+    }
 
     public void setSelectedItem(int selectedItem) {
         if (selectedItem != this.selectedItem) {

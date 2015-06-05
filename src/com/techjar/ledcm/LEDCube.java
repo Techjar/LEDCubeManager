@@ -64,7 +64,7 @@ public class LEDCube {
         ledManager = new StripLEDManager(110, false);
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("flatled.model");
-        //initOctree();
+        initOctree();
         /*for (int i = 0; i < 64; i++) {
             double j = i;
             LogHelper.info(Math.round(MathHelper.cie1931(j/63)*63));
