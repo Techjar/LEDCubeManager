@@ -6,6 +6,7 @@ import com.techjar.ledcm.gui.GUI;
 import com.techjar.ledcm.gui.GUIAlignment;
 import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIBox;
+import com.techjar.ledcm.gui.GUIButton;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.GUICheckBox;
 import com.techjar.ledcm.gui.GUIComboBox;
@@ -175,6 +176,17 @@ public abstract class Animation {
                             height += 35;
                         }
                         radioBox.setHeight(height - 5);
+                        break;
+                    case BUTTON:
+                        final GUIButton button = new GUIButton(screen.font, new Color(255, 255, 255), option.params[0], new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+                        gui = button;
+                        button.setHeight(35);
+                        button.setClickHandler(new GUICallback() {
+                            @Override
+                            public void run() {
+                                optionChanged(option.id, null);
+                            }
+                        });
                         break;
                 }
                 GUILabel label = new GUILabel(screen.font, new Color(255, 255, 255), option.name);

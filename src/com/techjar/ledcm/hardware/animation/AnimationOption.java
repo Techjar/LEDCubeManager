@@ -41,5 +41,6 @@ public class AnimationOption {
         COMBOBUTTON, // 2+ params: default value, items
         CHECKBOX, // 0-1 params: default value
         RADIOGROUP, // 2+ params: default value, items
+        BUTTON, // 1 param: text
     }
 }
