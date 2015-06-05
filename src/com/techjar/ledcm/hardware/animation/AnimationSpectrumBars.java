@@ -1,7 +1,9 @@
 
 package com.techjar.ledcm.hardware.animation;
 
+import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
+import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import ddf.minim.analysis.BeatDetect;
 import ddf.minim.analysis.FFT;
@@ -12,30 +14,35 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
-    private float[] amplitudes = new float[64];
-    private int bandIncrement = 4;
+    private float[] amplitudes;
+    private int bandIncrement = 3;
+
+    public AnimationSpectrumBars() {
+        super();
+        amplitudes = new float[dimension.x];
+    }
 
     @Override
     public String getName() {
-        return "Spectrum Bars";
+        return "Spectrum Dots";
     }
 
     @Override
     public synchronized void refresh() {
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < amplitudes.length; i++) {
             float amplitude = amplitudes[i] - 2;
-            Vector2 pos = spiralPosition(i);
-            for (int j = 0; j < 8; j++) {
-                float increment = (5.0F * (j + 1)) * (1 - (i / 70F));
-                ledManager.setLEDColorReal((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
-                amplitude -= increment;
-            }
+            float constant = 10;
+            float increment = (5.0F * constant) * (1 - (i / (float)(amplitudes.length + 10)));
+            float brightness = MathHelper.clamp(amplitude / increment, 0, 1);
+            Color color = LEDCubeManager.getPaintColor();
+            color = Util.multiplyColor(color, brightness);
+            ledManager.setLEDColor(i, 0, 0, amplitude > 0 ? color : new Color());
         }
     }
 
     @Override
     public void reset() {
-        amplitudes = new float[64];
+        amplitudes = new float[dimension.x];
     }
 
     @Override
@@ -55,7 +62,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 
     @Override
     public synchronized void processFFT(FFT fft) {
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < amplitudes.length; i++) {
             float amplitude = 0;
             for (int j = 0; j < bandIncrement; j++) {
                 float band = fft.getBand(i * bandIncrement + j);
@@ -70,47 +77,12 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     public void processBeatDetect(BeatDetect bt) {
     }
 
-    private Color colorAtY(int y, float brightness) {
+    private Color colorAtBrightness(float brightness) {
         int res = ledManager.getResolution();
-        if (y > 6) return new Color(Math.round(res * brightness), 0, 0);
-        if (y > 4) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
-        if (y > 1) return new Color(0, Math.round(res * brightness), 0);
-        return new Color(0, 0, Math.round(res * brightness));
-    }
-
-    private Vector2 spiralPosition(int index) {
-        // (di, dj) is a vector - direction in which we move right now
-        int di = 1;
-        int dj = 0;
-        // length of current segment
-        int segment_length = 1;
-
-        // current position (i, j) and how much of current segment we passed
-        int i = 0;
-        int j = 0;
-        int segment_passed = 0;
-        for (int k = 0; k < index; ++k) {
-            // make a step, add 'direction' vector (di, dj) to current position (i, j)
-            i += di;
-            j += dj;
-            ++segment_passed;
-
-            if (segment_passed == segment_length) {
-                // done with current segment
-                segment_passed = 0;
-
-                // 'rotate' directions
-                int buffer = di;
-                di = -dj;
-                dj = buffer;
-
-                // increase segment length if necessary
-                if (dj == 0) {
-                    ++segment_length;
-                }
-            }
-        }
-
-        return new Vector2(i, j);
+        if (brightness > 0.9) return new Color(Math.round(res * brightness), 0, 0);
+        if (brightness > 0.5) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
+        if (brightness > 0.15) return new Color(0, Math.round(res * brightness), 0);
+        if (brightness > 0.01) return new Color(0, 0, Math.round(res * brightness));
+        return new Color();
     }
 }

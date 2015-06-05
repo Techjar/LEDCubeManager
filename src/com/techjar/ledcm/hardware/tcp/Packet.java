@@ -51,8 +51,8 @@ public class Packet {
     }
 
     public static void writePacket(DataOutputStream stream, Packet packet) throws IOException {
-        stream.write(packet.getId().ordinal());
-        stream.writeShort(packet.data.length);
+        //stream.write(packet.getId().ordinal());
+        //stream.writeShort(packet.data.length);
         stream.write(packet.data);
     }
 }

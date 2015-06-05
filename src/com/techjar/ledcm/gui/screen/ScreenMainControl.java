@@ -504,6 +504,6 @@ public class ScreenMainControl extends Screen {
         for (String name : LEDCubeManager.getLEDCube().getAnimationNames()) {
             animComboBox.addItem(name);
         }
-        animComboBox.setSelectedItem(/*1*/0);
+        animComboBox.setSelectedItem(1);
     }
 }

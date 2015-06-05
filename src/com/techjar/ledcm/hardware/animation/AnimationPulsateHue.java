@@ -24,16 +24,12 @@ public class AnimationPulsateHue extends Animation {
 
     @Override
     public void refresh() {
-        for (int y = 0; y < dimension.y; y++) {
-            double value = ((timer.getSeconds() / 7 + ((7 - y) / 7F) / 5)) % 1;
+        for (int x = 0; x < dimension.x; x++) {
+            double value = ((timer.getSeconds() / 7 + ((7 - x) / (float)dimension.x) / 5)) % 1;
             //double value = ((timer.getSeconds() / (dimension.y - 1) + ((dimension.y - 1 - y) / (dimension.y - 1F)) / 5)) % 1;
             Color color = new Color();
             color.fromHSB((float)value, 1, 1);
-            for (int x = 0; x < dimension.x; x++) {
-                for (int z = 0; z < dimension.z; z++) {
-                    ledManager.setLEDColor(x, y, z, color);
-                }
-            }
+            ledManager.setLEDColor(x, 0, 0, color);
         }
     }
 

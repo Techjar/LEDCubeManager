@@ -48,7 +48,7 @@ public class TCPServer {
                         continue;
                     }
                     TCPClient tcpClient = new TCPClient(client, clientIndex++);
-                    if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) sendPacket(Packet.ID.AUDIO_INIT, LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioInit(), tcpClient);
+                    //if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) sendPacket(Packet.ID.AUDIO_INIT, LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioInit(), tcpClient);
                     clients.add(tcpClient);
                 } catch (IOException ex) {
                     ex.printStackTrace();

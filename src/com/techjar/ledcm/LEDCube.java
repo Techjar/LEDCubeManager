@@ -77,7 +77,7 @@ public class LEDCube {
         spectrumAnalyzer = new SpectrumAnalyzer();
         commThread = new CommThread();
         commThread.start();
-        LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 25));
+        LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 30));
         LEDCubeManager.getCamera().setAngle(new Angle(-90, -90, 0));
     }
 
@@ -97,7 +97,7 @@ public class LEDCube {
                 }
                 return false;
             } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
-                LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 25));
+                LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 30));
                 LEDCubeManager.getCamera().setAngle(new Angle(-90, -90, 0));
                 return false;
             } else if (Keyboard.getEventKey() == Keyboard.KEY_H) {
@@ -341,10 +341,10 @@ public class LEDCube {
         addAnimation(new AnimationTwinkle());
         addAnimation(new AnimationBlink());
         addAnimation(new AnimationStrobe());
-        addAnimation(new AnimationSnake());
+        addAnimation(new AnimationPingPong());
         addAnimation(new AnimationSnakeBattle());
         addAnimation(new AnimationSnakeInfinite());
-        addAnimation(new AnimationScrollers());
+        addAnimation(new AnimationTicker());
         addAnimation(new AnimationProgressiveFill());
         addAnimation(new AnimationSine());
         addAnimation(new AnimationSineDouble());
