@@ -67,7 +67,7 @@ public class GUIRadioButton extends GUI {
 
     @Override
     public void render() {
-        if (label != null) {
+        /*if (label != null) {
             if (hovered) {
                 Color color2 = label.getColor();
                 label.setColor(Util.addColors(color2, new Color(50, 50, 50)));
@@ -75,7 +75,7 @@ public class GUIRadioButton extends GUI {
                 label.setColor(color2);
             }
             else label.render();
-        }
+        }*/
         circle.bind();
         RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), hovered ? Util.addColors(guiBg.getBorderColor(), new Color(50, 50, 50)) : guiBg.getBorderColor(), circle);
         RenderHelper.drawSquare(getPosition().getX() + guiBg.getBorderSize(), getPosition().getY() + guiBg.getBorderSize(), dimension.getWidth() - (guiBg.getBorderSize() * 2), dimension.getHeight() - (guiBg.getBorderSize() * 2), guiBg.getBackgroundColor(), circle);
