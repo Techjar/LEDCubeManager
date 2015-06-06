@@ -219,7 +219,7 @@ public final class Util {
     public static Vector3 decodeCubeVector(int number) {
         Dimension3D dim = LEDCubeManager.getLEDManager().getDimensions();
         Dimension3D bits = getRequiredBits(dim);
-        return new Vector3(number & (dim.z - 1), (number >> (bits.x + bits.z)) & (dim.y - 1), (number >> bits.z) & (dim.x - 1));
+        return new Vector3(number & (getNextPowerOfTwo(dim.x) - 1), (number >> (bits.x + bits.z)) & (getNextPowerOfTwo(dim.y) - 1), (number >> bits.z) & (getNextPowerOfTwo(dim.z) - 1));
     }
 
     public static int getRequiredBits(long value) {
