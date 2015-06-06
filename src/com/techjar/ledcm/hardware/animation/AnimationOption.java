@@ -9,9 +9,9 @@ public class AnimationOption {
     public final String id;
     public final String name;
     public final OptionType type;
-    public final String[] params;
+    public final Object[] params;
 
-    public AnimationOption(String id, String name, OptionType type, String[] params) {
+    public AnimationOption(String id, String name, OptionType type, Object[] params) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -30,7 +30,7 @@ public class AnimationOption {
         return type;
     }
 
-    public String[] getParams() {
+    public Object[] getParams() {
         return params;
     }
 
