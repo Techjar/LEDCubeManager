@@ -1,6 +1,7 @@
 
 package com.techjar.ledcm.hardware.animation;
 
+import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
 import org.lwjgl.util.Color;
@@ -28,16 +29,10 @@ public class AnimationIndividualTest extends Animation {
     @Override
     public void refresh() {
         if (ticks % 12 == 0) {
-            for (int x = 0; x < dimension.x; x++) {
-                for (int y = 0; y < dimension.y; y++) {
-                    for (int z = 0; z < dimension.z; z++) {
-                        ledManager.setLEDColor(x, y, z, new Color());
-                    }
-                }
-            }
+            LEDUtil.clear(ledManager);
             Vector3 pos = Util.decodeCubeVector(index / 3);
             ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), new Color(index % 3 == 0 ? 255 : 0, index % 3 == 1 ? 255 : 0, index % 3 == 2 ? 255 : 0));
-            if (index++ >= count) {
+            if (++index >= count) {
                 index = 0;
             }
         }

@@ -13,11 +13,12 @@ import org.lwjgl.util.Color;
  *
  * @author Techjar
  */
-public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
+public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     private float[] amplitudes;
     private int bandIncrement = 3;
+    private boolean rainbow;
 
-    public AnimationSpectrumBars() {
+    public AnimationSpectrumDots() {
         super();
         amplitudes = new float[dimension.x];
     }
@@ -34,8 +35,9 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
             float constant = 10;
             float increment = (5.0F * constant) * (1 - (i / (float)(amplitudes.length + 10)));
             float brightness = MathHelper.clamp(amplitude / increment, 0, 1);
-            Color color = LEDCubeManager.getPaintColor();
-            color = Util.multiplyColor(color, brightness);
+            Color color = new Color();
+            if (rainbow) color.fromHSB(i / (float)amplitudes.length, 1, brightness);
+            else color = Util.multiplyColor(LEDCubeManager.getPaintColor(), brightness);
             ledManager.setLEDColor(i, 0, 0, amplitude > 0 ? color : new Color());
         }
     }
@@ -43,6 +45,23 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     @Override
     public void reset() {
         amplitudes = new float[dimension.x];
+        rainbow = false;
+    }
+
+    @Override
+    public AnimationOption[] getOptions() {
+        return new AnimationOption[]{
+            new AnimationOption("rainbow", "Rainbow", AnimationOption.OptionType.CHECKBOX, new Object[]{false}),
+        };
+    }
+
+    @Override
+    public void optionChanged(String name, String value) {
+        switch (name) {
+            case "rainbow":
+                rainbow = Boolean.parseBoolean(value);
+                break;
+        }
     }
 
     @Override

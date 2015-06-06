@@ -94,9 +94,9 @@ public class StripLEDManager implements LEDManager {
 
     @Override
     public Color getLEDColor(int x, int y, int z) {
-        if (x < 0 || x > count) throw new IllegalArgumentException("Invalid X coordinate: " + x);
-        if (y < 0 || y > 1) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
-        if (z < 0 || z > 1) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
+        if (x < 0 || x >= count) throw new IllegalArgumentException("Invalid X coordinate: " + x);
+        if (y < 0 || y > 0) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
+        if (z < 0 || z > 0) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
         int index = x;
         return new Color(red[index], green[index], blue[index]);
@@ -109,9 +109,9 @@ public class StripLEDManager implements LEDManager {
 
     @Override
     public void setLEDColor(int x, int y, int z, ReadableColor color) {
-        if (x < 0 || x > count) throw new IllegalArgumentException("Invalid X coordinate: " + x);
-        if (y < 0 || y > 1) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
-        if (z < 0 || z > 1) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
+        if (x < 0 || x >= count) throw new IllegalArgumentException("Invalid X coordinate: " + x);
+        if (y < 0 || y > 0) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
+        if (z < 0 || z > 0) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
         int index = x;
         red[index] = color.getRedByte();

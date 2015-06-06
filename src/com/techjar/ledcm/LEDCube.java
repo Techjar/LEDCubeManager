@@ -328,35 +328,19 @@ public class LEDCube {
         animations.clear();
         animationNames.clear();
         addAnimation(new AnimationNone());
-        addAnimation(new AnimationSpectrumBars());
-        addAnimation(new AnimationSpectrumShooters());
+        addAnimation(new AnimationSpectrumDots());
+        //addAnimation(new AnimationSpectrumShooters());
         //addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
         addAnimation(new AnimationPulsate());
         addAnimation(new AnimationPulsateHue());
         addAnimation(new AnimationRandomize());
-        addAnimation(new AnimationRain());
         addAnimation(new AnimationMatrix());
-        //addAnimation(new AnimationFolder());
         addAnimation(new AnimationTwinkle());
-        addAnimation(new AnimationBlink());
         addAnimation(new AnimationStrobe());
         addAnimation(new AnimationPingPong());
-        addAnimation(new AnimationSnakeBattle());
-        addAnimation(new AnimationSnakeInfinite());
         addAnimation(new AnimationTicker());
         addAnimation(new AnimationProgressiveFill());
-        addAnimation(new AnimationSine());
-        addAnimation(new AnimationSineDouble());
-        addAnimation(new AnimationStacker());
-        addAnimation(new AnimationRainbowStacker());
-        addAnimation(new AnimationCandyCaneStacker());
-        addAnimation(new AnimationDrain());
-        addAnimation(new AnimationFaucet());
-        addAnimation(new AnimationMultiFaucet());
-        addAnimation(new AnimationFaucetFill());
-        addAnimation(new AnimationFaucetFillRainbow());
-        addAnimation(new AnimationSlidingBoxes());
         if (LEDCubeManager.getInstance().getScreenMainControl() != null) {
             LEDCubeManager.getInstance().getScreenMainControl().populateAnimationList();
         }

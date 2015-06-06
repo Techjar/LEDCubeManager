@@ -12,6 +12,8 @@ import org.lwjgl.util.Color;
  */
 public class AnimationPulsate extends Animation {
     private Timer timer = new Timer();
+    private float speed = 2;
+    private float scale = 3;
 
     public AnimationPulsate() {
         super();
@@ -25,7 +27,7 @@ public class AnimationPulsate extends Animation {
     @Override
     public void refresh() {
         for (int x = 0; x < dimension.x; x++) {
-            double value = Math.sin(timer.getSeconds() * 2 + ((7 - x) / (float)dimension.x) * 3) * 0.5 + 0.5;
+            double value = Math.sin(timer.getSeconds() * speed + ((7 - x) / (float)dimension.x) * scale) * 0.5 + 0.5;
             Color color = Util.multiplyColor(LEDCubeManager.getPaintColor(), value);
             ledManager.setLEDColor(x, 0, 0, color);
         }
@@ -34,5 +36,25 @@ public class AnimationPulsate extends Animation {
     @Override
     public void reset() {
         timer.restart();
+    }
+
+    @Override
+    public AnimationOption[] getOptions() {
+        return new AnimationOption[]{
+            new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 0.2F) / 19F}),
+            new AnimationOption("scale", "Scale", AnimationOption.OptionType.SLIDER, new Object[]{(29 - (scale - 1)) / 29F}),
+        };
+    }
+
+    @Override
+    public void optionChanged(String name, String value) {
+        switch (name) {
+            case "speed":
+                speed = 0.2F + (19 * Float.parseFloat(value));
+                break;
+            case "scale":
+                scale = 1 + (29 * (1 - Float.parseFloat(value)));
+                break;
+        }
     }
 }
