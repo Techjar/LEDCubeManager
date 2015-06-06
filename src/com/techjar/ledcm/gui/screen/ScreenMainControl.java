@@ -476,7 +476,7 @@ public class ScreenMainControl extends Screen {
         sequenceWindow.addComponent(sequenceComboBox);
 
         animOptionsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
-        animOptionsWindow.setDimension(700, 500);
+        animOptionsWindow.setDimension(500, 300);
         animOptionsWindow.setPosition(container.getWidth() / 2 - animOptionsWindow.getWidth() / 2, container.getHeight() / 2 - animOptionsWindow.getHeight() / 2);
         animOptionsWindow.setResizable(false, true);
         animOptionsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
