@@ -81,12 +81,12 @@ public class GUIScrollBox extends GUIContainer {
             Vector2 mouseOffset = Util.getMousePos().subtract(mouseStart);
             int[] maxScrollOffset = getMaxScrollOffset();
             int[] maxScrollbarOffset = getMaxScrollbarOffset();
-            if (scrolling == 1 && maxScrollOffset[0] > 0) {
+            if (scrolling == 1 && maxScrollOffset[0] > 0 && maxScrollbarOffset[0] > 0) {
                 float offset = MathHelper.clamp(scrollOffsetStart.getX() + (mouseOffset.getX() * ((float)maxScrollOffset[0] / (float)maxScrollbarOffset[0])), 0, maxScrollOffset[0]);
                 if (scrollXIncrement > 0) scrollOffset.setX(offset - (offset % scrollXIncrement));
                 else scrollOffset.setX(offset);
             }
-            else if (scrolling == 2 && maxScrollOffset[1] > 0) {
+            else if (scrolling == 2 && maxScrollOffset[1] > 0 && maxScrollbarOffset[1] > 0) {
                 float offset = MathHelper.clamp(scrollOffsetStart.getY() + (mouseOffset.getY() * ((float)maxScrollOffset[1] / (float)maxScrollbarOffset[1])), 0, maxScrollOffset[1]);
                 if (scrollYIncrement > 0) scrollOffset.setY(offset - (offset % scrollYIncrement));
                 else scrollOffset.setY(offset);
@@ -132,7 +132,7 @@ public class GUIScrollBox extends GUIContainer {
     }
 
     private boolean getScrollX(boolean checkAuto) {
-        if (checkAuto && scrollXMode == ScrollMode.AUTOMATIC) return getMaxScrollOffset()[0] > 0;
+        if (checkAuto && scrollXMode == ScrollMode.AUTOMATIC) return getMaxScrollOffset()[0] > 0 && getMaxScrollbarOffset()[0] > 0;
         return scrollXMode == ScrollMode.ENABLED || scrollXMode == ScrollMode.AUTOMATIC;
     }
 
@@ -141,7 +141,7 @@ public class GUIScrollBox extends GUIContainer {
     }
 
     private boolean getScrollY(boolean checkAuto) {
-        if (checkAuto && scrollYMode == ScrollMode.AUTOMATIC) return getMaxScrollOffset()[1] > 0;
+        if (checkAuto && scrollYMode == ScrollMode.AUTOMATIC) return getMaxScrollOffset()[1] > 0 && getMaxScrollbarOffset()[1] > 0;
         return scrollYMode == ScrollMode.ENABLED || scrollYMode == ScrollMode.AUTOMATIC;
     }
 
