@@ -94,7 +94,7 @@ public class GUIComboBox extends GUI {
         glEnable(GL_TEXTURE_2D);
         if (getSelectedItem() != null) {
             RenderHelper.beginScissor(new Rectangle(getPosition().getX() + guiBg.getBorderSize(), getPosition().getY() + guiBg.getBorderSize(), dimension.getWidth() - guiBg.getBorderSize() - 20, dimension.getHeight() - (guiBg.getBorderSize() * 2)));
-            font.drawString(getPosition().getX() + guiBg.getBorderSize(), getPosition().getY() + guiBg.getBorderSize(), getSelectedItem().toString(), Util.convertColor(color));
+            font.drawString(getPosition().getX() + guiBg.getBorderSize() + 3, getPosition().getY() + guiBg.getBorderSize(), getSelectedItem().toString(), Util.convertColor(color));
             RenderHelper.endScissor();
         }
         if (opened) {
