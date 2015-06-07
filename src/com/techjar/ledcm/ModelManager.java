@@ -169,6 +169,7 @@ public class ModelManager {
     public void unloadModel(String file) {
         if (cache.containsKey(file)) {
             cache.remove(file).release();
+            LogHelper.info("Unloaded %s", file);
         }
     }
 

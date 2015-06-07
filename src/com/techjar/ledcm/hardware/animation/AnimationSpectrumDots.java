@@ -51,7 +51,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("rainbow", "Rainbow", AnimationOption.OptionType.CHECKBOX, new Object[]{false}),
+            new AnimationOption("rainbow", "Rainbow", AnimationOption.OptionType.CHECKBOX, new Object[]{rainbow}),
         };
     }
 

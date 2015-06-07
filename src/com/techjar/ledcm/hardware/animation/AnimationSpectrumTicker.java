@@ -12,7 +12,7 @@ import org.lwjgl.util.Color;
  *
  * @author Techjar
  */
-public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
+public class AnimationSpectrumTicker extends AnimationSpectrumAnalyzer {
     private float[] amplitudes = new float[64];
     private int bandIncrement = 4;
     private boolean rainbow = true;

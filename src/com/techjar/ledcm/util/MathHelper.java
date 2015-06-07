@@ -7,6 +7,8 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public final class MathHelper {
+    private static final float[] xyzWhiteRef = new float[]{0.95047F, 1F, 1.08883F};
+
     private MathHelper() {
     }
 
@@ -111,6 +113,17 @@ public final class MathHelper {
      * @param fraction interpolation fraction from 0 to 1
      * @return the interpolated value
      */
+    public static float lerp(float start, float end, float fraction) {
+        return (start * (1.0F - fraction)) + (end * fraction);
+    }
+
+    /**
+     * Performs a linear interpolation between <em>start</em> and <em>end</em> using <em>fraction</em>.
+     * @param start starting value
+     * @param end ending value
+     * @param fraction interpolation fraction from 0 to 1
+     * @return the interpolated value
+     */
     public static double lerp(double start, double end, double fraction) {
         return (start * (1.0D - fraction)) + (end * fraction);
     }
@@ -167,5 +180,104 @@ public final class MathHelper {
         float blue = (start.getBlue() * fractionInverse) + (end.getBlue() * fraction);
         float alpha = (start.getAlpha() * fractionInverse) + (end.getAlpha() * fraction);
         return new Color((int)red, (int)green, (int)blue, (int)alpha);
+    }
+
+    /**
+     * Performs a linear interpolation between <em>start</em> and <em>end</em> using <em>fraction</em>.
+     * @param start starting value
+     * @param end ending value
+     * @param fraction interpolation fraction from 0 to 1
+     * @return the interpolated value
+     */
+    public static Color lerpXyz(Color start, Color end, float fraction) {
+        return xyzToRgb(lerpColorSpace(rgbToXyz(start), rgbToXyz(end), fraction));
+    }
+
+    /**
+     * Performs a linear interpolation between <em>start</em> and <em>end</em> using <em>fraction</em>.
+     * @param start starting value
+     * @param end ending value
+     * @param fraction interpolation fraction from 0 to 1
+     * @return the interpolated value
+     */
+    public static Color lerpLab(Color start, Color end, float fraction) {
+        return xyzToRgb(labToXyz(lerpColorSpace(xyzToLab(rgbToXyz(start)), xyzToLab(rgbToXyz(end)), fraction)));
+    }
+
+    /**
+     * Performs a linear interpolation between <em>start</em> and <em>end</em> using <em>fraction</em>.
+     * @param start starting value
+     * @param end ending value
+     * @param fraction interpolation fraction from 0 to 1
+     * @return the interpolated value
+     */
+    public static float[] lerpColorSpace(float[] start, float[] end, float fraction) {
+        float[] ret = new float[3];
+        float fractionInverse = 1 - fraction;
+        //System.out.println(fraction);
+        ret[0] = (start[0] * fractionInverse) + (end[0] * fraction);
+        ret[1] = (start[1] * fractionInverse) + (end[1] * fraction);
+        ret[2] = (start[2] * fractionInverse) + (end[2] * fraction);
+        return ret;
+    }
+
+    private static float pivotRgb(float n) {
+        return n > 0.04045F ? (float)Math.pow((n + 0.055F) / 1.055F, 2.4F) : n / 12.92F;
+    }
+
+    private static float pivotRgbInverse(float n) {
+        return n > 0.0031308F ? 1.055F * (float)Math.pow(n, 1F / 2.4F) - 0.055F : 12.92F * n;
+    }
+
+    public static Color xyzToRgb(float[] xyz) {
+        float x = xyz[0];
+        float y = xyz[1];
+        float z = xyz[2];
+
+        // (Observer = 2°, Illuminant = D65)
+        float r = pivotRgbInverse(x * 3.240479F + y * -1.537150F + z * -0.498535F);
+        float g = pivotRgbInverse(x * -0.969256F + y * 1.875992F + z * 0.041556F);
+        float b = pivotRgbInverse(x * 0.055648F + y * -0.204043F + z * 1.057311F);
+
+        return new Color(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
+    }
+
+    public static float[] rgbToXyz(Color color) {
+        float[] xyz = new float[3];
+        float r = pivotRgb(color.getRed() / 255F);
+        float g = pivotRgb(color.getGreen() / 255F);
+        float b = pivotRgb(color.getBlue() / 255F);
+
+        // (Observer = 2°, Illuminant = D65)
+        xyz[0] = r * 0.412453F + g * 0.357580F + b * 0.180423F;
+        xyz[1] = r * 0.212671F + g * 0.715160F + b * 0.072169F;
+        xyz[2] = r * 0.019334F + g * 0.119193F + b * 0.950227F;
+        
+        return xyz;
+    }
+    
+    private static float pivotLab(float n) {
+        return n > 0.008856F ? (float)Math.pow(n, 1F / 3F) : (1F / 3F) * (float)Math.pow(29F / 6F, 2) * n + (4F / 29F);
+    }
+
+    private static float pivotLabInverse(float n) {
+        return n > 6F / 29F ? (float)Math.pow(n, 3) : 3F * (float)Math.pow(6F / 29F, 2) * (n - (4F / 29F));
+    }
+
+    public static float[] xyzToLab(float[] xyz) {
+        float[] lab = new float[3];
+        lab[0] = 116 * pivotLab(xyz[1] / xyzWhiteRef[1]) - 16;
+        lab[1] = 500 * (pivotLab(xyz[0] / xyzWhiteRef[0]) - pivotLab(xyz[1] / xyzWhiteRef[1]));
+        lab[2] = 200 * (pivotLab(xyz[1] / xyzWhiteRef[1]) - pivotLab(xyz[2] / xyzWhiteRef[2]));
+        return lab;
+    }
+
+    public static float[] labToXyz(float[] lab) {
+        float[] xyz = new float[3];
+        float p = (lab[0] + 16F) / 116F;
+        xyz[0] = xyzWhiteRef[0] * pivotLabInverse(p + (lab[1] / 500F));
+        xyz[1] = xyzWhiteRef[1] * pivotLabInverse(p);
+        xyz[2] = xyzWhiteRef[2] * pivotLabInverse(p - (lab[2] / 200F));
+        return xyz;
     }
 }

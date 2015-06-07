@@ -3,6 +3,9 @@ package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.LEDUtil;
+import com.techjar.ledcm.util.MathHelper;
+import org.lwjgl.util.Color;
+import org.lwjgl.util.ReadableColor;
 
 /**
  *

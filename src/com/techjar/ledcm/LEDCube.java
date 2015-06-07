@@ -286,7 +286,6 @@ public class LEDCube {
 
         float mult = ledSpaceMult;
         Dimension3D dim = ledManager.getDimensions();
-        Model model = LEDCubeManager.getModelManager().getModel("led.model");
         for (float step = 1; step < 3000; step += 2) {
             Vector3 rayPos = position.add(direction.multiply(step));
             if (octree == null) {
@@ -332,6 +331,7 @@ public class LEDCube {
         //addAnimation(new AnimationSpectrumShooters());
         //addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
+        addAnimation(new AnimationGradient());
         addAnimation(new AnimationPulsate());
         addAnimation(new AnimationPulsateHue());
         addAnimation(new AnimationRandomize());

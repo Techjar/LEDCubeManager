@@ -54,7 +54,7 @@ public class AnimationTicker extends Animation {
         return new AnimationOption[]{
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(15 - (speed - 1)) / 15F, 1F / 15F}),
             new AnimationOption("density", "Density", AnimationOption.OptionType.SLIDER, new Object[]{(30 - (density - 1)) / 30F, 1F / 30F}),
-            new AnimationOption("rainbow", "Rainbow", AnimationOption.OptionType.CHECKBOX, new Object[]{false}),
+            new AnimationOption("rainbow", "Rainbow", AnimationOption.OptionType.CHECKBOX, new Object[]{rainbow}),
         };
     }
 
