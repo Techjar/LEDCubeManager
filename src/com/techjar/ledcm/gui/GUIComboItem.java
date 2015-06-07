@@ -1,5 +1,7 @@
 package com.techjar.ledcm.gui;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import com.techjar.ledcm.RenderHelper;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
@@ -46,7 +48,9 @@ public class GUIComboItem extends GUIText {
     public void render() {
         Shape box = getComponentBox();
         if (checkMouseIntersect(box)) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), hoverBgColor);
+        glTranslatef(3, 0, 0);
         super.render();
+        glTranslatef(-3, 0, 0);
     }
 
     public Object getValue() {
