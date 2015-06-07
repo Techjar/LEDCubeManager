@@ -56,14 +56,6 @@ public abstract class Animation {
         ticks++;
     }
 
-    /*
-        TEXT, // 0-1 params: default value
-        SLIDER, // 0-3 params: default value, increment, show notches
-        COMBOBOX, // 2+ params: default value, items
-        COMBOBUTTON, // 2+ params: default value, items
-        CHECKBOX, // 0-1 params: default value
-        RADIOGROUP, // 2+ params: default value, items (id + name interleaved)
-    */
     public final void loadOptions() {
         ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
         GUIScrollBox box = screen.animOptionsScrollBox;
@@ -79,6 +71,7 @@ public abstract class Animation {
                 int width = screen.font.getWidth(option.name);
                 if (width > labelWidth) labelWidth = width;
             }
+            int componentWidth = boxWidth - labelWidth - 30;
             for (final AnimationOption option : options) {
                 GUI gui = null;
                 switch (option.getType()) {
@@ -155,11 +148,11 @@ public abstract class Animation {
                         final GUIBox radioBox = new GUIBox();
                         gui = radioBox;
                         int height = 0;
-                        for (int i = 1; i < option.params.length; i += 2) {
+                        int xPos = 0;
+                        for (int i = 1; i < option.params.length; i++) {
                             final GUIRadioButton radioButton = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
                             if (option.params[0].toString().equals(option.params[i].toString())) radioButton.setSelected(true);
                             radioButton.setDimension(30, 30);
-                            radioButton.setPosition(0, height);
                             final int j = i;
                             radioButton.setSelectHandler(new GUICallback() {
                                 @Override
@@ -167,15 +160,23 @@ public abstract class Animation {
                                     optionChanged(option.id, option.params[j].toString());
                                 }
                             });
-                            GUILabel radioLabel = new GUILabel(screen.font, new Color(255, 255, 255), option.params[i + 1].toString());
-                            radioLabel.setDimension(screen.font.getWidth(option.params[i + 1].toString()), 30);
-                            radioLabel.setPosition(35, height);
+                            GUILabel radioLabel = new GUILabel(screen.font, new Color(255, 255, 255), option.params[i].toString());
+                            int textWidth = screen.font.getWidth(option.params[i].toString());
+                            if (xPos > 0 && xPos + 35 + textWidth > componentWidth - 1) {
+                                xPos = 0;
+                                height += 35;
+                                System.out.println(option.params[i]);
+                                System.out.println(height);
+                            }
+                            radioLabel.setDimension(textWidth, 30);
+                            radioLabel.setPosition(xPos + 35, height);
+                            radioButton.setPosition(xPos, height);
                             radioButton.setLabel(radioLabel);
                             radioBox.addComponent(radioLabel);
                             radioBox.addComponent(radioButton);
-                            height += 35;
+                            xPos += 35 + textWidth + 10;
                         }
-                        radioBox.setHeight(height - 5);
+                        radioBox.setHeight(height + 30);
                         break;
                     case BUTTON:
                         final GUIButton button = new GUIButton(screen.font, new Color(255, 255, 255), option.params[0].toString(), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
@@ -195,7 +196,7 @@ public abstract class Animation {
                 if (gui instanceof GUICheckBox) ((GUICheckBox)gui).setLabel(label);
                 box.addComponent(label);
                 gui.setPosition(labelWidth + 15, position);
-                if (!(gui instanceof GUICheckBox)) gui.setWidth(boxWidth - labelWidth - 30);
+                if (!(gui instanceof GUICheckBox)) gui.setWidth(componentWidth);
                 box.addComponent(gui);
                 position += gui.getHeight() + 5;
             }
