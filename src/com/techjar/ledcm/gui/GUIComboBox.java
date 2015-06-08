@@ -30,7 +30,7 @@ public class GUIComboBox extends GUI {
     protected GUIScrollBox scrollBox;
     protected List<GUIComboItem> items = new ArrayList<>();
     protected GUICallback changeHandler;
-    protected int visibleItems = 5;
+    protected int visibleItems = Integer.MAX_VALUE;
     
     protected int selectedItem = -1;
     protected boolean opened;
@@ -129,10 +129,21 @@ public class GUIComboBox extends GUI {
             scrollBox.addComponent(item);
         }
         if (selectedItem > -1) scrollBox.setScrollOffset(new Vector2(0, selectedItem * (int)(getHeight() - (guiBg.getBorderSize() * 2))));
-        scrollBox.setHeight(MathHelper.clamp((dimension.getHeight() - (guiBg.getBorderSize() * 2)) * items.size(), (dimension.getHeight() - (guiBg.getBorderSize() * 2)), (dimension.getHeight() - (guiBg.getBorderSize() * 2)) * visibleItems));
+        setScrollBoxHeight(visibleItems);
         scrollBox.setY(dimension.getHeight() - guiBg.getBorderSize());
-        if (!checkWithinContainer(scrollBox.getComponentBox()))
-            scrollBox.setY(-scrollBox.getHeight() + guiBg.getBorderSize());
+        for (int i = Math.min(items.size(), visibleItems); i > 0; i--) {
+            if (!checkWithinContainer(scrollBox.getComponentBox())) {
+                scrollBox.setY(-scrollBox.getHeight() + guiBg.getBorderSize());
+                if (!checkWithinContainer(scrollBox.getComponentBox())) {
+                    scrollBox.setY(dimension.getHeight() - guiBg.getBorderSize());
+                    setScrollBoxHeight(i);
+                } else break;
+            } else break;
+        }
+    }
+
+    private void setScrollBoxHeight(int maxItems) {
+        scrollBox.setHeight(MathHelper.clamp((dimension.getHeight() - (guiBg.getBorderSize() * 2)) * items.size(), (dimension.getHeight() - (guiBg.getBorderSize() * 2)), (dimension.getHeight() - (guiBg.getBorderSize() * 2)) * maxItems));
     }
 
     public int getVisibleItems() {
@@ -176,6 +187,10 @@ public class GUIComboBox extends GUI {
         return getItem(selectedItem);
     }
 
+    public int getSelectedIndex() {
+        return selectedItem;
+    }
+
     public boolean isOpened() {
         return opened;
     }
@@ -189,7 +204,7 @@ public class GUIComboBox extends GUI {
     }
 
     private GUIComboItem createItem(Object value) {
-        GUIComboItem newItem = new GUIComboItem(this, font, color, Util.addColors(guiBg.getBackgroundColor(), new Color(50, 50, 50)), value);
+        GUIComboItem newItem = new GUIComboItem(this, font, color, Util.addColors(guiBg.getBackgroundColor(), new Color(50, 50, 50)), Util.addColors(guiBg.getBackgroundColor(), new Color(25, 25, 25)), value);
         newItem.setDimension(scrollBox.getWidth(), getHeight() - (guiBg.getBorderSize() * 2));
         return newItem;
     }

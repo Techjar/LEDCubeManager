@@ -16,7 +16,8 @@ import org.newdawn.slick.geom.Shape;
  */
 public abstract class GUI {
     protected Vector2 position = new Vector2();
-    protected Dimension dimension = new Dimension();;
+    protected Dimension dimension = new Dimension();
+    protected Rectangle baseBox = new Rectangle(0, 0, 0, 0);
     protected GUICallback dimensionChangeHandler;
     protected GUICallback positionChangeHandler;
     protected GUICallback removeHandler;
@@ -201,7 +202,7 @@ public abstract class GUI {
             for (int i = 0; i < guiList.size(); i++) {
                 if (i <= thisIndex) continue;
                 GUI gui = guiList.get(i);
-                if (gui.getComponentBox().intersects(mouseBox)) return false;
+                if (gui.isVisible() && gui.getComponentBox().intersects(mouseBox)) return false;
             }
         }
         if (boxes.length > 1) {
@@ -244,7 +245,10 @@ public abstract class GUI {
     }
     
     public Shape getComponentBox() {
-        return new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
+        Vector2 pos = getPosition();
+        baseBox.setLocation(pos.getX(), pos.getY());
+        baseBox.setSize(dimension.getWidth(), dimension.getHeight());
+        return baseBox;
     }
 
     public GUI getParent() {
