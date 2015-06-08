@@ -117,6 +117,10 @@ public class GUIComboButton extends GUI {
         return items.get(selectedItem);
     }
 
+    public int getSelectedIndex() {
+        return selectedItem;
+    }
+
     public boolean addAllItems(int index, Collection<? extends Object> c) {
         if (index <= selectedItem) selectedItem += c.size();
         return items.addAll(index, c);

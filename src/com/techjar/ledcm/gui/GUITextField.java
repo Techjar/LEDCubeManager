@@ -9,6 +9,7 @@ import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.geom.Rectangle;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.util.Timer;
 import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -24,21 +25,20 @@ import java.io.IOException;
 public class GUITextField extends GUIText {
     protected GUIBackground guiBg;
     protected int maxLength = Short.MAX_VALUE;
-    protected String validCharRegex = ".";
+    protected String validationRegex = ".*";
     protected boolean focused;
     protected boolean canLoseFocus = true;
     //protected int cursorPosition;
     protected GUICallback changeHandler;
     
     // Timing stuff
-    protected long cursorLastTime;
+    protected Timer cursorTimer = new Timer();
+    protected Timer repeatStartTimer = new Timer();
+    protected Timer repeatTimer = new Timer();
     protected boolean cursorState;
-    protected long repeatLastTime;
-    protected long repeatLastTime2;
     protected int repeatLastKey;
     protected char repeatLastChar;
     protected boolean repeatState;
-    protected boolean repeatState2;
     protected boolean ctrlPressed;
     
     public GUITextField(UnicodeFont font, Color color, GUIBackground guiBg, String text) {
@@ -70,12 +70,15 @@ public class GUITextField extends GUIText {
                                     str = str.substring(0, maxLength - text.length());
                                     if (str.length() < 1) return false;
                                 }
+                                str = str.replaceAll("[\r\n]", "");
                                 for (char ch : str.toCharArray()) {
-                                    if (!Util.isValidCharacter(ch) || !String.valueOf(ch).matches(validCharRegex)) {
+                                    if (!Util.isPrintableCharacter(ch)) {
                                         return false;
                                     }
                                 }
-                                text.append(str);
+                                if ((text.toString() + str).matches(validationRegex)) {
+                                    text.append(str);
+                                }
                                 if (changeHandler != null) {
                                     changeHandler.setComponent(this);
                                     changeHandler.run();
@@ -86,32 +89,16 @@ public class GUITextField extends GUIText {
                     } catch (HeadlessException | UnsupportedFlavorException | IOException ex) {
                         ex.printStackTrace();
                     }
-                    return true;
+                    return false;
                 }
                 char ch = Keyboard.getEventCharacter();
-                if (text.length() < maxLength && Util.isValidCharacter(ch) && String.valueOf(ch).matches(validCharRegex)) {
-                    text.append(ch);
-                    if (changeHandler != null) {
-                        changeHandler.setComponent(this);
-                        changeHandler.run();
-                    }
-                    repeatState = true;
-                }
-                else if (Keyboard.getEventKey() == Keyboard.KEY_BACK && text.length() > 0) {
-                    text.deleteCharAt(text.length() - 1);
-                    if (changeHandler != null) {
-                        changeHandler.setComponent(this);
-                        changeHandler.run();
-                    }
-                    repeatState = true;
-                }
+                handleKeyOrCharacter(Keyboard.getEventKey(), ch);
                 repeatLastKey = Keyboard.getEventKey();
                 repeatLastChar = Keyboard.getEventCharacter();
-                repeatLastTime = Util.milliTime();
+                repeatStartTimer.restart();
             }
             else if (Keyboard.getEventKey() == repeatLastKey || Keyboard.getEventCharacter() == repeatLastChar) {
                 repeatState = false;
-                repeatState2 = false;
             }
             return false;
         }
@@ -126,42 +113,27 @@ public class GUITextField extends GUIText {
     @Override
     public void update(float delta) {
         super.update(delta);
-        if (Util.milliTime() - cursorLastTime >= 500) {
+        if (cursorTimer.getMilliseconds() >= 500) {
             cursorState = !cursorState;
-            cursorLastTime = Util.milliTime();
+            cursorTimer.restart();
         }
 
         if (Mouse.isButtonDown(0)) {
             Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
             if (checkMouseIntersect(box)) {
                 focused = true;
+                cursorState = true;
+                cursorTimer.restart();
             }
             else if(focused && canLoseFocus) {
                 focused = false;
             }
         }
         
-        if (repeatState && Util.milliTime() - repeatLastTime >= 500) {
-            if (!repeatState2) {
-                repeatLastTime2 = Util.milliTime() + 200;
-                repeatState2 = true;
-            }
-            if (Util.milliTime() - repeatLastTime2 >= 50) {
-                if (text.length() < maxLength && Util.isValidCharacter(repeatLastChar) && String.valueOf(repeatLastChar).matches(validCharRegex)) {
-                    text.append(repeatLastChar);
-                    if (changeHandler != null) {
-                        changeHandler.setComponent(this);
-                        changeHandler.run();
-                    }
-                }
-                else if (repeatLastKey == Keyboard.KEY_BACK && text.length() > 0) {
-                    text.deleteCharAt(text.length() - 1);
-                    if (changeHandler != null) {
-                        changeHandler.setComponent(this);
-                        changeHandler.run();
-                    }
-                }
-                repeatLastTime2 = Util.milliTime();
+        if (repeatState && repeatStartTimer.getMilliseconds() >= 400) {
+            if (repeatTimer.getMilliseconds() >= 25) {
+                handleKeyOrCharacter(repeatLastKey, repeatLastChar);
+                repeatTimer.restart();
             }
         }
     }
@@ -184,6 +156,25 @@ public class GUITextField extends GUIText {
         else font.drawString(getPosition().getX() + guiBg.getBorderSize() - (textWidth - boxWidth), getPosition().getY() + guiBg.getBorderSize(), text.toString(), Util.convertColor(color));
         RenderHelper.endScissor();
         if (focused && cursorState) RenderHelper.drawSquare(getPosition().getX() + getCursorPos(textWidth, boxWidth), getPosition().getY() + guiBg.getBorderSize() + 2, guiBg.getBorderSize(), dimension.getHeight() - (guiBg.getBorderSize() * 2) - 4, color);
+    }
+
+    private void handleKeyOrCharacter(int key, char ch) {
+        if (text.length() < maxLength && Util.isPrintableCharacter(ch) && (text.toString() + ch).matches(validationRegex)) {
+            text.append(ch);
+            if (changeHandler != null) {
+                changeHandler.setComponent(this);
+                changeHandler.run();
+            }
+            repeatState = true;
+        }
+        else if (key == Keyboard.KEY_BACK && text.length() > 0) {
+            text.deleteCharAt(text.length() - 1);
+            if (changeHandler != null) {
+                changeHandler.setComponent(this);
+                changeHandler.run();
+            }
+            repeatState = true;
+        }
     }
 
     protected float getCursorPos(int textWidth, float boxWidth) {
@@ -210,12 +201,12 @@ public class GUITextField extends GUIText {
         this.maxLength = maxLength;
     }
 
-    public String getValidCharacterRegex() {
-        return validCharRegex;
+    public String getValidationRegex() {
+        return validationRegex;
     }
 
-    public void setValidCharacterRegex(String validCharRegex) {
-        this.validCharRegex = validCharRegex;
+    public void setValidationRegex(String validationRegex) {
+        this.validationRegex = validationRegex;
     }
 
     public GUICallback getChangeHandler() {

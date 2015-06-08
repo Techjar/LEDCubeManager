@@ -79,8 +79,9 @@ public abstract class GUIContainer extends GUI {
     @Override
     public void render() {
         RenderHelper.beginScissor(getScissorBox());
+        Rectangle containerBox = getContainerBox();
         for (GUI gui : components) {
-            if (gui.isVisible() && gui.getComponentBox().intersects(getContainerBox())) gui.render();
+            if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) gui.render();
         }
         RenderHelper.endScissor();
     }

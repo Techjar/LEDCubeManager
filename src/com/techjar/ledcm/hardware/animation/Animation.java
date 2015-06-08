@@ -64,14 +64,16 @@ public abstract class Animation {
         AnimationOption[] options = getOptions();
         if (options.length > 0) {
             screen.animOptionsBtn.setEnabled(true);
+            box.setScrollYMode(GUIScrollBox.ScrollMode.ENABLED);
             int boxWidth = (int)box.getContainerBox().getWidth();
+            box.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
             float position = 5;
             int labelWidth = 0;
             for (AnimationOption option : options) {
                 int width = screen.font.getWidth(option.name);
                 if (width > labelWidth) labelWidth = width;
             }
-            int componentWidth = boxWidth - labelWidth - 30;
+            int componentWidth = boxWidth - labelWidth - 20;
             for (final AnimationOption option : options) {
                 GUI gui = null;
                 switch (option.getType()) {
@@ -105,30 +107,34 @@ public abstract class Animation {
                     case COMBOBOX:
                         final GUIComboBox comboBox = new GUIComboBox(screen.font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
                         gui = comboBox;
-                        for (int i = 1; i < option.params.length; i++) {
-                            comboBox.addItem(option.params[i].toString());
+                        String selected = null;
+                        for (int i = 1; i < option.params.length; i += 2) {
+                            comboBox.addItem(option.params[i + 1].toString());
+                            if (option.params[i].equals(option.params[0])) selected = option.params[i + 1].toString();
                         }
-                        comboBox.setSelectedItem(option.params[0].toString());
+                        comboBox.setSelectedItem(selected);
                         comboBox.setHeight(35);
                         comboBox.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, comboBox.getSelectedItem().toString());
+                                optionChanged(option.id, comboBox.getSelectedItem() != null ? option.params[comboBox.getSelectedIndex() * 2 + 1].toString() : null);
                             }
                         });
                         break;
                     case COMBOBUTTON:
                         final GUIComboButton comboButton = new GUIComboButton(screen.font, new Color(255, 255, 255), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
                         gui = comboButton;
-                        for (int i = 1; i < option.params.length; i++) {
-                            comboButton.addItem(option.params[i].toString());
+                        selected = null;
+                        for (int i = 1; i < option.params.length; i += 2) {
+                            comboButton.addItem(option.params[i + 1].toString());
+                            if (option.params[i].equals(option.params[0])) selected = option.params[i + 1].toString();
                         }
-                        comboButton.setSelectedItem(option.params[0].toString());
+                        comboButton.setSelectedItem(selected);
                         comboButton.setHeight(35);
                         comboButton.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, comboButton.getSelectedItem().toString());
+                                optionChanged(option.id, comboButton.getSelectedItem() != null ? option.params[comboButton.getSelectedIndex() * 2 + 1].toString() : null);
                             }
                         });
                         break;
@@ -149,9 +155,9 @@ public abstract class Animation {
                         gui = radioBox;
                         int height = 0;
                         int xPos = 0;
-                        for (int i = 1; i < option.params.length; i++) {
+                        for (int i = 1; i < option.params.length; i += 2) {
                             final GUIRadioButton radioButton = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-                            if (option.params[0].toString().equals(option.params[i].toString())) radioButton.setSelected(true);
+                            if (option.params[0].equals(option.params[i])) radioButton.setSelected(true);
                             radioButton.setDimension(30, 30);
                             final int j = i;
                             radioButton.setSelectHandler(new GUICallback() {
@@ -160,13 +166,11 @@ public abstract class Animation {
                                     optionChanged(option.id, option.params[j].toString());
                                 }
                             });
-                            GUILabel radioLabel = new GUILabel(screen.font, new Color(255, 255, 255), option.params[i].toString());
-                            int textWidth = screen.font.getWidth(option.params[i].toString());
+                            GUILabel radioLabel = new GUILabel(screen.font, new Color(255, 255, 255), option.params[i + 1].toString());
+                            int textWidth = screen.font.getWidth(option.params[i + 1].toString());
                             if (xPos > 0 && xPos + 35 + textWidth > componentWidth - 1) {
                                 xPos = 0;
                                 height += 35;
-                                System.out.println(option.params[i]);
-                                System.out.println(height);
                             }
                             radioLabel.setDimension(textWidth, 30);
                             radioLabel.setPosition(xPos + 35, height);
@@ -176,7 +180,7 @@ public abstract class Animation {
                             radioBox.addComponent(radioButton);
                             xPos += 35 + textWidth + 10;
                         }
-                        radioBox.setHeight(height + 30);
+                        radioBox.setHeight(height + 35);
                         break;
                     case BUTTON:
                         final GUIButton button = new GUIButton(screen.font, new Color(255, 255, 255), option.params[0].toString(), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
@@ -191,8 +195,9 @@ public abstract class Animation {
                         break;
                 }
                 GUILabel label = new GUILabel(screen.font, new Color(255, 255, 255), option.name);
-                label.setPosition(5, position + (gui instanceof GUIContainer ? 0 : ((gui.getHeight() - 30) / 2F)));
-                label.setDimension(labelWidth, 30);
+                int width = screen.font.getWidth(option.name);
+                label.setPosition(5 + (labelWidth - width), position + (gui instanceof GUIContainer ? 0 : ((gui.getHeight() - 30) / 2F)));
+                label.setDimension(width, 30);
                 if (gui instanceof GUICheckBox) ((GUICheckBox)gui).setLabel(label);
                 box.addComponent(label);
                 gui.setPosition(labelWidth + 15, position);

@@ -6,6 +6,7 @@ import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.json.ShapeInfo;
+import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -57,8 +58,9 @@ public final class Util {
     private Util() {
     }
 
-    public static boolean isValidCharacter(char ch) {
-        return ch >= 32 && ch <= 126;
+    public static boolean isPrintableCharacter(char ch) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
+        return !Character.isISOControl(ch) && ch != KeyEvent.CHAR_UNDEFINED && block != null && block != Character.UnicodeBlock.SPECIALS;
     }
     
     public static String stackTraceToString(Throwable throwable) {
