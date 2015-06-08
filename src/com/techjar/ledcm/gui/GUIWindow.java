@@ -61,10 +61,12 @@ public class GUIWindow extends GUIContainer {
 
     @Override
     public boolean processMouseEvent() {
-        if (!super.processMouseEvent()) return false;
         if (!closeBtn.processMouseEvent()) return false;
-        if (Mouse.getEventButton() == 0) {
+        if (Mouse.getEventButtonState()) {
             if (!onTop && checkMouseIntersect(getComponentBox())) setToBePutOnTop(true);
+        }
+        if (!super.processMouseEvent()) return false;
+        if (Mouse.getEventButton() == 0) {
             if (Mouse.getEventButtonState()) {
                 if (canResizeX || canResizeY) {
                     Rectangle[] boxes = getBoxes();

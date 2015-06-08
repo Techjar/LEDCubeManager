@@ -50,10 +50,10 @@ public class AnimationBlink extends Animation {
             objs[(i * 2) + 1] = i;
             objs[(i * 2) + 2] = "Thing #" + (i + 1);
         }
-        array[0] = new AnimationOption("test", "Test", AnimationOption.OptionType.RADIOGROUP, new String[]{"2", "1", "loolololol", "2", "lol2", "3", "watican", "4", "testtesteste"});
+        array[0] = new AnimationOption("test", "Test", AnimationOption.OptionType.COMBOBUTTON, new String[]{"2", "1", "loolololol", "2", "lol2", "3", "watican", "4", "testtesteste"});
         array[1] = new AnimationOption("test2", "Test 2", AnimationOption.OptionType.SLIDER, new String[]{"0.5", "0.1", "true"});
         array[2] = new AnimationOption("test3", "Test 3", AnimationOption.OptionType.CHECKBOX, new String[]{"false"});
-        array[3] = new AnimationOption("test", "Test", AnimationOption.OptionType.COMBOBOX, objs);
+        array[3] = new AnimationOption("testd", "Test Deluxe", AnimationOption.OptionType.COMBOBOX, objs);
         return array;
     }
 }
