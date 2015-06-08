@@ -121,7 +121,7 @@ public class GUISlider extends GUI {
             theColor = Util.addColors(theColor, new Color(50, 50, 50));
         if (vertical) {
             if (showNotches && increment > 0) {
-                for (float i = increment; i < 1; i += increment) {
+                for (float i = increment; 1 - i > 0.0001F; i += increment) {
                     RenderHelper.drawSquare(getPosition().getX() + dimension.getWidth() / 2 - lineSize * 2, getPosition().getY() + draggerSize / 2 + (dimension.getHeight() - draggerSize) * i - 1, lineSize * 4, lineSize, lineColor);
                 }
             }
@@ -129,7 +129,7 @@ public class GUISlider extends GUI {
             RenderHelper.drawSquare(getPosition().getX(), getPosition().getY() + getSliderPos(), dimension.getWidth(), draggerSize, theColor);
         } else {
             if (showNotches && increment > 0) {
-                for (float i = increment; i < 1; i += increment) {
+                for (float i = increment; 1 - i > 0.0001F; i += increment) {
                     RenderHelper.drawSquare(getPosition().getX() + draggerSize / 2 + (dimension.getWidth() - draggerSize) * i - 1, getPosition().getY() + dimension.getHeight() / 2 - lineSize * 2, lineSize, lineSize * 4, lineColor);
                 }
             }
