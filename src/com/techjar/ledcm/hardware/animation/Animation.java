@@ -64,14 +64,16 @@ public abstract class Animation {
         AnimationOption[] options = getOptions();
         if (options.length > 0) {
             screen.animOptionsBtn.setEnabled(true);
+            box.setScrollYMode(GUIScrollBox.ScrollMode.ENABLED);
             int boxWidth = (int)box.getContainerBox().getWidth();
+            box.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
             float position = 5;
             int labelWidth = 0;
             for (AnimationOption option : options) {
                 int width = screen.font.getWidth(option.name);
                 if (width > labelWidth) labelWidth = width;
             }
-            int componentWidth = boxWidth - labelWidth - 30;
+            int componentWidth = boxWidth - labelWidth - 20;
             for (final AnimationOption option : options) {
                 GUI gui = null;
                 switch (option.getType()) {
