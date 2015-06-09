@@ -89,11 +89,12 @@ void main(void) {
         totalSpecular += specular;
     }
 
+    float specularLuminance = 0.2126 * totalSpecular.r + 0.7152 * totalSpecular.g + 0.0722 * totalSpecular.b;
     vec3 ambient = scene_ambient * front_material.ambient;
     vec3 linearColor = color.rgb * (ambient + totalDiffuse) + totalSpecular;
-    out_Color = vec4(linearColor, color.a);
+    out_Color = vec4(linearColor, color.a + specularLuminance);
     
     // Gamma correction (turns out to be useless garbage, as modern displays are already gamma corrected)
     //vec3 gamma = vec3(1.0 / 2.2);
-    //out_Color = vec4(pow(linearColor, gamma), color.a);
+    //out_Color = vec4(pow(linearColor, gamma), color.a + specularLuminance);
 }

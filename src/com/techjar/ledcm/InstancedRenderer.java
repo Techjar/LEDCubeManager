@@ -38,6 +38,7 @@ public final class InstancedRenderer {
     private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedNormal = new LinkedList<>();
     private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedAlpha = new LinkedList<>();
     private static final int vboId;
+    private static boolean alphaPolygonFix = false;
     private static ByteBuffer buffer = BufferUtils.createByteBuffer(8000000);
 
     static {
@@ -53,6 +54,18 @@ public final class InstancedRenderer {
     }
 
     private InstancedRenderer() {
+    }
+
+    public static boolean getAlphaPolygonFix() {
+        return alphaPolygonFix;
+    }
+
+    /**
+     * Toggles a fix for alpha sorting at the polygon level using a depth buffer trick, with the downside that each translucent object is drawn separately rather than being instanced.
+     * @param alphaPolygonFix
+     */
+    public static void setAlphaPolygonFix(boolean alphaPolygonFix) {
+        InstancedRenderer.alphaPolygonFix = alphaPolygonFix;
     }
 
     public static void addItem(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
@@ -93,48 +106,87 @@ public final class InstancedRenderer {
     public static int renderAll() {
         int total = 0;
         for (int i = 0; i < 8; i++) glEnableVertexAttribArray(i);
-        total += renderItems(groupedNormal);
-        total += renderItems(groupedAlpha);
+        total += renderItems(groupedNormal, false);
+        total += renderItems(groupedAlpha, alphaPolygonFix);
         for (int i = 0; i < 8; i++) glDisableVertexAttribArray(i);
         return total;
     }
 
-    private static int renderItems(LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> items) {
+    private static int renderItems(LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> items, boolean alphaDepthTrick) {
         int total = 0;
         for (Tuple<ModelMesh, LinkedList<InstanceItem>> entry : items) {
             ModelMesh mesh = entry.getA();
             LinkedList<InstanceItem> queue = entry.getB();
             int count = queue.size();
             total += count;
-            int dataSize = count * 80;
-            if (buffer == null || buffer.capacity() < dataSize) {
-                buffer = BufferUtils.createByteBuffer(dataSize);
-            } else {
+            if (alphaDepthTrick) { // Individual draw for alpha polygon trick
+                int dataSize = 80;
+                if (buffer == null || buffer.capacity() < dataSize) {
+                    buffer = BufferUtils.createByteBuffer(dataSize);
+                } else {
+                    buffer.rewind();
+                    buffer.limit(dataSize);
+                }
+                for (InstanceItem item : queue) {
+                    buffer.rewind();
+                    Util.storeColorInBuffer(item.getColor(), buffer);
+                    Matrix4f matrix = new Matrix4f();
+                    matrix.translate(Util.convertVector(item.getPosition()));
+                    matrix.scale(Util.convertVector(item.getScale()));
+                    Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
+                    Util.storeMatrixInBuffer(matrix, buffer);
+
+                    glActiveTexture(GL_TEXTURE0);
+                    mesh.getModel().getTexture().bind();
+                    //glActiveTexture(GL_TEXTURE1);
+                    //mesh.getModel().getNormalMap().bind();
+                    mesh.getModel().getMaterial().sendToShader(0);
+                    buffer.rewind();
+                    glBindBuffer(GL_ARRAY_BUFFER, vboId);
+                    glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW);
+                    glBindBuffer(GL_ARRAY_BUFFER, mesh.getVBO());
+                    glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
+                    glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
+                    glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
+                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    glColorMask(false, false, false, false);
+                    glDrawArrays(GL_TRIANGLES, 0, mesh.getIndices());
+                    glColorMask(true, true, true, true);
+                    glDepthFunc(GL_EQUAL);
+                    glDrawArrays(GL_TRIANGLES, 0, mesh.getIndices());
+                    glDepthFunc(GL_LEQUAL);
+                }
+            } else { // Instanced render
+                int dataSize = count * 80;
+                if (buffer == null || buffer.capacity() < dataSize) {
+                    buffer = BufferUtils.createByteBuffer(dataSize);
+                } else {
+                    buffer.rewind();
+                    buffer.limit(dataSize);
+                }
+                for (InstanceItem item : queue) {
+                    Util.storeColorInBuffer(item.getColor(), buffer);
+                    Matrix4f matrix = new Matrix4f();
+                    matrix.translate(Util.convertVector(item.getPosition()));
+                    matrix.scale(Util.convertVector(item.getScale()));
+                    Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
+                    Util.storeMatrixInBuffer(matrix, buffer);
+                }
+                glActiveTexture(GL_TEXTURE0);
+                mesh.getModel().getTexture().bind();
+                //glActiveTexture(GL_TEXTURE1);
+                //mesh.getModel().getNormalMap().bind();
+                mesh.getModel().getMaterial().sendToShader(0);
                 buffer.rewind();
-                buffer.limit(dataSize);
+                glBindBuffer(GL_ARRAY_BUFFER, vboId);
+                glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW);
+                glBindBuffer(GL_ARRAY_BUFFER, mesh.getVBO());
+                glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
+                glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
+                glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.getIndices(), count);
             }
-            for (InstanceItem item : queue) {
-                Util.storeColorInBuffer(item.getColor(), buffer);
-                Matrix4f matrix = new Matrix4f();
-                matrix.translate(Util.convertVector(item.getPosition()));
-                matrix.scale(Util.convertVector(item.getScale()));
-                Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
-                Util.storeMatrixInBuffer(matrix, buffer);
-            }
-            glActiveTexture(GL_TEXTURE0);
-            mesh.getModel().getTexture().bind();
-            //glActiveTexture(GL_TEXTURE1);
-            //mesh.getModel().getNormalMap().bind();
-            mesh.getModel().getMaterial().sendToShader(0);
-            buffer.rewind();
-            glBindBuffer(GL_ARRAY_BUFFER, vboId);
-            glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW);
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.getVBO());
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
-            glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
-            glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.getIndices(), count);
         }
         return total;
     }
