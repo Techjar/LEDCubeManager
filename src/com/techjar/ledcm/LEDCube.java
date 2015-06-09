@@ -328,7 +328,7 @@ public class LEDCube {
         animationNames.clear();
         addAnimation(new AnimationNone());
         addAnimation(new AnimationSpectrumDots());
-        //addAnimation(new AnimationSpectrumShooters());
+        addAnimation(new AnimationSpectrumTicker());
         //addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
         addAnimation(new AnimationGradient());

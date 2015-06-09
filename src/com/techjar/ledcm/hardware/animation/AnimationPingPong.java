@@ -64,7 +64,7 @@ public class AnimationPingPong extends Animation {
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(15 - (speed - 1)) / 15F, 1F / 15F}),
-            new AnimationOption("twoballs", "Two Balls", AnimationOption.OptionType.CHECKBOX, new Object[]{twoballs}),
+            new AnimationOption("twoballs", "Two Dots", AnimationOption.OptionType.CHECKBOX, new Object[]{twoballs}),
         };
     }
 

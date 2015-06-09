@@ -34,7 +34,7 @@ public class AnimationGradient extends Animation {
         for (int x = 0; x < dimension.x; x++) {
             float value = x / (dimension.x - 1F);
             if (pulsate) value = (float)Math.sin(timer.getSeconds() * (speed / 5) + ((dimension.x - x) / (float)dimension.x) * scale) * 0.5F + 0.5F;
-            Color color = MathHelper.lerpXyz(color1, color2, value * 10900);
+            Color color = MathHelper.lerpXyz(color1, color2, value);
             for (int y = 0; y < dimension.y; y++) {
                 for (int z = 0; z < dimension.z; z++) {
                     ledManager.setLEDColor(x, y, z, color);
@@ -53,7 +53,7 @@ public class AnimationGradient extends Animation {
             new AnimationOption("color1", "Start Color", AnimationOption.OptionType.BUTTON, new Object[]{"Set From Picker"}),
             new AnimationOption("color2", "End Color", AnimationOption.OptionType.BUTTON, new Object[]{"Set From Picker"}),
             new AnimationOption("pulsate", "Pulsate", AnimationOption.OptionType.CHECKBOX, new Object[]{pulsate}),
-            new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 150F}),
+            new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 149F}),
             new AnimationOption("scale", "Scale", AnimationOption.OptionType.SLIDER, new Object[]{(29 - (scale - 1)) / 29F}),
         };
     }
@@ -71,7 +71,7 @@ public class AnimationGradient extends Animation {
                 pulsate = Boolean.parseBoolean(value);
                 break;
             case "speed":
-                speed = 1 + (150 * Float.parseFloat(value));
+                speed = 1 + (149 * Float.parseFloat(value));
                 break;
             case "scale":
                 scale = 1 + (29 * (1 - Float.parseFloat(value)));

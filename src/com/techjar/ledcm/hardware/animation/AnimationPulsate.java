@@ -27,7 +27,7 @@ public class AnimationPulsate extends Animation {
     @Override
     public void refresh() {
         for (int x = 0; x < dimension.x; x++) {
-            double value = Math.sin(timer.getSeconds() * speed + ((7 - x) / (float)dimension.x) * scale) * 0.5 + 0.5;
+            double value = Math.sin(timer.getSeconds() * (speed / 5) + ((dimension.x - x) / (float)dimension.x) * scale) * 0.5 + 0.5;
             Color color = Util.multiplyColor(LEDCubeManager.getPaintColor(), value);
             ledManager.setLEDColor(x, 0, 0, color);
         }
@@ -41,7 +41,7 @@ public class AnimationPulsate extends Animation {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 0.2F) / 19F}),
+            new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 149F}),
             new AnimationOption("scale", "Scale", AnimationOption.OptionType.SLIDER, new Object[]{(29 - (scale - 1)) / 29F}),
         };
     }
@@ -50,7 +50,7 @@ public class AnimationPulsate extends Animation {
     public void optionChanged(String name, String value) {
         switch (name) {
             case "speed":
-                speed = 0.2F + (19 * Float.parseFloat(value));
+                speed = 1 + (149 * Float.parseFloat(value));
                 break;
             case "scale":
                 scale = 1 + (29 * (1 - Float.parseFloat(value)));
