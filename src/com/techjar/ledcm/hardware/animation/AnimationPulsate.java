@@ -12,7 +12,7 @@ import org.lwjgl.util.Color;
  */
 public class AnimationPulsate extends Animation {
     private Timer timer = new Timer();
-    private float speed = 2;
+    private float speed = 5;
     private float scale = 3;
 
     public AnimationPulsate() {

@@ -61,7 +61,7 @@ public class LEDCube {
         //ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
         //ledManager = new TestHugeLEDManager(true);
-        ledManager = new StripLEDManager(110, false);
+        ledManager = new StripLEDManager(110, true);
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("flatled.model");
         initOctree();
@@ -331,6 +331,7 @@ public class LEDCube {
         addAnimation(new AnimationSpectrumTicker());
         //addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
+        addAnimation(new AnimationStaticHue());
         addAnimation(new AnimationGradient());
         addAnimation(new AnimationPulsate());
         addAnimation(new AnimationPulsateHue());

@@ -380,7 +380,7 @@ public class LEDCubeManager {
         shutdownInternal();
     }
 
-    private void runGameLoop() throws LWJGLException {
+    private void runGameLoop() throws LWJGLException, InterruptedException {
         if (fullscreen && !frame.isFocused()) setFullscreen(false);
         if (newDisplayMode != null || newFullscreen != fullscreen) {
             if (newDisplayMode != null) {
@@ -408,6 +408,7 @@ public class LEDCubeManager {
         this.processController();
         this.update();
         this.render();
+        //if (!frame.isActive()) Thread.sleep(100);
         Display.update();
     }
 

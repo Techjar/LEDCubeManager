@@ -16,7 +16,7 @@ import org.lwjgl.util.Color;
 public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     private float[] amplitudes;
     private int bandIncrement = 3;
-    private boolean rainbow;
+    private int colorMode;
 
     public AnimationSpectrumDots() {
         super();
@@ -36,7 +36,8 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
             float increment = (5.0F * constant) * (1 - (i / (float)(amplitudes.length + 10)));
             float brightness = MathHelper.clamp(amplitude / increment, 0, 1);
             Color color = new Color();
-            if (rainbow) color.fromHSB(i / (float)amplitudes.length, 1, brightness);
+            if (colorMode == 1) color.fromHSB(i / (float)amplitudes.length, 1, brightness);
+            else if (colorMode == 2) color = colorAtBrightness(brightness);
             else color = Util.multiplyColor(LEDCubeManager.getPaintColor(), brightness);
             ledManager.setLEDColor(i, 0, 0, amplitude > 0 ? color : new Color());
         }
@@ -45,21 +46,20 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     @Override
     public void reset() {
         amplitudes = new float[dimension.x];
-        rainbow = false;
     }
 
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("rainbow", "Rainbow", AnimationOption.OptionType.CHECKBOX, new Object[]{rainbow}),
+            new AnimationOption("colorMode", "Color", AnimationOption.OptionType.COMBOBUTTON, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Amplitude"}),
         };
     }
 
     @Override
     public void optionChanged(String name, String value) {
         switch (name) {
-            case "rainbow":
-                rainbow = Boolean.parseBoolean(value);
+            case "colorMode":
+                colorMode = Integer.parseInt(value);
                 break;
         }
     }
@@ -98,10 +98,14 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
 
     private Color colorAtBrightness(float brightness) {
         int res = ledManager.getResolution();
-        if (brightness > 0.9) return new Color(Math.round(res * brightness), 0, 0);
-        if (brightness > 0.5) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
-        if (brightness > 0.15) return new Color(0, Math.round(res * brightness), 0);
-        if (brightness > 0.01) return new Color(0, 0, Math.round(res * brightness));
+        Color red = new Color(Math.round(res * brightness), 0, 0);
+        Color yellow = new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
+        Color green = new Color(0, Math.round(res * brightness), 0);
+        Color blue = new Color(0, 0, Math.round(res * brightness));
+        if (brightness >= 0.9) return MathHelper.lerpXyz(yellow, red, (brightness - 0.9F) * 10);
+        else if (brightness >= 0.6) return MathHelper.lerpXyz(green, yellow, (brightness - 0.6F) * 3.33333F);
+        else if (brightness >= 0.2) return MathHelper.lerpXyz(blue, green, (brightness - 0.2F) * 2.5F);
+        else if (brightness > 0.001) return blue;
         return new Color();
     }
 }

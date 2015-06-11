@@ -78,9 +78,9 @@ public class StripLEDManager implements LEDManager {
                 }
             }
             for (int i = 0; i < count; i++) {
-                array[i * 3] = (byte)(green2[i] & 0b10000000);
-                array[(i * 3) + 1] = (byte)(red2[i] & 0b10000000);
-                array[(i * 3) + 2] = (byte)(blue2[i] & 0b10000000);
+                array[i * 3] = (byte)(green2[i] | 0b10000000);
+                array[(i * 3) + 1] = (byte)(red2[i] | 0b10000000);
+                array[(i * 3) + 2] = (byte)(blue2[i] | 0b10000000);
             }
             return array;
         }
