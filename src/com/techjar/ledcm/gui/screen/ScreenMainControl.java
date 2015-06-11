@@ -532,8 +532,8 @@ public class ScreenMainControl extends Screen {
 
     @Override
     public void render() {
-        super.render();
         RenderHelper.drawSquare(LEDCubeManager.getWidth() - 40 - 10, LEDCubeManager.getHeight() - 150 - 10, 40, 150, LEDCubeManager.getLEDCube().getPaintColor());
+        super.render();
     }
 
     public final void populateAnimationList() {
