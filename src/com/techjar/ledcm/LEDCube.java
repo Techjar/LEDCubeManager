@@ -77,8 +77,8 @@ public class LEDCube {
         spectrumAnalyzer = new SpectrumAnalyzer();
         commThread = new CommThread();
         commThread.start();
-        LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 30));
-        LEDCubeManager.getCamera().setAngle(new Angle(-90, -90, 0));
+        LEDCubeManager.getCamera().setPosition(new Vector3(-500, 184, -30));
+        LEDCubeManager.getCamera().setAngle(new Angle(-21, -123, 0));
     }
 
     public boolean processKeyboardEvent() {
@@ -97,8 +97,8 @@ public class LEDCube {
                 }
                 return false;
             } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
-                LEDCubeManager.getCamera().setPosition(new Vector3(0, 64, 30));
-                LEDCubeManager.getCamera().setAngle(new Angle(-90, -90, 0));
+                LEDCubeManager.getCamera().setPosition(new Vector3(-500, 184, -30));
+                LEDCubeManager.getCamera().setAngle(new Angle(-21, -123, 0));
                 return false;
             } else if (Keyboard.getEventKey() == Keyboard.KEY_H) {
                 trueColor = !trueColor;

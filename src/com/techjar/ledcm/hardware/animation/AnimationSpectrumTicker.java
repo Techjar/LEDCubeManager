@@ -148,7 +148,7 @@ public class AnimationSpectrumTicker extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void processBeatDetect(BeatDetect bt) {
+    public synchronized void processBeatDetect(BeatDetect bt) {
         switch (mode) {
             case BeatDetect.FREQ_ENERGY:
                 if (bt.isRange(Math.min(rangeMin, rangeMax), Math.max(rangeMin, rangeMax), threshold)) {

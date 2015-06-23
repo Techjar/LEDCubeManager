@@ -19,7 +19,7 @@ public class StripLEDManager implements LEDManager {
     private byte[] blue;
 
     public StripLEDManager(int count, boolean gammaCorrection) {
-        if (count % 2 != 0) throw new IllegalArgumentException("Strip LED count is in multiples of 2");
+        if (count % 2 != 0) throw new IllegalArgumentException("Strip LED count must be a multiple of 2");
         this.count = count;
         this.gammaCorrection = gammaCorrection;
         red = new byte[count];

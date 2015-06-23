@@ -49,6 +49,7 @@ import com.techjar.ledcm.util.Vector3;
 import com.techjar.ledcm.util.logging.LogHelper;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -408,7 +409,7 @@ public class LEDCubeManager {
         this.processController();
         this.update();
         this.render();
-        //if (!frame.isActive()) Thread.sleep(100);
+        if (frame.getState() == Frame.ICONIFIED) Thread.sleep(200);
         Display.update();
     }
 
@@ -759,10 +760,12 @@ public class LEDCubeManager {
                 debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);
                 //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), debugColor);
                 //debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), debugColor);
-                Vector3 vector = camera.getAngle().forward();
-                debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
-                vector = camera.getPosition();
+                Vector3 vector = camera.getPosition();
                 debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
+                Angle angle = camera.getAngle();
+                debugFont.drawString(5, 5 + y++ * 25, "Camera angle: " + angle.getPitch() + ", " + angle.getYaw() + ", " + angle.getRoll(), debugColor);
+                vector = angle.forward();
+                debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
                 //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
                 //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
                 debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, debugColor);

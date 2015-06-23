@@ -7,6 +7,7 @@ import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import ddf.minim.analysis.BeatDetect;
 import ddf.minim.analysis.FFT;
+import java.util.Random;
 import org.lwjgl.util.Color;
 
 /**
@@ -14,13 +15,18 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
+    private Random random = new Random();
     private float[] amplitudes;
+    private Color[] randomColors;
     private int bandIncrement = 3;
     private int colorMode;
+    private float holdUp = 7;
 
     public AnimationSpectrumDots() {
         super();
         amplitudes = new float[dimension.x];
+        randomColors = new Color[dimension.x];
+        for (int i = 0; i < randomColors.length; i++) randomColors[i] = new Color();
     }
 
     @Override
@@ -38,6 +44,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
             Color color = new Color();
             if (colorMode == 1) color.fromHSB(i / (float)amplitudes.length, 1, brightness);
             else if (colorMode == 2) color = colorAtBrightness(brightness);
+            else if (colorMode == 3) color = ledManager.getLEDColor(i, 0, 0).equals(new Color()) || randomColors[i].equals(new Color()) ? Util.multiplyColor(randomColors[i] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)), brightness) : Util.multiplyColor(randomColors[i], brightness);
             else color = Util.multiplyColor(LEDCubeManager.getPaintColor(), brightness);
             ledManager.setLEDColor(i, 0, 0, amplitude > 0 ? color : new Color());
         }
@@ -51,7 +58,8 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("colorMode", "Color", AnimationOption.OptionType.COMBOBUTTON, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Amplitude"}),
+            new AnimationOption("colorMode", "Color", AnimationOption.OptionType.COMBOBUTTON, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Amplitude", 3, "Random"}),
+            new AnimationOption("holdUp", "Hold Up", AnimationOption.OptionType.SLIDER, new Object[]{holdUp / 29F}),
         };
     }
 
@@ -60,6 +68,9 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
         switch (name) {
             case "colorMode":
                 colorMode = Integer.parseInt(value);
+                break;
+            case "holdUp":
+                holdUp = 1 + (29 * Float.parseFloat(value));
                 break;
         }
     }
@@ -88,7 +99,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
                 if (band > amplitude) amplitude = band;
             }
             if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
-            else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / 7, 1F);
+            else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / holdUp, 1F);
         }
     }
 
@@ -97,7 +108,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     }
 
     private Color colorAtBrightness(float brightness) {
-        int res = ledManager.getResolution();
+        int res = 255;
         Color red = new Color(Math.round(res * brightness), 0, 0);
         Color yellow = new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
         Color green = new Color(0, Math.round(res * brightness), 0);
