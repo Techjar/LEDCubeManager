@@ -1,3 +1,3 @@
 @echo off
 cd dist
-java -Xmx2048M -jar LEDCubeManager.jar --showfps
+java -Xverify:none -Xmx2048M -jar LEDCubeManager.jar --showfps

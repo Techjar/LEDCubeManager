@@ -135,27 +135,33 @@ public class Vector3 {
     }
 
     public float distance(Vector3 other) {
-        return other.subtract(this).length();
+        float xx = other.x - x;
+        float yy = other.y - y;
+        float zz = other.z - z;
+        return (float)Math.sqrt(xx * xx + yy * yy + zz * zz);
     }
 
     public float distanceSquared(Vector3 other) {
-        return other.subtract(this).lengthSquared();
+        float xx = other.x - x;
+        float yy = other.y - y;
+        float zz = other.z - z;
+        return xx * xx + yy * yy + zz * zz;
     }
 
     public float distance2D(Vector2 other) {
-        return other.subtract(new Vector2(this.x, this.y)).length();
+        return other.subtract(new Vector2(this.x, this.z)).length();
     }
 
     public float distanceSquared2D(Vector2 other) {
-        return other.subtract(new Vector2(this.x, this.y)).lengthSquared();
+        return other.subtract(new Vector2(this.x, this.z)).lengthSquared();
     }
 
     public float distance2D(Vector3 other) {
-        return this.distance2D(new Vector2(other.x, other.y));
+        return this.distance2D(new Vector2(other.x, other.z));
     }
 
     public float distanceSquared2D(Vector3 other) {
-        return this.distanceSquared2D(new Vector2(other.x, other.y));
+        return this.distanceSquared2D(new Vector2(other.x, other.z));
     }
 
     public void normalize() {

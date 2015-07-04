@@ -67,4 +67,19 @@ public interface LEDManager {
      * Sets the color of an LED normalized into the 24-bit RGB color space.
      */
     public void setLEDColor(int x, int y, int z, ReadableColor color);
+
+    /**
+     * Encodes a vector into an integer for array indexing in this LEDManager.
+     */
+    public int encodeVector(Vector3 vector);
+
+    /**
+     * Encodes a vector into an integer for array indexing in this LEDManager.
+     */
+    public int encodeVector(int x, int y, int z);
+
+    /**
+     * Decodes an integers into a vector for array indexing in this LEDManager.
+     */
+    public Vector3 decodeVector(int value);
 }

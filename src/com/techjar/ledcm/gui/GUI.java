@@ -59,7 +59,7 @@ public abstract class GUI {
                 case TOP_CENTER:
                     return new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY());
                 case BOTTOM_CENTER:
-                    return new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), -position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
+                    return new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
                 case LEFT_CENTER:
                     return new Vector2(position.getX() + parentPos.getX(), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
                 case RIGHT_CENTER:

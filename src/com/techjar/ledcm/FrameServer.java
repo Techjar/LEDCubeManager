@@ -1,0 +1,63 @@
+
+package com.techjar.ledcm;
+
+import com.techjar.ledcm.hardware.tcp.Packet;
+import com.techjar.ledcm.hardware.tcp.TCPServer;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
+import lombok.Getter;
+import lombok.SneakyThrows;
+
+/**
+ *
+ * @author Techjar
+ */
+public class FrameServer {
+    private Thread sendThread;
+    @Getter private TCPServer tcpServer;
+    private Queue<BufferedImage> sendQueue = new ConcurrentLinkedQueue<>();
+
+    public FrameServer(int port) throws IOException {
+        tcpServer = new TCPServer(port);
+        sendThread = new Thread("Frame Send Thread") {
+            @Override
+            @SneakyThrows(InterruptedException.class)
+            public void run() {
+                BufferedImage image;
+                while (true) {
+                    while ((image = sendQueue.poll()) != null) {
+                        try {
+                            byte[] imageBytes;
+                            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                                ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+                                ImageWriteParam param = writer.getDefaultWriteParam();
+                                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                                param.setCompressionQuality(0.5F);
+                                writer.setOutput(new MemoryCacheImageOutputStream(baos));
+                                writer.write(null, new IIOImage(image, null, null), param);
+                                writer.dispose();
+                                imageBytes = baos.toByteArray();
+                            }
+                            tcpServer.sendPacket(Packet.ID.VISUAL_FRAME, imageBytes);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                    Thread.sleep(1);
+                }
+            }
+        };
+    }
+
+    public void queueFrame(BufferedImage image) {
+        sendQueue.add(image);
+    }
+}

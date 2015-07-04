@@ -9,7 +9,7 @@ import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL31.*;
 import static org.lwjgl.opengl.GL32.*;
 import static org.lwjgl.opengl.GL33.*;
-import static org.lwjgl.opengl.GL41.*;
+import static org.lwjgl.opengl.GL40.*;
 import static org.lwjgl.util.glu.GLU.*;
 
 import com.hackoeur.jglm.Mat3;
@@ -27,6 +27,7 @@ import com.techjar.ledcm.hardware.SpectrumAnalyzer;
 import com.techjar.ledcm.hardware.TLC5940LEDManager;
 import com.techjar.ledcm.hardware.TestHugeLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
+import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;
@@ -55,7 +56,9 @@ import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -70,7 +73,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -110,7 +117,7 @@ public class LEDCubeManager {
     private boolean newFullscreen;
     @Getter private static ConfigManager config;
     @Getter private static JFrame frame;
-    private List<DisplayMode> displayModeList;
+    @Getter private List<DisplayMode> displayModeList;
     private Canvas canvas;
     private boolean closeRequested = false;
     private boolean running = false;
@@ -123,6 +130,7 @@ public class LEDCubeManager {
     @Getter private static JFileChooser fileChooser;
     @Getter private static String serialPortName = "COM3";
     @Getter private static int serverPort = 7545;
+    @Getter private static FrameServer frameServer;
     @Getter @Setter private static boolean convertingAudio;
     private static LEDCube ledCube;
     private List<Screen> screenList = new ArrayList<>();
@@ -144,9 +152,10 @@ public class LEDCubeManager {
     public boolean wireframe;
     public final boolean antiAliasingSupported;
     public final int antiAliasingMaxSamples;
-    private boolean antiAliasing = true;
-    private int antiAliasingSamples = 4;
+    @Getter private boolean antiAliasing = true;
+    @Getter private int antiAliasingSamples = 4;
     private float fieldOfView;
+    private float viewDistance;
     private int multisampleFBO;
     private int multisampleTexture;
     private int multisampleDepthTexture;
@@ -256,6 +265,7 @@ public class LEDCubeManager {
         fileChooser.setMultiSelectionEnabled(false);
         if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
         init();
+        InstancedRenderer.init();
 
         LightSource light = new LightSource();
         light.position = new Vector4f(0, 0, 0, 1);
@@ -263,6 +273,7 @@ public class LEDCubeManager {
 
         ledCube = new LEDCube();
         ledCube.postInit();
+        frameServer = new FrameServer(serverPort + 2);
 
         timeCounter = getTime();
         deltaTime = System.nanoTime();
@@ -388,6 +399,8 @@ public class LEDCubeManager {
                 configDisplayMode = newDisplayMode;
                 config.setProperty("display.width", configDisplayMode.getWidth());
                 config.setProperty("display.height", configDisplayMode.getHeight());
+                config.setProperty("display.antialiasing", antiAliasing);
+                config.setProperty("display.antialiasingsamples", antiAliasingSamples);
             }
             fullscreen = newFullscreen;
             newDisplayMode = null;
@@ -426,12 +439,11 @@ public class LEDCubeManager {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampleTexture);
             glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, antiAliasingSamples, GL_RGBA8, displayMode.getWidth(), displayMode.getHeight(), false);
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, antiAliasingSamples, GL_DEPTH_COMPONENT, displayMode.getWidth(), displayMode.getHeight(), false);
-            //glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, displayMode.getWidth(), displayMode.getHeight(), 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, (ByteBuffer)null);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, antiAliasingSamples, GL_DEPTH_STENCIL, displayMode.getWidth(), displayMode.getHeight(), false);
             multisampleFBO = glGenFramebuffers();
             glBindFramebuffer(GL_FRAMEBUFFER, multisampleFBO);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampleTexture, 0);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture, 0);
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
                 throw new RuntimeException("Anti-aliasing framebuffer is invalid.");
             }
@@ -476,16 +488,18 @@ public class LEDCubeManager {
 
     private void initConfig() {
         if (displayMode == null) displayMode = new DisplayMode(1024, 768);
-        config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"));
+        config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"), true);
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
         config.defaultProperty("display.height", displayMode.getHeight());
         config.defaultProperty("display.fieldofview", 45F);
+        config.defaultProperty("display.viewdistance", 1000F);
         config.defaultProperty("display.antialiasing", true);
         config.defaultProperty("display.antialiasingsamples", 4);
         //config.defaultProperty("display.fullscreen", false);
         config.defaultProperty("sound.effectvolume", 1.0F);
         config.defaultProperty("sound.musicvolume", 1.0F);
+        config.defaultProperty("sound.inputdevice", "");
 
         if (!internalSetDisplayMode(config.getInteger("display.width"), config.getInteger("display.height"))) {
             config.setProperty("display.width", displayMode.getWidth());
@@ -494,6 +508,7 @@ public class LEDCubeManager {
         antiAliasing = config.getBoolean("display.antialiasing");
         antiAliasingSamples = config.getInteger("display.antialiasingsamples");
         fieldOfView = config.getFloat("display.fieldofview");
+        viewDistance = config.getFloat("display.viewdistance");
         //fullscreen = config.getBoolean("display.fullscreen");
 
         if (!antiAliasingSupported) {
@@ -528,6 +543,8 @@ public class LEDCubeManager {
         glClearDepth(1);
         glDepthFunc(GL_LEQUAL);
         glDepthMask(true);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0x00);
         glShadeModel(GL_SMOOTH);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
@@ -662,8 +679,8 @@ public class LEDCubeManager {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         // Setup projection matrix
-        projectionMatrix = Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, 1000);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        projectionMatrix = Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, viewDistance);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -691,29 +708,36 @@ public class LEDCubeManager {
         if (antiAliasing) {
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
-            glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
-        if (screenshot) {
-            screenshot = false;
+        if (screenshot || frameServer.getTcpServer().getNumClients() > 0) {
             ByteBuffer buffer = BufferUtils.createByteBuffer(displayMode.getWidth() * displayMode.getHeight() * 3);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glReadPixels(0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
             BufferedImage image = new BufferedImage(displayMode.getWidth(), displayMode.getHeight(), BufferedImage.TYPE_INT_RGB);
+            int[] pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
             buffer.rewind();
-            for (int y = 0; y < displayMode.getHeight(); y++) {
+            for (int y = displayMode.getHeight() - 1; y >= 0; y--) {
                 for (int x = 0; x < displayMode.getWidth(); x++) {
-                    image.setRGB(x, displayMode.getHeight() - y - 1, (buffer.get() & 0xFF) << 16 | (buffer.get() & 0xFF) << 8 | (buffer.get() & 0xFF));
+                    pixels[x + (y * displayMode.getWidth())] = (buffer.get() & 0xFF) << 16 | (buffer.get() & 0xFF) << 8 | (buffer.get() & 0xFF);
                 }
             }
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-            File screenshotDir = new File(Constants.DATA_DIRECTORY, "screenshots");
-            screenshotDir.mkdirs();
-            File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
-            for (int i = 2; file.exists(); i++) {
-                file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + "_" + i + ".png");
+            if (screenshot) {
+                screenshot = false;
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
+                File screenshotDir = new File(Constants.DATA_DIRECTORY, "screenshots");
+                screenshotDir.mkdirs();
+                File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
+                for (int i = 2; file.exists(); i++) {
+                    file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + "_" + i + ".png");
+                }
+                ImageIO.write(image, "png", file);
             }
-            ImageIO.write(image, "png", file);
+            
+            if (frameServer.getTcpServer().getNumClients() > 0) {
+                frameServer.queueFrame(image);
+            }
         }
     }
 
@@ -905,6 +929,11 @@ public class LEDCubeManager {
 
     public void setFullscreen(boolean fullscreen) {
         this.newFullscreen = fullscreen;
+    }
+
+    public void setAntiAliasing(boolean enabled, int samples) {
+        antiAliasing = enabled;
+        antiAliasingSamples = samples;
     }
 
     public int addResizeHandler(GUICallback resizeHandler) {

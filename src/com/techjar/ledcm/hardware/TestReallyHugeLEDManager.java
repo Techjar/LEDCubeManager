@@ -11,13 +11,13 @@ import org.lwjgl.util.ReadableColor;
  *
  * @author Techjar
  */
-public class TestHugeLEDManager implements LEDManager {
+public class TestReallyHugeLEDManager implements LEDManager {
     private boolean gammaCorrection;
-    private byte[] red = new byte[32768];
-    private byte[] green = new byte[32768];
-    private byte[] blue = new byte[32768];
+    private byte[] red = new byte[64 * 64 * 64];
+    private byte[] green = new byte[64 * 64 * 64];
+    private byte[] blue = new byte[64 * 64 * 64];
 
-    public TestHugeLEDManager(boolean gammaCorrection) {
+    public TestReallyHugeLEDManager(boolean gammaCorrection) {
         this.gammaCorrection = gammaCorrection;
     }
 
@@ -33,12 +33,12 @@ public class TestHugeLEDManager implements LEDManager {
 
     @Override
     public Dimension3D getDimensions() {
-        return new Dimension3D(32, 32, 32);
+        return new Dimension3D(64, 64, 64);
     }
 
     @Override
     public int getLEDCount() {
-        return 32768;
+        return 64 * 64 * 64;
     }
 
     @Override
@@ -65,11 +65,11 @@ public class TestHugeLEDManager implements LEDManager {
 
     @Override
     public Color getLEDColor(int x, int y, int z) {
-        if (x < 0 || x > 31) throw new IllegalArgumentException("Invalid X coordinate: " + x);
-        if (y < 0 || y > 31) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
-        if (z < 0 || z > 31) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
+        if (x < 0 || x > 63) throw new IllegalArgumentException("Invalid X coordinate: " + x);
+        if (y < 0 || y > 63) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
+        if (z < 0 || z > 63) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 10) | (x << 5) | z;
+        int index = (y << 12) | (x << 6) | z;
         return new Color(red[index], green[index], blue[index]);
     }
 
@@ -80,11 +80,11 @@ public class TestHugeLEDManager implements LEDManager {
 
     @Override
     public void setLEDColor(int x, int y, int z, ReadableColor color) {
-        if (x < 0 || x > 31) throw new IllegalArgumentException("Invalid X coordinate: " + x);
-        if (y < 0 || y > 31) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
-        if (z < 0 || z > 31) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
+        if (x < 0 || x > 63) throw new IllegalArgumentException("Invalid X coordinate: " + x);
+        if (y < 0 || y > 63) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
+        if (z < 0 || z > 63) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 10) | (x << 5) | z;
+        int index = (y << 12) | (x << 6) | z;
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();
@@ -97,11 +97,11 @@ public class TestHugeLEDManager implements LEDManager {
 
     @Override
     public int encodeVector(int x, int y, int z) {
-        return (y << 10) | (x << 5) | z;
+        return (y << 12) | (x << 6) | z;
     }
 
     @Override
     public Vector3 decodeVector(int value) {
-        return new Vector3((value >> 5) & 31, (value >> 10) & 31, value & 31);
+        return new Vector3((value >> 6) & 63, (value >> 12) & 63, value & 63);
     }
 }

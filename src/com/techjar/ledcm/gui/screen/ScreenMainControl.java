@@ -8,6 +8,7 @@ import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIButton;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.GUIComboBox;
+import com.techjar.ledcm.gui.GUIComboButton;
 import com.techjar.ledcm.gui.GUILabel;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUIScrollBox;
@@ -23,7 +24,9 @@ import com.techjar.ledcm.util.PrintStreamRelayer;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFileChooser;
+import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.Dimension;
 import org.lwjgl.util.ReadableColor;
 import org.newdawn.slick.UnicodeFont;
 
@@ -37,10 +40,19 @@ public class ScreenMainControl extends Screen {
     public final GUIWindow layersWindow;
     public final GUIWindow sequenceWindow;
     public final GUIWindow animOptionsWindow;
+    public final GUIWindow settingsWindow;
     public final GUIScrollBox animOptionsScrollBox;
+    public final GUIScrollBox settingsScrollBox;
     public final GUIButton animOptionsBtn;
+    public final GUIButton settingsBtn;
+    public final GUIButton audioInputBtn;
+    public final GUIBackground audioInputBtnBg;
+    public final GUISlider mixerGainSlider;
     public final GUISlider layerSlider;
     public final GUIComboBox animComboBox;
+    public final GUIComboBox resolutionComboBox;
+    public final GUIComboBox audioInputComboBox;
+    public final GUIComboButton antiAliasingComboBtn;
     public final GUISlider redColorSlider;
     public final GUISlider greenColorSlider;
     public final GUISlider blueColorSlider;
@@ -69,6 +81,7 @@ public class ScreenMainControl extends Screen {
     public final GUIButton sequenceLoadBtn;
     public final GUIButton sequencePlayBtn;
     public final GUIButton sequenceStopBtn;
+    public final GUIButton settingsApplyBtn;
     
     public ScreenMainControl() {
         super();
@@ -522,6 +535,128 @@ public class ScreenMainControl extends Screen {
         });
         //populateAnimationList();
         container.addComponent(animComboBox);
+
+        settingsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
+        settingsWindow.setDimension(450, 450);
+        settingsWindow.setPosition(container.getWidth() / 2 - settingsWindow.getWidth() / 2, container.getHeight() / 2 - settingsWindow.getHeight() / 2);
+        settingsWindow.setResizable(false, true);
+        settingsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
+        settingsWindow.setMinimumSize(new Dimension(50, 150));
+        settingsWindow.setVisible(false);
+        container.addComponent(settingsWindow);
+        settingsScrollBox = new GUIScrollBox(new Color(255, 0, 0));
+        settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
+        settingsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
+        settingsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
+        settingsWindow.setDimensionChangeHandler(new GUICallback() {
+            @Override
+            public void run() {
+                settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
+            }
+        });
+        settingsWindow.addComponent(settingsScrollBox);
+        settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
+        settingsApplyBtn.setDimension(200, 40);
+        settingsApplyBtn.setPosition(0, -30);
+        settingsApplyBtn.setClickHandler(new GUICallback() {
+            @Override
+            public void run() {
+                settingsWindow.setVisible(false);
+                Object item = resolutionComboBox.getSelectedItem();
+                if (item != null) {
+                    String[] split = item.toString().split("x");
+                    if (split.length == 2) {
+                        LEDCubeManager.getInstance().setDisplayMode(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+                    }
+                }
+                item = audioInputComboBox.getSelectedItem();
+                if (item != null) {
+                    LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixer(item.toString());
+                }
+                item = antiAliasingComboBtn.getSelectedItem();
+                if (item != null) {
+                    switch (item.toString()) {
+                        case "Off":
+                            LEDCubeManager.getInstance().setAntiAliasing(false, 2);
+                            break;
+                        default:
+                            LEDCubeManager.getInstance().setAntiAliasing(true, Integer.parseInt(Character.toString(item.toString().charAt(0))));
+                            break;
+                    }
+                }
+            }
+        });
+        settingsWindow.addComponent(settingsApplyBtn);
+        settingsBtn = new GUIButton(font, new Color(255, 255, 255), "Settings", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        settingsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        settingsBtn.setDimension(160, 35);
+        settingsBtn.setPosition(-5, 45);
+        settingsBtn.setClickHandler(new GUICallback() {
+            @Override
+            public void run() {
+                settingsWindow.setVisible(!settingsWindow.isVisible());
+                if (settingsWindow.isVisible()) settingsWindow.setToBePutOnTop(true);
+            }
+        });
+        container.addComponent(settingsBtn);
+
+        resolutionComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+        resolutionComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
+        resolutionComboBox.setDimension(400, 35);
+        resolutionComboBox.setPosition(0, 10);
+        resolutionComboBox.setVisibleItems(5);
+        for (DisplayMode displayMode : LEDCubeManager.getInstance().getDisplayModeList()) {
+            resolutionComboBox.addItem(displayMode.getWidth() + "x" + displayMode.getHeight());
+        }
+        resolutionComboBox.setSelectedItem(LEDCubeManager.getWidth() + "x" + LEDCubeManager.getHeight());
+        settingsScrollBox.addComponent(resolutionComboBox);
+        audioInputComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+        audioInputComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
+        audioInputComboBox.setDimension(400, 35);
+        audioInputComboBox.setPosition(0, 55);
+        audioInputComboBox.setVisibleItems(5);
+        audioInputComboBox.addAllItems(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getMixers().keySet());
+        audioInputComboBox.setSelectedItem(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getCurrentMixerName());
+        settingsScrollBox.addComponent(audioInputComboBox);
+        antiAliasingComboBtn = new GUIComboButton(font, new Color(255, 255, 255), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        antiAliasingComboBtn.setParentAlignment(GUIAlignment.TOP_CENTER);
+        antiAliasingComboBtn.setDimension(400, 35);
+        antiAliasingComboBtn.setPosition(0, 100);
+        antiAliasingComboBtn.addItem("Off");
+        for (int i = 2; i <= LEDCubeManager.getInstance().antiAliasingMaxSamples; i *= 2) {
+            antiAliasingComboBtn.addItem(i + "x");
+        }
+        antiAliasingComboBtn.setSelectedItem(LEDCubeManager.getInstance().isAntiAliasing() ? LEDCubeManager.getInstance().getAntiAliasingSamples() + "x" : "Off");
+        settingsScrollBox.addComponent(antiAliasingComboBtn);
+
+        audioInputBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
+        audioInputBtn = new GUIButton(font, new Color(255, 255, 255), "Audio Input", audioInputBtnBg);
+        audioInputBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        audioInputBtn.setDimension(200, 35);
+        audioInputBtn.setPosition(-5, 85);
+        audioInputBtn.setClickHandler(new GUICallback() {
+            @Override
+            public void run() {
+                boolean running = LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isRunningAudioInput();
+                audioInputBtnBg.setBackgroundColor(running ? new Color(255, 0, 0) : new Color(0, 255, 0));
+                if (running) LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stopAudioInput();
+                else LEDCubeManager.getLEDCube().getSpectrumAnalyzer().startAudioInput();
+            }
+        });
+        container.addComponent(audioInputBtn);
+        mixerGainSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
+        mixerGainSlider.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        mixerGainSlider.setDimension(200, 30);
+        mixerGainSlider.setPosition(-5, 125);
+        mixerGainSlider.setChangeHandler(new GUICallback() {
+            @Override
+            public void run() {
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(mixerGainSlider.getValue() * 10);
+            }
+        });
+        mixerGainSlider.setValue(0.1F);
+        container.addComponent(mixerGainSlider);
     }
 
     @Override

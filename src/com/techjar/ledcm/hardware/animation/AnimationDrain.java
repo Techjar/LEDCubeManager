@@ -10,7 +10,8 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class AnimationDrain extends Animation {
-    private int spread;
+    private int spreadX;
+    private int spreadZ;
     private boolean state;
 
     public AnimationDrain() {
@@ -25,35 +26,36 @@ public class AnimationDrain extends Animation {
     @Override
     public void refresh() {
         if (ticks % 6 == 0) {
-            if (state && spread < 4) spread++;
+            if (state && spreadX < dimension.x / 2) spreadX++;
+            if (state && spreadZ < dimension.z / 2) spreadZ++;
             state = !state;
-            for (int x = 3; x > 3 - spread; x--) {
-                for (int z = 3; z > 3 - spread; z--) {
-                    for (int y = 1; y < 8; y++) {
+            for (int x = (dimension.x / 2) - 1; x > (dimension.x / 2) - 1 - spreadX; x--) {
+                for (int z = (dimension.z / 2) - 1; z > (dimension.z / 2) - 1 - spreadZ; z--) {
+                    for (int y = 1; y < dimension.y; y++) {
                         ledManager.setLEDColor(x, y - 1, z, ledManager.getLEDColor(x, y, z));
                         ledManager.setLEDColor(x, y, z, new Color());
                     }
                 }
             }
-            for (int x = 4; x < 4 + spread; x++) {
-                for (int z = 3; z > 3 - spread; z--) {
-                    for (int y = 1; y < 8; y++) {
+            for (int x = dimension.x / 2; x < (dimension.x / 2) + spreadX; x++) {
+                for (int z = (dimension.z / 2) - 1; z > (dimension.z / 2) - 1 - spreadZ; z--) {
+                    for (int y = 1; y < dimension.y; y++) {
                         ledManager.setLEDColor(x, y - 1, z, ledManager.getLEDColor(x, y, z));
                         ledManager.setLEDColor(x, y, z, new Color());
                     }
                 }
             }
-            for (int x = 3; x > 3 - spread; x--) {
-                for (int z = 4; z < 4 + spread; z++) {
-                    for (int y = 1; y < 8; y++) {
+            for (int x = (dimension.x / 2) - 1; x > (dimension.x / 2) - 1 - spreadX; x--) {
+                for (int z = dimension.z / 2; z < (dimension.z / 2) + spreadZ; z++) {
+                    for (int y = 1; y < dimension.y; y++) {
                         ledManager.setLEDColor(x, y - 1, z, ledManager.getLEDColor(x, y, z));
                         ledManager.setLEDColor(x, y, z, new Color());
                     }
                 }
             }
-            for (int x = 4; x < 4 + spread; x++) {
-                for (int z = 4; z < 4 + spread; z++) {
-                    for (int y = 1; y < 8; y++) {
+            for (int x = dimension.x / 2; x < (dimension.x / 2) + spreadX; x++) {
+                for (int z = dimension.z / 2; z < (dimension.z / 2) + spreadZ; z++) {
+                    for (int y = 1; y < dimension.y; y++) {
                         ledManager.setLEDColor(x, y - 1, z, ledManager.getLEDColor(x, y, z));
                         ledManager.setLEDColor(x, y, z, new Color());
                     }
@@ -64,7 +66,8 @@ public class AnimationDrain extends Animation {
 
     @Override
     public void reset() {
-        spread = 0;
+        spreadX = 0;
+        spreadZ = 0;
         state = false;
     }
 }

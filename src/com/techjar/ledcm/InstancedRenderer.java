@@ -7,20 +7,20 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL31.*;
-import static org.lwjgl.opengl.GL33.*;
+import static org.lwjgl.opengl.GL43.*;
 
 import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.Quaternion;
-import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Tuple;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import lombok.Value;
 import org.lwjgl.BufferUtils;
@@ -34,26 +34,40 @@ import org.lwjgl.util.vector.Matrix4f;
  */
 public final class InstancedRenderer {
     private static final Map<ModelMesh, LinkedList<InstanceItem>> itemsNormal = new HashMap<>();
-    private static final LinkedList<InstanceItem> itemsAlpha = new LinkedList<>();
+    private static final List<InstanceItem> itemsAlpha = new ArrayList<>();
     private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedNormal = new LinkedList<>();
     private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedAlpha = new LinkedList<>();
-    private static final int vboId;
+    private static final List<Tuple<Integer, Integer>> vboIds = new ArrayList<>();
+    private static int vaoId;
+    private static int alphaTrickVboId;
     private static boolean alphaPolygonFix = false;
+    private static int currentVBOIndex = 0;
+    private static final int maxVboCount = 64;
+    private static ByteBuffer zeroBuffer = BufferUtils.createByteBuffer(500000);
     private static ByteBuffer buffer = BufferUtils.createByteBuffer(8000000);
 
-    static {
-        vboId = glGenBuffers();
-        glBindBuffer(GL_ARRAY_BUFFER, vboId);
-        glVertexAttribPointer(3, 4, GL_FLOAT, false, 80, 0);
-        glVertexAttribDivisor(3, 1);
-        for (int i = 0; i < 4; i++) {
-            glVertexAttribPointer(4 + i, 4, GL_FLOAT, false, 80, 16 + (16 * i));
-            glVertexAttribDivisor(4 + i, 1);
-        }
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    private InstancedRenderer() {
     }
 
-    private InstancedRenderer() {
+    public static void init() { // bindingindex 0 = mesh (stride = 22), 1 = instances (stride = 80)
+        if (vaoId != 0) throw new IllegalStateException("Already initialized!");
+        vaoId = glGenVertexArrays();
+        glBindVertexArray(vaoId);
+        for (int i = 0; i < 8; i++) glEnableVertexAttribArray(i);
+        glVertexAttribFormat(0, 3, GL_FLOAT, false, 0);
+        glVertexAttribBinding(0, 0);
+        glVertexAttribFormat(1, 3, GL_HALF_FLOAT, false, 12);
+        glVertexAttribBinding(1, 0);
+        glVertexAttribFormat(2, 2, GL_HALF_FLOAT, false, 18);
+        glVertexAttribBinding(2, 0);
+        glVertexAttribFormat(3, 4, GL_FLOAT, false, 0);
+        glVertexAttribBinding(3, 1);
+        for (int i = 0; i < 4; i++) {
+            glVertexAttribFormat(4 + i, 4, GL_FLOAT, false, 16 + (16 * i));
+            glVertexAttribBinding(4 + i, 1);
+        }
+        glVertexBindingDivisor(1, 1);
+        glBindVertexArray(0);
     }
 
     public static boolean getAlphaPolygonFix() {
@@ -68,12 +82,12 @@ public final class InstancedRenderer {
         InstancedRenderer.alphaPolygonFix = alphaPolygonFix;
     }
 
-    public static void addItem(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
-        if (mesh.getModel().getTexture().hasAlpha() || color.getAlpha() < 255) {
-            itemsAlpha.add(new InstanceItem(mesh, position, rotation, color, scale));
+    public static void addItem(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale, float cameraDist) {
+        if (mesh.getModel().isTranslucent() || color.getAlpha() < 255) {
+            itemsAlpha.add(new InstanceItem(mesh, position, rotation, color, scale, cameraDist));
         } else {
             if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedList<InstanceItem>());
-            itemsNormal.get(mesh).add(new InstanceItem(mesh, position, rotation, color, scale));
+            itemsNormal.get(mesh).add(new InstanceItem(mesh, position, rotation, color, scale, cameraDist));
         }
     }
 
@@ -86,7 +100,7 @@ public final class InstancedRenderer {
         Collections.sort(itemsAlpha, new AlphaSorter());
         LinkedList<InstanceItem> currentList = null;
         ModelMesh currentMesh = null;
-        for (InstanceItem item = itemsAlpha.poll(); item != null; item = itemsAlpha.poll()) {
+        for (InstanceItem item : itemsAlpha) {
             if (item.getMesh() != currentMesh) {
                 currentMesh = item.getMesh();
                 currentList = new LinkedList<>();
@@ -104,12 +118,40 @@ public final class InstancedRenderer {
     }
 
     public static int renderAll() {
+        currentVBOIndex = 0;
         int total = 0;
-        for (int i = 0; i < 8; i++) glEnableVertexAttribArray(i);
         total += renderItems(groupedNormal, false);
         total += renderItems(groupedAlpha, alphaPolygonFix);
         for (int i = 0; i < 8; i++) glDisableVertexAttribArray(i);
         return total;
+    }
+
+    private static Tuple<Integer, Integer> getNextVBO() {
+        Tuple<Integer, Integer> vbo = getVBO(currentVBOIndex++);
+        if (currentVBOIndex >= maxVboCount) currentVBOIndex = 0;
+        return vbo;
+    }
+
+    private static Tuple<Integer, Integer> getVBO(int index) {
+        if (index == -1) {
+            if (alphaTrickVboId == 0) {
+                alphaTrickVboId = glGenBuffers();
+                glBindBuffer(GL_ARRAY_BUFFER, alphaTrickVboId);
+                zeroBuffer.limit(80);
+                glBufferData(GL_ARRAY_BUFFER, zeroBuffer, GL_STREAM_DRAW);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+            }
+            return new Tuple<>(alphaTrickVboId, 80);
+        }
+        if (index >= vboIds.size() || vboIds.get(index) == null) {
+            int vboId = glGenBuffers();
+            glBindBuffer(GL_ARRAY_BUFFER, vboId);
+            zeroBuffer.limit(500000);
+            glBufferData(GL_ARRAY_BUFFER, zeroBuffer, GL_STREAM_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            vboIds.add(index, new Tuple<>(vboId, 500000));
+        }
+        return vboIds.get(index);
     }
 
     private static int renderItems(LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> items, boolean alphaDepthTrick) {
@@ -142,19 +184,20 @@ public final class InstancedRenderer {
                     //mesh.getModel().getNormalMap().bind();
                     mesh.getModel().getMaterial().sendToShader(0);
                     buffer.rewind();
-                    glBindBuffer(GL_ARRAY_BUFFER, vboId);
-                    glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW);
-                    glBindBuffer(GL_ARRAY_BUFFER, mesh.getVBO());
-                    glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
-                    glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
-                    glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
+                    Tuple<Integer, Integer> vbo = getVBO(-1);
+                    glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, buffer);
                     glBindBuffer(GL_ARRAY_BUFFER, 0);
+                    glBindVertexArray(vaoId);
+                    glBindVertexBuffer(0, mesh.getVBO(), 0, 22);
+                    glBindVertexBuffer(1, vbo.getA(), 0, 80);
                     glColorMask(false, false, false, false);
                     glDrawArrays(GL_TRIANGLES, 0, mesh.getIndices());
                     glColorMask(true, true, true, true);
                     glDepthFunc(GL_EQUAL);
                     glDrawArrays(GL_TRIANGLES, 0, mesh.getIndices());
                     glDepthFunc(GL_LEQUAL);
+                    glBindVertexArray(0);
                 }
             } else { // Instanced render
                 int dataSize = count * 80;
@@ -178,32 +221,31 @@ public final class InstancedRenderer {
                 //mesh.getModel().getNormalMap().bind();
                 mesh.getModel().getMaterial().sendToShader(0);
                 buffer.rewind();
-                glBindBuffer(GL_ARRAY_BUFFER, vboId);
-                glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW);
-                glBindBuffer(GL_ARRAY_BUFFER, mesh.getVBO());
-                glVertexAttribPointer(0, 3, GL_FLOAT, false, 22, 0);
-                glVertexAttribPointer(1, 3, GL_HALF_FLOAT, false, 22, 12);
-                glVertexAttribPointer(2, 2, GL_HALF_FLOAT, false, 22, 18);
+                Tuple<Integer, Integer> vbo = getNextVBO();
+                glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());
+                if (vbo.getB() < dataSize) {
+                    glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW);
+                    vbo.setB(dataSize);
+                }
+                else glBufferSubData(GL_ARRAY_BUFFER, 0, buffer);
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindVertexArray(vaoId);
+                glBindVertexBuffer(0, mesh.getVBO(), 0, 22);
+                glBindVertexBuffer(1, vbo.getA(), 0, 80);
                 glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.getIndices(), count);
+                glBindVertexArray(0);
             }
         }
         return total;
     }
 
     private static class AlphaSorter implements Comparator<InstanceItem> {
-        private final Vector3 cameraPos;
-
-        public AlphaSorter() {
-            this.cameraPos = LEDCubeManager.getCamera().getPosition();
-        }
+        volatile float crap = 2F;
 
         @Override
         public int compare(InstanceItem o1, InstanceItem o2) {
-            float dist1 = cameraPos.distanceSquared(o1.getPosition());
-            float dist2 = cameraPos.distanceSquared(o2.getPosition());
-            if (dist1 < dist2) return 1;
-            if (dist1 > dist2) return -1;
+            if (o1.cameraDistSqr < o2.cameraDistSqr) return 1;
+            if (o1.cameraDistSqr > o2.cameraDistSqr) return -1;
             return 0;
         }
     }
@@ -214,5 +256,6 @@ public final class InstancedRenderer {
         private final Quaternion rotation;
         private final Color color;
         private final Vector3 scale;
+        private final float cameraDistSqr;
     }
 }

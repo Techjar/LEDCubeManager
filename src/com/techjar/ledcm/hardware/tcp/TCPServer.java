@@ -39,21 +39,21 @@ public class TCPServer {
             @Override
             public void run() {
                 while (true) {
-                try {
-                    final Socket client = socket.accept();
-                    client.setTcpNoDelay(true);
-                    BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                    if (!"LEDCUBE".equals(br.readLine())) {
-                        client.close();
-                        continue;
+                    try {
+                        final Socket client = socket.accept();
+                        client.setTcpNoDelay(true);
+                        BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                        if (!"LEDCUBE".equals(br.readLine())) {
+                            client.close();
+                            continue;
+                        }
+                        TCPClient tcpClient = new TCPClient(client, clientIndex++);
+                        if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) sendPacket(Packet.ID.AUDIO_INIT, LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioInit(), tcpClient);
+                        clients.add(tcpClient);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
                     }
-                    TCPClient tcpClient = new TCPClient(client, clientIndex++);
-                    if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) sendPacket(Packet.ID.AUDIO_INIT, LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioInit(), tcpClient);
-                    clients.add(tcpClient);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
                 }
-            }
             }
         };
         listenThread.start();
