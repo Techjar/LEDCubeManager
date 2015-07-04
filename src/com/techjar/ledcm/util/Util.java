@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -56,6 +57,31 @@ public final class Util {
     public static final Gson GSON = new GsonBuilder().create();
 
     private Util() {
+    }
+
+    public static void addLibraryPath(String path) throws IOException {
+        try {
+            // This enables the java.library.path to be modified at runtime
+            // From a Sun engineer at http://forums.sun.com/thread.jspa?threadID=707176
+            //
+            Field field = ClassLoader.class.getDeclaredField("usr_paths");
+            field.setAccessible(true);
+            String[] paths = (String[])field.get(null);
+            for (int i = 0; i < paths.length; i++) {
+                if (path.equals(paths[i])) {
+                    return;
+                }
+            }
+            String[] tmp = new String[paths.length+1];
+            System.arraycopy(paths, 0, tmp, 0, paths.length);
+            tmp[paths.length] = path;
+            field.set(null,tmp);
+            System.setProperty("java.library.path", System.getProperty("java.library.path") + File.pathSeparator + path);
+        } catch (IllegalAccessException e) {
+            throw new IOException("Failed to get permissions to set library path");
+        } catch (NoSuchFieldException e) {
+            throw new IOException("Failed to get field handle to set library path");
+        }
     }
 
     public static boolean isPrintableCharacter(char ch) {
@@ -210,21 +236,18 @@ public final class Util {
     }
 
     public static int encodeCubeVector(Vector3 vector) {
-        Dimension3D bits = getRequiredBits(LEDCubeManager.getLEDManager().getDimensions());
-        return (int)vector.getZ() | ((int)vector.getX() << bits.z) | ((int)vector.getY() << (bits.x + bits.z));
+        return LEDCubeManager.getLEDManager().encodeVector(vector);
     }
 
     public static int encodeCubeVector(int x, int y, int z) {
-        return encodeCubeVector(new Vector3(x, y, z));
+        return LEDCubeManager.getLEDManager().encodeVector(x, y, z);
     }
 
     public static Vector3 decodeCubeVector(int number) {
-        Dimension3D dim = LEDCubeManager.getLEDManager().getDimensions();
-        Dimension3D bits = getRequiredBits(dim);
-        return new Vector3(number & (getNextPowerOfTwo(dim.x) - 1), (number >> (bits.x + bits.z)) & (getNextPowerOfTwo(dim.y) - 1), (number >> bits.z) & (getNextPowerOfTwo(dim.z) - 1));
+        return LEDCubeManager.getLEDManager().decodeVector(number);
     }
 
-    public static int getRequiredBits(long value) {
+    /*public static int getRequiredBits(long value) {
         int i = 0;
         for (; i < 64; i++) {
             if (value == 0) break;
@@ -235,7 +258,7 @@ public final class Util {
 
     public static Dimension3D getRequiredBits(Dimension3D dimension) {
         return new Dimension3D(getRequiredBits(dimension.x - 1), getRequiredBits(dimension.y - 1), getRequiredBits(dimension.z - 1));
-    }
+    }*/
 
     public static float getAxisValue(Controller con, String name) {
         if (name == null) return 0;

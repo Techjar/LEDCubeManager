@@ -8,7 +8,7 @@ import com.techjar.ledcm.hardware.tcp.Packet;
 import com.techjar.ledcm.util.BufferHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.PrintStreamRelayer;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.logging.LogHelper;
 import ddf.minim.AudioListener;
 import ddf.minim.AudioPlayer;
 import ddf.minim.Minim;
@@ -16,13 +16,20 @@ import ddf.minim.analysis.BeatDetect;
 import ddf.minim.analysis.FFT;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Line;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.TargetDataLine;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -33,20 +40,41 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class SpectrumAnalyzer {
+    private final int bufferSize = 2048;
+    private final int sampleRate = 48000;
     private final Minim minim;
     private FFT fft;
     private BeatDetect beatDetect;
     private int beatDetectMode = BeatDetect.FREQ_ENERGY;
     private AudioPlayer player;
-    @Setter public int updateRate = 60;
     @Getter private String currentTrack = "";
+    @Getter private Map<String, Mixer> mixers = new LinkedHashMap<>();
+    @Getter private Mixer currentMixer;
+    @Getter private String currentMixerName;
+    @Getter @Setter private float mixerGain;
+    private TargetDataLine dataLine;
+    private Thread inputThread;
 
     public SpectrumAnalyzer() {
         super();
         this.minim = new Minim(this);
         //this.minim.debugOn();
-        //thread.player = minim.loadFile("resources/sounds/ui/click.wav");
-        //thread.start();
+        for (Mixer.Info info : AudioSystem.getMixerInfo()) {
+            Mixer mixer = AudioSystem.getMixer(info);
+            for (Line.Info lineInfo : mixer.getTargetLineInfo()) {
+                if (lineInfo instanceof TargetDataLine.Info) {
+                    mixers.put(info.getName(), mixer);
+                    if (currentMixer == null || info.getName().equals(LEDCubeManager.getConfig().getString("sound.inputdevice"))) {
+                        currentMixer = mixer;
+                        currentMixerName = info.getName();
+                    }
+                    LogHelper.config("Input device: %s", info.getName());
+                    break;
+                }
+            }
+        }
+        mixers = Collections.unmodifiableMap(mixers);
+        LEDCubeManager.getConfig().setProperty("sound.inputdevice", currentMixerName);
     }
 
     public String sketchPath(String fileName) {
@@ -130,16 +158,94 @@ public class SpectrumAnalyzer {
         }
     }
 
+    public void setMixer(String name) {
+        Mixer mixer = mixers.get(name);
+        if (mixer != null) {
+            currentMixer = mixer;
+            currentMixerName = name;
+            if (dataLine != null) {
+                stopAudioInput();
+                while (dataLine != null);
+                startAudioInput();
+            }
+            LEDCubeManager.getConfig().setProperty("sound.inputdevice", currentMixerName);
+        }
+    }
+
+    public boolean isRunningAudioInput() {
+        return dataLine != null;
+    }
+
+    public void startAudioInput() {
+        if (player != null) {
+            player.close();
+            player = null;
+            currentTrack = "";
+        }
+        try {
+            TargetDataLine.Info lineInfo = (TargetDataLine.Info)currentMixer.getTargetLineInfo()[0];
+            AudioFormat supportedFormat = null;
+            for (AudioFormat fmt : lineInfo.getFormats()) {
+                if (fmt.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && fmt.getSampleSizeInBits() == 16 && fmt.getChannels() == 1) {
+                    supportedFormat = fmt;
+                    break;
+                }
+            }
+            if (supportedFormat == null) {
+                LogHelper.severe("Couldn't find desired AudioFormat!");
+                return;
+            }
+            final AudioFormat format = new AudioFormat(supportedFormat.getEncoding(), sampleRate, supportedFormat.getSampleSizeInBits(), supportedFormat.getChannels(), supportedFormat.getFrameSize(), sampleRate, false);
+            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+            if (!currentMixer.isLineSupported(info)) {
+                LogHelper.severe("Mixer doesn't support requested line!");
+                return;
+            }
+            dataLine = (TargetDataLine)currentMixer.getLine(info);
+            dataLine.open(format, bufferSize * 8);
+            dataLine.start();
+            fft = new FFT(bufferSize / 2, sampleRate);
+            beatDetect = new BeatDetect(bufferSize / 2, sampleRate);
+            beatDetect.detectMode(beatDetectMode);
+            final AudioListener listener = new AnalyzerAudioListener(fft, beatDetect);
+            inputThread = new Thread("Audio Input") {
+                @Override
+                public void run() {
+                    byte[] buffer = new byte[bufferSize];
+                    float[] floats = new float[bufferSize / 2];
+                    while (dataLine.isOpen()) {
+                        dataLine.read(buffer, 0, bufferSize);
+                        for (int i = 0; i < bufferSize; i += 2) {
+                            int val = (short)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
+                            floats[i / 2] = MathHelper.clamp(val / 32768F, -1, 1) * mixerGain;
+                        }
+                        listener.samples(floats);
+                    }
+                    dataLine = null;
+                }
+            };
+            inputThread.start();
+        } catch (LineUnavailableException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void stopAudioInput() {
+        if (dataLine != null) {
+            dataLine.close();
+            inputThread = null;
+        }
+    }
+
     public void loadFile(File file) {
         try {
-
             File file2 = new File("resampled/" + file.getName().substring(0, file.getName().lastIndexOf('.')) + ".wav");
             String path = file2.getAbsolutePath();
             if (!file2.exists()) {
                 ProcessBuilder pb = new ProcessBuilder();
                 pb.directory(new File(System.getProperty("user.dir")));
                 pb.redirectErrorStream(true);
-                pb.command("ffmpeg", "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", "48000", file2.getAbsolutePath());
+                pb.command("ffmpeg", "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", Integer.toString(sampleRate), file2.getAbsolutePath());
                 Process proc = pb.start();
                 LEDCubeManager.setConvertingAudio(true);
                 Thread psrThread = new PrintStreamRelayer(proc.getInputStream(), System.out);
@@ -147,6 +253,8 @@ public class SpectrumAnalyzer {
                 proc.waitFor();
                 LEDCubeManager.setConvertingAudio(false);
             }
+            stopAudioInput();
+            LEDCubeManager.getInstance().getScreenMainControl().audioInputBtnBg.setBackgroundColor(new Color(255, 0, 0));
             if (player != null) {
                 player.close();
             }

@@ -90,9 +90,6 @@ public class AnimationData {
         private final int width;
         private final int length;
         private final int height;
-        private final int xBits;
-        private final int zBits;
-        private final int yBits;
         private float frameTime;
         private byte[] red;
         private byte[] green;
@@ -102,9 +99,6 @@ public class AnimationData {
             this.width = width;
             this.length = length;
             this.height = height;
-            this.xBits = Util.getRequiredBits(width - 1);
-            this.zBits = Util.getRequiredBits(length - 1);
-            this.yBits = Util.getRequiredBits(height - 1);
             int count = width * length * height;
             red = new byte[count];
             green = new byte[count];
@@ -124,12 +118,12 @@ public class AnimationData {
         }
 
         public Color getLEDColor(int x, int y, int z) {
-            int index = (y << (xBits + zBits)) | (z << xBits) | x;
+            int index = x + z * width + y * width * length;
             return new Color(red[index] & 0xFF, green[index] & 0xFF, blue[index] & 0xFF);
         }
 
         public void setLEDColor(int x, int y, int z, Color color) {
-            int index = (y << (xBits + zBits)) | (z << xBits) | x;
+            int index = x + z * width + y * width * length;
             red[index] = color.getRedByte();
             green[index] = color.getGreenByte();
             blue[index] = color.getBlueByte();
@@ -139,7 +133,7 @@ public class AnimationData {
             for (int x = 0; x < width; x++) {
                 for (int z = 0; z < length; z++) {
                     for (int y = 0; y < height; y++) {
-                        int index = (y << (xBits + zBits)) | (z << xBits) | x;
+                        int index = x + z * width + y * width * length;
                         ledManager.setLEDColor(x, y, z, new Color(red[index] & 0xFF, green[index] & 0xFF, blue[index] & 0xFF));
                     }
                 }

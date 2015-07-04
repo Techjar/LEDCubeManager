@@ -2,6 +2,7 @@
 package com.techjar.ledcm.hardware.tcp;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,8 +20,8 @@ import lombok.SneakyThrows;
  * @author Techjar
  */
 public class TCPClient {
-    private Thread timeoutThread;
     private Thread sendThread;
+    private Thread recvThread;
     @Getter private Socket socket;
     @Getter private InputStream inputStream;
     @Getter private OutputStream outputStream;
@@ -30,23 +31,6 @@ public class TCPClient {
         this.socket = socket;
         this.inputStream = socket.getInputStream();
         this.outputStream = socket.getOutputStream();
-        timeoutThread = new Thread("Client Timeout Thread #" + index) {
-            @Override
-            public void run() {
-                try {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(TCPClient.this.socket.getInputStream()));
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        System.out.println(line);
-                    }
-                    TCPClient.this.socket.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        };
-        timeoutThread.setDaemon(true);
-        timeoutThread.start();
         sendThread = new Thread("Client Send Thread #" + index) {
             @Override
             @SneakyThrows(InterruptedException.class)
@@ -72,6 +56,28 @@ public class TCPClient {
             }
         };
         sendThread.start();
+        recvThread = new Thread("Client Recv Thread #" + index) {
+            @Override
+            public void run() {
+                Packet packet;
+                DataInputStream in = new DataInputStream(TCPClient.this.inputStream);
+                try {
+                    while (!TCPClient.this.socket.isClosed()) {
+                        packet = Packet.readPacket(in);
+                        // TODO: dispatch to handler queue on main thread
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    try {
+                        close();
+                    } catch (IOException ex2) {
+                        ex2.printStackTrace();
+                    }
+                }
+            }
+        };
+        recvThread.setDaemon(true);
+        recvThread.start();
     }
 
     public InetAddress getInetAddress() {

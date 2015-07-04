@@ -37,9 +37,10 @@ public class Model {
      * @return Number of faces in the chosen mesh.
      */
     public int render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean frustumCheck) {
-        ModelMesh mesh = getMeshByDistance(LEDCubeManager.getCamera().getPosition().distance(position));
+        float distance = LEDCubeManager.getCamera().getPosition().distance(position);
+        ModelMesh mesh = getMeshByDistance(distance - meshes[0].getRadius());
         if (!mesh.isInFrustum(position)) return 0;
-        InstancedRenderer.addItem(mesh, position, rotation, color, scale);
+        InstancedRenderer.addItem(mesh, position, rotation, color, scale, distance);
         return mesh.getFaceCount();
     }
 

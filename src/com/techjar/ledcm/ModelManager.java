@@ -99,7 +99,7 @@ public class ModelManager {
                 case "scale":
                     if (subsplit.length == 1) {
                         scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]));
-                    } else if (subsplit.length == 1) {
+                    } else if (subsplit.length >= 3) {
                         scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[1]), Float.parseFloat(subsplit[2]));
                     } else {
                         throw new IOException("Illegal arguments to scale: " + split[1]);
@@ -117,7 +117,7 @@ public class ModelManager {
                     break;
             }
         }
-        if (objectFiles == null) throw new IOException("Missing \"render\" entry in model file");
+        if (objectFiles == null || objectFiles.size() < 1) throw new IOException("Missing or empty \"render\" entry in model file");
         Model model = new Model(objectFiles.size(), texture, material, translucent);
         for (int i = 0; i < objectFiles.size(); i++) {
             File objectFile = objectFiles.get(i);

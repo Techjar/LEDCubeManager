@@ -10,6 +10,7 @@ import com.techjar.ledcm.hardware.SpectrumAnalyzer;
 import com.techjar.ledcm.hardware.StripLEDManager;
 import com.techjar.ledcm.hardware.TLC5940LEDManager;
 import com.techjar.ledcm.hardware.TestHugeLEDManager;
+import com.techjar.ledcm.hardware.TestReallyHugeLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.AxisAlignedBB;
@@ -27,7 +28,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import lombok.Getter;
 import lombok.Setter;
 import org.lwjgl.input.Controller;
@@ -43,7 +43,7 @@ public class LEDCube {
     private Map<String, Animation> animations = new HashMap<>();
     private List<String> animationNames = new ArrayList<>();
     private LEDManager ledManager;
-    private LEDCubeOctreeNode octree;
+    private LEDCubeOctreeNode[] octrees;
     private int ledSpaceMult = 8;
     private boolean drawClick;
     private boolean postInited;
@@ -58,10 +58,11 @@ public class LEDCube {
     @Getter private Model model;
 
     public LEDCube() {
+        ledManager = new StripLEDManager(110, true);
         //ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
         //ledManager = new TestHugeLEDManager(true);
-        ledManager = new StripLEDManager(110, true);
+        //ledManager = new TestReallyHugeLEDManager(true);
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("flatled.model");
         initOctree();
@@ -237,11 +238,21 @@ public class LEDCube {
 
     private void initOctree() {
         Dimension3D dim =  ledManager.getDimensions();
-        if (dim.x != dim.y || dim.x != dim.z || dim.y != dim.z || dim.x % 2 != 0 || dim.y % 2 != 0 || dim.z % 2 != 0) return; // Non-cubes and non-powers-of-two need special handling here
+        if (/*dim.x != dim.y || dim.x != dim.z || dim.y != dim.z ||*/ !Util.isPowerOfTwo(dim.x) || !Util.isPowerOfTwo(dim.y) || !Util.isPowerOfTwo(dim.z)) return; // Non-cubes and non-powers-of-two need special handling here
         int minDim = Math.min(dim.x, Math.min(dim.y, dim.z));
         float octreeSize = ledSpaceMult * minDim;
-        octree = new LEDCubeOctreeNode(new AxisAlignedBB(new Vector3(-ledSpaceMult / 2, -ledSpaceMult / 2, -ledSpaceMult / 2), new Vector3(octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2))));
-        recursiveFillOctree(octree, octreeSize / 2, minDim, new Vector3());
+        ArrayList<LEDCubeOctreeNode> list = new ArrayList<>();
+        for (int x = 0; x < dim.x; x += minDim) {
+            for (int y = 0; y < dim.y; y += minDim) {
+                for (int z = 0; z < dim.z; z += minDim) {
+                    Vector3 offset = new Vector3(octreeSize * (x / minDim), octreeSize * (y / minDim), octreeSize * (z / minDim));
+                    LEDCubeOctreeNode octree = new LEDCubeOctreeNode(new AxisAlignedBB(new Vector3(-ledSpaceMult / 2, -ledSpaceMult / 2, -ledSpaceMult / 2).add(offset), new Vector3(octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2)).add(offset)));
+                    recursiveFillOctree(octree, octreeSize / 2, minDim, new Vector3(x, y, z));
+                    list.add(octree);
+                }
+            }
+        }
+        list.toArray(octrees = new LEDCubeOctreeNode[list.size()]);
     }
 
     private void recursiveFillOctree(LEDCubeOctreeNode node, float size, int count, Vector3 ledPos) {
@@ -286,9 +297,9 @@ public class LEDCube {
 
         float mult = ledSpaceMult;
         Dimension3D dim = ledManager.getDimensions();
-        for (float step = 1; step < 3000; step += 2) {
+        for (float step = 1; step < 5000; step += 2) {
             Vector3 rayPos = position.add(direction.multiply(step));
-            if (octree == null) {
+            if (octrees == null) {
                 for (int y = 0; y < dim.y; y++) {
                     for (int z = 0; z < dim.z; z++) {
                         for (int x = 0; x < dim.x; x++) {
@@ -303,7 +314,11 @@ public class LEDCube {
                     }
                 }
             } else {
-                Vector3 ret = recursiveIntersectOctree(octree, rayPos);
+                Vector3 ret = null;
+                for (int i = 0; i < octrees.length; i++) {
+                    ret = recursiveIntersectOctree(octrees[i], rayPos);
+                    if (ret != null) break;
+                }
                 if (ret != null) {
                     if (isLEDWithinIsolation((int)ret.getX(), (int)ret.getY(), (int)ret.getZ())) {
                         return ret;

@@ -3,6 +3,7 @@ package com.techjar.ledcm.hardware;
 
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
+import com.techjar.ledcm.util.Vector3;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
@@ -117,5 +118,20 @@ public class StripLEDManager implements LEDManager {
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();
+    }
+
+    @Override
+    public int encodeVector(Vector3 vector) {
+        return encodeVector((int)vector.getY(), (int)vector.getX(), (int)vector.getZ());
+    }
+
+    @Override
+    public int encodeVector(int x, int y, int z) {
+        return x;
+    }
+
+    @Override
+    public Vector3 decodeVector(int value) {
+        return new Vector3(value, 0, 0);
     }
 }

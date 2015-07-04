@@ -8,6 +8,7 @@ import java.io.File;
  */
 public final class OperatingSystem {
     private static final Type osType;
+    private static final String version;
     static {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.indexOf("win") >= 0) osType = Type.WINDOWS;
@@ -15,6 +16,7 @@ public final class OperatingSystem {
         else if (os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0) osType = Type.LINUX;
         else if (os.indexOf("sunos") >= 0 || os.indexOf("solaris") >= 0) osType = Type.SOLARIS;
         else osType = Type.UNKNOWN;
+        version = System.getProperty("os.version");
     }
 
     private OperatingSystem() {
@@ -57,11 +59,31 @@ public final class OperatingSystem {
     public static String getTypeString() {
         switch (osType) {
             case WINDOWS: return "windows";
-            case MAC: return "macosx";
+            case MAC: return "osx";
             case LINUX: return "linux";
             case SOLARIS: return "solaris";
             default: return "unknown";
         }
+    }
+
+    public static String getVersion() {
+        return version;
+    }
+
+    public static String getJavaArch() {
+        return System.getProperty("sun.arch.data.model");
+    }
+
+    public static String getOSArch() {
+        String arch = System.getProperty("os.arch");
+        if (isWindows() && "32".equals(getJavaArch())) {
+            //String procArch = System.getenv("PROCESSOR_ARCHITECTURE");
+            String wow64Arch = System.getenv("PROCESSOR_ARCHITEW6432");
+            return arch.endsWith("64") || (wow64Arch != null && wow64Arch.endsWith("64")) ? "64" : "32";
+        }
+        if ("i386".equals(arch) || "x86".equals(arch)) return "32";
+        if ("amd64".equals(arch) || "ppc".equals(arch) || "sparc".equals(arch) || "x86_64".equals(arch)) return "64";
+        return "unknown";
     }
     
     public static File getDataDirectory(String appName) {

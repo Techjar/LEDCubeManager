@@ -123,4 +123,19 @@ public class TLC5940LEDManager implements LEDManager {
         bytes[2] = (byte)value2;
         return bytes;
     }
+
+    @Override
+    public int encodeVector(Vector3 vector) {
+        return encodeVector((int)vector.getY(), (int)vector.getX(), (int)vector.getZ());
+    }
+
+    @Override
+    public int encodeVector(int x, int y, int z) {
+        return (y << 6) | (x << 3) | z;
+    }
+
+    @Override
+    public Vector3 decodeVector(int value) {
+        return new Vector3((value >> 3) & 7, (value >> 6) & 7, value & 7);
+    }
 }

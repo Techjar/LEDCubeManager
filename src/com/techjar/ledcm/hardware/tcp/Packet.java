@@ -13,7 +13,8 @@ public class Packet {
     public enum ID {
         CUBE_FRAME,
         AUDIO_DATA,
-        AUDIO_INIT;
+        AUDIO_INIT,
+        VISUAL_FRAME;
     }
 
     private ID id;
