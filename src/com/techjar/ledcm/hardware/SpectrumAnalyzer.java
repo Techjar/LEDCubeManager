@@ -217,7 +217,7 @@ public class SpectrumAnalyzer {
                         dataLine.read(buffer, 0, bufferSize);
                         for (int i = 0; i < bufferSize; i += 2) {
                             int val = (short)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
-                            floats[i / 2] = MathHelper.clamp(val / 32768F, -1, 1) * mixerGain;
+                            floats[i / 2] = MathHelper.clamp((val / 32768F) * mixerGain, -1, 1);
                         }
                         listener.samples(floats);
                     }
