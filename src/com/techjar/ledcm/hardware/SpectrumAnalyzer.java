@@ -51,7 +51,7 @@ public class SpectrumAnalyzer {
     @Getter private Map<String, Mixer> mixers = new LinkedHashMap<>();
     @Getter private Mixer currentMixer;
     @Getter private String currentMixerName;
-    @Getter @Setter private float mixerGain;
+    @Getter @Setter private float mixerGain = 1;
     private TargetDataLine dataLine;
     private Thread inputThread;
 
