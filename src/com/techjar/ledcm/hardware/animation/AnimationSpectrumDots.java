@@ -44,7 +44,8 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
             Color color = new Color();
             if (colorMode == 1) color.fromHSB(i / (float)amplitudes.length, 1, brightness);
             else if (colorMode == 2) color = colorAtBrightness(brightness);
-            else if (colorMode == 3) color = ledManager.getLEDColor(i, 0, 0).equals(new Color()) || randomColors[i].equals(new Color()) ? Util.multiplyColor(randomColors[i] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)), brightness) : Util.multiplyColor(randomColors[i], brightness);
+            else if (colorMode == 3) color.fromHSB((1 - brightness) * (300F / 360F), 1, brightness);
+            else if (colorMode == 4) color = ledManager.getLEDColor(i, 0, 0).equals(new Color()) || randomColors[i].equals(new Color()) ? Util.multiplyColor(randomColors[i] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256)), brightness) : Util.multiplyColor(randomColors[i], brightness);
             else color = Util.multiplyColor(LEDCubeManager.getPaintColor(), brightness);
             ledManager.setLEDColor(i, 0, 0, amplitude > 0 ? color : new Color());
         }
@@ -58,7 +59,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("colorMode", "Color", AnimationOption.OptionType.COMBOBUTTON, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Amplitude", 3, "Random"}),
+            new AnimationOption("colorMode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Amplitude", 3, "Amplitude Rainbow", 4, "Random"}),
             new AnimationOption("holdUp", "Hold Up", AnimationOption.OptionType.SLIDER, new Object[]{holdUp / 29F}),
         };
     }

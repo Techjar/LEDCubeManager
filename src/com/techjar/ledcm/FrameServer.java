@@ -56,6 +56,8 @@ public class FrameServer {
                 }
             }
         };
+        sendThread.setDaemon(true);
+        sendThread.start();
     }
 
     public void queueFrame(BufferedImage image) {

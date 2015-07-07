@@ -433,8 +433,8 @@ public class LEDCubeManager {
         this.processMouse();
         this.processController();
         this.update();
-        this.render();
-        if (frame.getState() == Frame.ICONIFIED) Thread.sleep(200);
+        if (frame.getState() != Frame.ICONIFIED || frameServer.getTcpServer().getNumClients() > 0) this.render();
+        else Thread.sleep(20);
         Display.update();
     }
 
