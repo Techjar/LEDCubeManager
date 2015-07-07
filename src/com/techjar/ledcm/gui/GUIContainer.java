@@ -137,4 +137,14 @@ public abstract class GUIContainer extends GUI {
             it.remove();
         }
     }
+
+    public List<GUI> findComponentsByName(String name) {
+        ArrayList<GUI> list = new ArrayList<>();
+        for (GUI gui : components) {
+            if (name.equals(gui.getName())) {
+                list.add(gui);
+            }
+        }
+        return list;
+    }
 }

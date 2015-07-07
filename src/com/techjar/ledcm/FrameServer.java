@@ -1,8 +1,9 @@
 
 package com.techjar.ledcm;
 
-import com.techjar.ledcm.hardware.tcp.Packet;
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
+import com.techjar.ledcm.hardware.tcp.packet.PacketVisualFrame;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class FrameServer {
                                 writer.dispose();
                                 imageBytes = baos.toByteArray();
                             }
-                            tcpServer.sendPacket(Packet.ID.VISUAL_FRAME, imageBytes);
+                            tcpServer.sendPacket(new PacketVisualFrame(imageBytes));
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }

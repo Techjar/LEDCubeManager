@@ -17,7 +17,7 @@ public class AnimationSlidingBoxes extends Animation {
     private Random random = new Random();
     private int colorSeed;
     private int boxCount = 3;
-    private int boxSize = 8;
+    private int boxSize = 4;
     private int[] moving = new int[boxCount];
     private Vector3[] offsets = new Vector3[boxCount];
     private Vector3[] directions = new Vector3[boxCount];

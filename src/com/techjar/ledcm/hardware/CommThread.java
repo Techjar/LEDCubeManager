@@ -3,9 +3,14 @@ package com.techjar.ledcm.hardware;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.animation.Animation;
+import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
-import com.techjar.ledcm.hardware.tcp.Packet;
+import com.techjar.ledcm.hardware.tcp.TCPClient;
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
+import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationOptionList;
+import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
+import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Timer;
@@ -39,6 +44,15 @@ public class CommThread extends Thread {
         updateTime = System.nanoTime();
         port = new SerialPort(LEDCubeManager.getSerialPortName());
         tcpServer = new TCPServer(LEDCubeManager.getServerPort());
+        tcpServer.setConnectHanlder(new TCPServer.ConnectHandler() {
+            @Override
+            public boolean onClientConnected(TCPClient client) {
+                if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) {
+                    client.queuePacket(new PacketAudioInit(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioFormat()));
+                }
+                return true;
+            }
+        });
         Runtime.getRuntime().addShutdownHook(new ShutdownThread());
     }
 
@@ -64,7 +78,7 @@ public class CommThread extends Thread {
                     }
                 }
                 byte[] data = ledManager.getCommData();
-                tcpServer.sendPacket(Packet.ID.CUBE_FRAME, data);
+                tcpServer.sendPacket(new PacketCubeFrame(data));
                 synchronized (lock) {
                     try {
                         if (port.isOpened()) {
@@ -100,6 +114,7 @@ public class CommThread extends Thread {
             if (currentAnimation != null) {
                 currentAnimation.reset();
                 currentAnimation.loadOptions();
+                LEDCubeManager.getControlServer().sendAnimationOptions();
             }
         }
     }

@@ -159,6 +159,7 @@ public abstract class Animation {
                             final GUIRadioButton radioButton = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
                             if (option.params[0].equals(option.params[i])) radioButton.setSelected(true);
                             radioButton.setDimension(30, 30);
+                            radioButton.setName(option.params[i].toString());
                             final int j = i;
                             radioButton.setSelectHandler(new GUICallback() {
                                 @Override
@@ -200,6 +201,7 @@ public abstract class Animation {
                 label.setDimension(width, 30);
                 if (gui instanceof GUICheckBox) ((GUICheckBox)gui).setLabel(label);
                 box.addComponent(label);
+                gui.setName(option.id);
                 gui.setPosition(labelWidth + 15, position);
                 if (!(gui instanceof GUICheckBox)) gui.setWidth(componentWidth);
                 box.addComponent(gui);

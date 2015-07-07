@@ -43,18 +43,18 @@ public class AnimationBlink extends Animation {
     // Left here for reference purposes, will be deleted later
     /*@Override
     public AnimationOption[] getOptions() {
-        AnimationOption[] array = new AnimationOption[5];
+        AnimationOption[] array = new AnimationOption[4];
         Object[] objs = new Object[1000 * 2 + 1];
         objs[0] = new Random().nextInt((objs.length - 1) / 2);
         for (int i = 0; i < (objs.length - 1) / 2; i++) {
             objs[(i * 2) + 1] = i;
             objs[(i * 2) + 2] = "Thing #" + (i + 1);
         }
-        array[0] = new AnimationOption("test", "Test", AnimationOption.OptionType.COMBOBUTTON, new String[]{"2", "1", "loolololol", "2", "lol2", "3", "watican", "4", "testtesteste"});
-        array[1] = new AnimationOption("test2", "Test 2", AnimationOption.OptionType.SLIDER, new String[]{"0.5", "0.1", "true"});
-        array[2] = new AnimationOption("test3", "Test 3", AnimationOption.OptionType.CHECKBOX, new String[]{"false"});
-        array[3] = new AnimationOption("testd", "Test Deluxe", AnimationOption.OptionType.COMBOBOX, objs);
-        array[4] = new AnimationOption("poop", "Watwat", AnimationOption.OptionType.TEXT, new Object[]{});
+        array[0] = new AnimationOption("test", "Test", AnimationOption.OptionType.COMBOBUTTON, new Object[]{"2", "1", "loolololol", "2", "lol2", "3", "watican", "4", "testtesteste"});
+        array[1] = new AnimationOption("test2", "Test 2", AnimationOption.OptionType.SLIDER, new Object[]{0.5, 0.1, true});
+        array[2] = new AnimationOption("test3", "Test 3", AnimationOption.OptionType.CHECKBOX, new Object[]{false});
+        //array[3] = new AnimationOption("testd", "Test Deluxe", AnimationOption.OptionType.COMBOBOX, objs);
+        array[3] = new AnimationOption("poop", "Watwat", AnimationOption.OptionType.TEXT, new Object[]{});
         return array;
     }*/
 }

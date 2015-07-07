@@ -1,6 +1,7 @@
 
 package com.techjar.ledcm.hardware.tcp;
 
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.LEDCubeManager;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,7 @@ public class TCPServer {
     private Thread listenThread;
     private Thread watchThread;
     private ServerSocket socket;
+    private ConnectHandler connectHandler;
     private List<TCPClient> clients = Collections.synchronizedList(new ArrayList<TCPClient>());
     private Queue<Packet> sendQueue = new ConcurrentLinkedQueue<>();
     private int numClients;
@@ -42,13 +44,18 @@ public class TCPServer {
                     try {
                         final Socket client = socket.accept();
                         client.setTcpNoDelay(true);
-                        BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                        /*BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
                         if (!"LEDCUBE".equals(br.readLine())) {
                             client.close();
                             continue;
-                        }
+                        }*/
                         TCPClient tcpClient = new TCPClient(client, clientIndex++);
-                        if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) sendPacket(Packet.ID.AUDIO_INIT, LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioInit(), tcpClient);
+                        if (connectHandler != null) {
+                            if (!connectHandler.onClientConnected(tcpClient)) {
+                                tcpClient.close();
+                                continue;
+                            }
+                        }
                         clients.add(tcpClient);
                     } catch (IOException ex) {
                         ex.printStackTrace();
@@ -87,9 +94,7 @@ public class TCPServer {
         watchThread.start();
     }
 
-    public void sendPacket(Packet.ID id, byte[] data) {
-        Packet packet = new Packet(id);
-        packet.setData(data);
+    public void sendPacket(Packet packet) {
         sendQueue.add(packet);
         /*synchronized (clients) {
             for (TCPClient client : clients) {
@@ -98,13 +103,19 @@ public class TCPServer {
         }*/
     }
 
-    public void sendPacket(Packet.ID id, byte[] data, TCPClient client) {
-        Packet packet = new Packet(id);
-        packet.setData(data);
+    public void sendPacket(Packet packet, TCPClient client) {
         client.queuePacket(packet);
     }
 
     public int getNumClients() {
         return numClients;
+    }
+
+    public void setConnectHanlder(ConnectHandler connectHanlder) {
+        this.connectHandler = connectHanlder;
+    }
+
+    public static interface ConnectHandler {
+        public abstract boolean onClientConnected(TCPClient client);
     }
 }

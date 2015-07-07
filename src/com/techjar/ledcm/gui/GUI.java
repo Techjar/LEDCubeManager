@@ -23,6 +23,7 @@ public abstract class GUI {
     protected GUICallback removeHandler;
     protected GUIAlignment parentAlign = GUIAlignment.TOP_LEFT;
     protected GUI parent;
+    protected String name;
     protected boolean visible = true;
     protected boolean enabled = true;
     protected boolean removeRequested;
@@ -257,6 +258,14 @@ public abstract class GUI {
 
     public void setParent(GUI parent) {
         this.parent = parent;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public GUIAlignment getParentAlignment() {

@@ -1,6 +1,8 @@
 
 package com.techjar.ledcm.hardware.tcp;
 
+import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -64,7 +66,7 @@ public class TCPClient {
                 try {
                     while (!TCPClient.this.socket.isClosed()) {
                         packet = Packet.readPacket(in);
-                        // TODO: dispatch to handler queue on main thread
+                        LEDCubeManager.queuePacketForProcessing(packet);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();

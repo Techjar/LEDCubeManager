@@ -28,6 +28,7 @@ import com.techjar.ledcm.hardware.TLC5940LEDManager;
 import com.techjar.ledcm.hardware.TestHugeLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;
@@ -71,7 +72,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -130,6 +133,7 @@ public class LEDCubeManager {
     @Getter private static JFileChooser fileChooser;
     @Getter private static String serialPortName = "COM3";
     @Getter private static int serverPort = 7545;
+    @Getter private static ControlServer controlServer;
     @Getter private static FrameServer frameServer;
     @Getter @Setter private static boolean convertingAudio;
     private static LEDCube ledCube;
@@ -137,6 +141,7 @@ public class LEDCubeManager {
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
     private List<GUICallback> resizeHandlers = new ArrayList<>();
     private Map<String, Integer> validControllers = new HashMap<>();
+    private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
     private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
     private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
     private int fpsCounter;
@@ -273,6 +278,7 @@ public class LEDCubeManager {
 
         ledCube = new LEDCube();
         ledCube.postInit();
+        controlServer = new ControlServer(serverPort + 1);
         frameServer = new FrameServer(serverPort + 2);
 
         timeCounter = getTime();
@@ -288,6 +294,12 @@ public class LEDCubeManager {
         return ledCube;
     }
 
+    /**
+     *
+     * @return
+     * @deprecated Get the LEDManager from the LEDCube instance.
+     */
+    @Deprecated
     public static LEDManager getLEDManager() {
         return ledCube.getLEDManager();
     }
@@ -637,6 +649,13 @@ public class LEDCubeManager {
         long time = System.nanoTime();
         float delta = getDelta();
 
+        if (!packetProcessQueue.isEmpty()) {
+            Packet packet;
+            while ((packet = packetProcessQueue.poll()) != null) {
+                packet.process();
+            }
+        }
+
         camera.update(delta);
         textureManager.update(delta);
         ledCube.update(delta);
@@ -772,7 +791,7 @@ public class LEDCubeManager {
             int y = 0;
             if (renderFPS || debugMode) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (ledCube.getCommThread().isPortOpen() ? "open" : "closed"), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + ledCube.getCommThread().getNumTCPClients(), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + (ledCube.getCommThread().getNumTCPClients() + frameServer.getTcpServer().getNumClients() + controlServer.getTcpServer().getNumClients()), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Current music: " + ledCube.getSpectrumAnalyzer().getCurrentTrack(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Music time: " + ledCube.getSpectrumAnalyzer().getPositionMillis(), debugColor);
             if (ledCube.getLEDManager().getResolution() < 255) debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (ledCube.isTrueColor() ? "true" : "full"), debugColor);
@@ -990,6 +1009,10 @@ public class LEDCubeManager {
 
     public static int getHeight() {
         return displayMode.getHeight();
+    }
+
+    public static void queuePacketForProcessing(Packet packet) {
+        instance.packetProcessQueue.add(packet);
     }
 
     @Value private class ScreenHolder {
