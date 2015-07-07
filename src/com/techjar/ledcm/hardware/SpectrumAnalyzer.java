@@ -4,7 +4,9 @@ package com.techjar.ledcm.hardware;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.AnimationSpectrumAnalyzer;
-import com.techjar.ledcm.hardware.tcp.Packet;
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
+import com.techjar.ledcm.hardware.tcp.packet.PacketAudioData;
+import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.util.BufferHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.PrintStreamRelayer;
@@ -158,6 +160,13 @@ public class SpectrumAnalyzer {
         }
     }
 
+    public AudioFormat getAudioFormat() {
+        if (player != null) {
+            return player.getFormat();
+        }
+        return null;
+    }
+
     public void setMixer(String name) {
         Mixer mixer = mixers.get(name);
         if (mixer != null) {
@@ -260,7 +269,7 @@ public class SpectrumAnalyzer {
             }
             AudioPlayer oldPlayer = player;
             player = minim.loadFile(path);
-            //LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(Packet.ID.AUDIO_INIT, getAudioInit());
+            //LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioInit(player.getFormat()));
             String path2 = path.replaceAll("\\\\", "/");
             currentTrack = path2.contains("/") ? path2.substring(path2.lastIndexOf('/') + 1) : path2;
             currentTrack = currentTrack.substring(0, currentTrack.lastIndexOf('.'));
@@ -278,20 +287,6 @@ public class SpectrumAnalyzer {
 
     public void loadFile(String file) {
         loadFile(new File(file));
-    }
-
-    public byte[] getAudioInit() {
-        AudioFormat format = player.getFormat();
-        ByteBuffer buf = ByteBuffer.allocate(BufferHelper.getStringSize(format.getEncoding().toString()) + 20);
-        buf.order(ByteOrder.BIG_ENDIAN);
-        BufferHelper.putString(buf, format.getEncoding().toString());
-        buf.putFloat(format.getSampleRate());
-        buf.putInt(format.getSampleSizeInBits());
-        buf.put((byte)format.getChannels());
-        buf.putInt(format.getFrameSize());
-        buf.putFloat(format.getFrameRate());
-        buf.put((byte)(format.isBigEndian() ? 1 : 0));
-        return buf.array();
     }
 
     private class AnalyzerAudioListener implements AudioListener {
@@ -399,7 +394,7 @@ public class SpectrumAnalyzer {
             for (int i = 0; i < samples.length; i++) {
                 buf.putShort(samples[i]);
             }
-            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(Packet.ID.AUDIO_DATA, buf.array());
+            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioData(buf.array()));
         }
     }
 }
