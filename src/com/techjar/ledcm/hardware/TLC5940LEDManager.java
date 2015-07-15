@@ -60,15 +60,15 @@ public class TLC5940LEDManager implements LEDManager {
             int[] blue2 = new int[512];
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
-                    red2[i] = (int)Math.round(MathHelper.cie1931(red[i] / 255D) * 4095D);
-                    green2[i] = (int)Math.round(MathHelper.cie1931(green[i] / 255D) * 4095D);
-                    blue2[i] = (int)Math.round(MathHelper.cie1931(blue[i] / 255D) * 4095D);
+                    red2[i] = (int)Math.round(MathHelper.cie1931((red[i] & 0xFF) / 255D) * 4095D);
+                    green2[i] = (int)Math.round(MathHelper.cie1931((green[i] & 0xFF) / 255D) * 4095D);
+                    blue2[i] = (int)Math.round(MathHelper.cie1931((blue[i] & 0xFF) / 255D) * 4095D);
                 }
             } else {
                 for (int i = 0; i < 512; i++) {
-                    red2[i] = (int)Math.round((red[i] / 255D) * 4095D);
-                    green2[i] = (int)Math.round((green[i] / 255D) * 4095D);
-                    blue2[i] = (int)Math.round((blue[i] / 255D) * 4095D);
+                    red2[i] = (int)Math.round(((red[i] & 0xFF) / 255D) * 4095D);
+                    green2[i] = (int)Math.round(((green[i] & 0xFF) / 255D) * 4095D);
+                    blue2[i] = (int)Math.round(((blue[i] & 0xFF) / 255D) * 4095D);
                 }
             }
             for (int y = 0; y < 8; y++) {
