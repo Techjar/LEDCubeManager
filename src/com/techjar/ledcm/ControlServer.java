@@ -35,7 +35,7 @@ public class ControlServer {
             @Override
             public boolean onClientConnected(TCPClient client) {
                 ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
-                client.queuePacket(new PacketAnimationList(LEDCubeManager.getLEDCube().getAnimationNames().toArray(new String[0]), LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().getName()));
+                client.queuePacket(new PacketAnimationList(LEDCubeManager.getLEDCube().getAnimationNames().toArray(new String[0]), LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null ? "" : LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().getName()));
                 client.queuePacket(new PacketSetColorPicker(screen.redColorSlider.getValue(), screen.greenColorSlider.getValue(), screen.blueColorSlider.getValue()));
                 sendAnimationOptions();
                 return true;
