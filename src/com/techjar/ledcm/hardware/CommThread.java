@@ -73,8 +73,13 @@ public class CommThread extends Thread {
                 synchronized (ledManager) {
                     if (currentSequence != null) currentSequence.update();
                     if (currentAnimation != null) {
-                        currentAnimation.refresh();
-                        currentAnimation.incTicks();
+                        try {
+                            currentAnimation.refresh();
+                            currentAnimation.incTicks();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            currentAnimation = null;
+                        }
                     }
                 }
                 byte[] data = ledManager.getCommData();
