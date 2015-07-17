@@ -3,22 +3,17 @@ package com.techjar.ledcm.hardware;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.animation.Animation;
-import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
 import com.techjar.ledcm.hardware.tcp.TCPClient;
-import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
-import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationOptionList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
-import com.techjar.ledcm.util.Constants;
-import com.techjar.ledcm.util.MathHelper;
-import com.techjar.ledcm.util.Timer;
-import java.io.IOException;
 import jssc.SerialPort;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+
+import java.io.IOException;
 
 /**
  *
@@ -137,7 +132,7 @@ public class CommThread extends Thread {
             if (!port.isOpened()) {
                 try {
                     port.openPort();
-                    port.setParams(2000000, 8, 1, 0);
+                    port.setParams(ledManager.getBaudrate(), 8, 1, 0);
 
                 } catch (Exception ex) {
                     ex.printStackTrace();

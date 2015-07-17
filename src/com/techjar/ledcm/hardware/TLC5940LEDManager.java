@@ -138,4 +138,9 @@ public class TLC5940LEDManager implements LEDManager {
     public Vector3 decodeVector(int value) {
         return new Vector3((value >> 3) & 7, (value >> 6) & 7, value & 7);
     }
+
+    @Override
+    public int getBaudrate() {
+        return 2000000;
+    }
 }
