@@ -41,7 +41,7 @@ public class AnimationBlink extends Animation {
     }
 
     // Left here for reference purposes, will be deleted later
-    @Override
+    /*@Override
     public AnimationOption[] getOptions() {
         AnimationOption[] array = new AnimationOption[4];
         Object[] objs = new Object[1000 * 2 + 1];
@@ -56,5 +56,5 @@ public class AnimationBlink extends Animation {
         //array[3] = new AnimationOption("testd", "Test Deluxe", AnimationOption.OptionType.COMBOBOX, objs);
         array[3] = new AnimationOption("poop", "Watwat", AnimationOption.OptionType.TEXT, new Object[]{});
         return array;
-    }
+    }*/
 }
