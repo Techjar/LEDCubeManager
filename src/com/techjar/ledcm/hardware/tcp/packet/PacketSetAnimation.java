@@ -31,6 +31,11 @@ public class PacketSetAnimation extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.CONTROL_DATA;
+    }
+
+    @Override
     public void process() {
         LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setSelectedItem(name);
     }

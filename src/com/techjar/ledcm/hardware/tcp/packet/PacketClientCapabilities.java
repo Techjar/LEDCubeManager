@@ -9,32 +9,29 @@ import java.io.IOException;
  *
  * @author Techjar
  */
-public class PacketAudioData extends Packet {
-    private byte[] data;
+public class PacketClientCapabilities extends Packet {
+    private int value;
 
-    public PacketAudioData() {
+    public PacketClientCapabilities() {
     }
 
-    public PacketAudioData(byte[] data) {
-        this.data = data;
+    public PacketClientCapabilities(int value) {
+        this.value = value;
     }
 
     @Override
     public void readData(DataInputStream stream) throws IOException {
-        int length = stream.readShort();
-        data = new byte[length];
-        stream.readFully(data);
+        value = stream.readInt();
     }
 
     @Override
     public void writeData(DataOutputStream stream) throws IOException {
-        stream.writeShort(data.length);
-        stream.write(data);
+        stream.writeInt(value);
     }
 
     @Override
     public int getRequiredCapabilities() {
-        return Capabilities.AUDIO_DATA;
+        return 0;
     }
 
     @Override
@@ -42,7 +39,7 @@ public class PacketAudioData extends Packet {
         throw new UnsupportedOperationException();
     }
 
-    public byte[] getData() {
-        return data;
+    public int getValue() {
+        return value;
     }
 }

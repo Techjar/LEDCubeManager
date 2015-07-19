@@ -35,6 +35,11 @@ public class PacketVisualFrame extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.FRAME_DATA;
+    }
+
+    @Override
     public void process() {
         throw new UnsupportedOperationException();
     }

@@ -3,12 +3,10 @@ package com.techjar.ledcm.hardware.tcp;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -27,12 +25,14 @@ public class TCPClient {
     @Getter private Socket socket;
     @Getter private InputStream inputStream;
     @Getter private OutputStream outputStream;
+    private int capabilities;
     private Queue<Packet> sendQueue = new ConcurrentLinkedQueue<>();
 
-    public TCPClient(Socket socket, int index) throws IOException {
+    public TCPClient(Socket socket, int index, int capabilities) throws IOException {
         this.socket = socket;
         this.inputStream = socket.getInputStream();
         this.outputStream = socket.getOutputStream();
+        this.capabilities = capabilities;
         sendThread = new Thread("Client Send Thread #" + index) {
             @Override
             @SneakyThrows(InterruptedException.class)
@@ -91,11 +91,18 @@ public class TCPClient {
     }
 
     public synchronized void close() throws IOException {
+        if (hasCapabilities(Packet.Capabilities.FRAME_DATA)) {
+            LEDCubeManager.getFrameServer().numClients--;
+        }
         socket.close();
     }
 
     public boolean isClosed() {
         return socket.isClosed();
+    }
+
+    public boolean hasCapabilities(int value) {
+        return (capabilities & value) == value;
     }
 
     public void queuePacket(Packet packet) {

@@ -45,6 +45,11 @@ public class PacketSetAnimationOption extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.CONTROL_DATA;
+    }
+
+    @Override
     public void process() {
         ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
         List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);

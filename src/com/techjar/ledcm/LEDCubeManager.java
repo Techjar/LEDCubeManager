@@ -134,7 +134,7 @@ public class LEDCubeManager {
     @Getter private static JFileChooser fileChooser;
     @Getter private static String serialPortName = "COM3";
     @Getter private static int serverPort = 7545;
-    @Getter private static ControlServer controlServer;
+    @Getter private static ControlUtil controlServer;
     @Getter private static FrameServer frameServer;
     @Getter @Setter private static boolean convertingAudio;
     private static LEDCube ledCube;
@@ -279,8 +279,7 @@ public class LEDCubeManager {
 
         ledCube = new LEDCube();
         ledCube.postInit();
-        controlServer = new ControlServer(serverPort + 1);
-        frameServer = new FrameServer(serverPort + 2);
+        frameServer = new FrameServer();
 
         timeCounter = getTime();
         deltaTime = System.nanoTime();
@@ -731,7 +730,7 @@ public class LEDCubeManager {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
             glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
-        if (screenshot || frameServer.getTcpServer().getNumClients() > 0) {
+        if (screenshot || frameServer.numClients > 0) {
             ByteBuffer buffer = BufferUtils.createByteBuffer(displayMode.getWidth() * displayMode.getHeight() * 3);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glReadPixels(0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
@@ -756,7 +755,7 @@ public class LEDCubeManager {
                 ImageIO.write(image, "png", file);
             }
             
-            if (frameServer.getTcpServer().getNumClients() > 0) {
+            if (frameServer.numClients > 0) {
                 frameServer.queueFrame(image);
             }
         }
@@ -793,7 +792,7 @@ public class LEDCubeManager {
             int y = 0;
             if (renderFPS || debugMode) debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (ledCube.getCommThread().isPortOpen() ? "open" : "closed"), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + (ledCube.getCommThread().getNumTCPClients() + frameServer.getTcpServer().getNumClients() + controlServer.getTcpServer().getNumClients()), debugColor);
+            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + ledCube.getCommThread().getNumTCPClients(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Current music: " + ledCube.getSpectrumAnalyzer().getCurrentTrack(), debugColor);
             debugFont.drawString(5, 5 + y++ * 25, "Music time: " + ledCube.getSpectrumAnalyzer().getPositionMillis(), debugColor);
             if (ledCube.getLEDManager().getResolution() < 255) debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (ledCube.isTrueColor() ? "true" : "full"), debugColor);

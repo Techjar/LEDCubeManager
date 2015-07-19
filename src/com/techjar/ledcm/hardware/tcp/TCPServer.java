@@ -1,22 +1,20 @@
 
 package com.techjar.ledcm.hardware.tcp;
 
-import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.LEDCubeManager;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+import com.techjar.ledcm.hardware.tcp.packet.Packet;
+import com.techjar.ledcm.hardware.tcp.packet.PacketClientCapabilities;
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.SneakyThrows;
@@ -43,21 +41,28 @@ public class TCPServer {
                 while (true) {
                     try {
                         final Socket client = socket.accept();
+                        int capabilities;
                         client.setTcpNoDelay(true);
-                        /*BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                        if (!"LEDCUBE".equals(br.readLine())) {
+                        DataInputStream dis = new DataInputStream(client.getInputStream());
+                        Packet packet = Packet.readPacket(dis);
+                        if (packet instanceof PacketClientCapabilities) {
+                            capabilities = ((PacketClientCapabilities)packet).getValue();
+                        } else {
                             client.close();
                             continue;
-                        }*/
-                        TCPClient tcpClient = new TCPClient(client, clientIndex++);
+                        }
+                        TCPClient tcpClient = new TCPClient(client, clientIndex++, capabilities);
                         if (connectHandler != null) {
                             if (!connectHandler.onClientConnected(tcpClient)) {
                                 tcpClient.close();
                                 continue;
                             }
                         }
+                        if (tcpClient.hasCapabilities(Packet.Capabilities.FRAME_DATA)) {
+                            LEDCubeManager.getFrameServer().numClients++;
+                        }
                         clients.add(tcpClient);
-                    } catch (IOException ex) {
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
@@ -69,20 +74,24 @@ public class TCPServer {
             @SneakyThrows(InterruptedException.class)
             public void run() {
                 while (true) {
-                    synchronized (clients) {
-                        Queue<Packet> queue = new LinkedList<>();
-                        Packet packet;
-                        while ((packet = sendQueue.poll()) != null) {
-                            queue.add(packet);
-                        }
-                        numClients = clients.size();
-                        Iterator<TCPClient> it = clients.iterator();
-                        while (it.hasNext()) {
-                            TCPClient client = it.next();
-                            if (client.isClosed()) it.remove();
-                            else {
-                                for (Packet pkt : queue) {
-                                    client.queuePacket(pkt);
+                    if (sendQueue.size() > 0) {
+                        synchronized (clients) {
+                            Queue<Packet> queue = new LinkedList<>();
+                            Packet packet;
+                            while ((packet = sendQueue.poll()) != null) {
+                                queue.add(packet);
+                            }
+                            numClients = clients.size();
+                            Iterator<TCPClient> it = clients.iterator();
+                            while (it.hasNext()) {
+                                TCPClient client = it.next();
+                                if (client.isClosed()) it.remove();
+                                else {
+                                    for (Packet pkt : queue) {
+                                        if (client.hasCapabilities(pkt.getRequiredCapabilities())) {
+                                            client.queuePacket(pkt);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -111,7 +120,7 @@ public class TCPServer {
         return numClients;
     }
 
-    public void setConnectHanlder(ConnectHandler connectHanlder) {
+    public void setConnectHandler(ConnectHandler connectHanlder) {
         this.connectHandler = connectHanlder;
     }
 

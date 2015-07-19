@@ -40,6 +40,11 @@ public class PacketAnimationList extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.CONTROL_DATA;
+    }
+
+    @Override
     public void process() {
         throw new UnsupportedOperationException();
     }

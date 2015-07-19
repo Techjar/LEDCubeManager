@@ -25,6 +25,11 @@
 				<include name="**/**" />
 			</fileset>
 		</copy>
+		<copy todir="dist/lib/webp-native/">
+			<fileset dir="lib/webp-native/">
+				<include name="**/**" />
+			</fileset>
+		</copy>
         
         <echo message="Copying resources..." />
         <copy todir="dist/resources/">

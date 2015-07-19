@@ -21,7 +21,18 @@ public abstract class Packet {
         ANIMATION_LIST,
         SET_COLOR_PICKER,
         ANIMATION_OPTION_LIST,
-        SET_ANIMATION_OPTION;
+        SET_ANIMATION_OPTION,
+        CLIENT_CAPABILITIES;
+    }
+
+    public static class Capabilities {
+        private Capabilities() {
+        }
+
+        public static final int LED_DATA = 0b1;
+        public static final int CONTROL_DATA = 0b10;
+        public static final int AUDIO_DATA = 0b100;
+        public static final int FRAME_DATA = 0b1000;
     }
 
     public static final BiMap<ID, Class<? extends Packet>> packetMap = HashBiMap.create();
@@ -35,10 +46,12 @@ public abstract class Packet {
         packetMap.put(ID.SET_COLOR_PICKER, PacketSetColorPicker.class);
         packetMap.put(ID.ANIMATION_OPTION_LIST, PacketAnimationOptionList.class);
         packetMap.put(ID.SET_ANIMATION_OPTION, PacketSetAnimationOption.class);
+        packetMap.put(ID.CLIENT_CAPABILITIES, PacketClientCapabilities.class);
     }
 
     public abstract void readData(DataInputStream stream) throws IOException;
     public abstract void writeData(DataOutputStream stream) throws IOException;
+    public abstract int getRequiredCapabilities();
     public abstract void process();
 
     public ID getId() {

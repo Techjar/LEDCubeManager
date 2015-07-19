@@ -45,6 +45,11 @@ public class PacketAudioInit extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.AUDIO_DATA;
+    }
+
+    @Override
     public void process() {
         throw new UnsupportedOperationException();
     }
