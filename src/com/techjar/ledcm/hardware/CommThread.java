@@ -1,16 +1,20 @@
 
 package com.techjar.ledcm.hardware;
 
+import com.techjar.ledcm.ControlUtil;
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
 import com.techjar.ledcm.hardware.tcp.TCPClient;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
+import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationOptionList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
+import com.techjar.ledcm.hardware.tcp.packet.PacketSetColorPicker;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Timer;
@@ -44,11 +48,19 @@ public class CommThread extends Thread {
         updateTime = System.nanoTime();
         port = new SerialPort(LEDCubeManager.getSerialPortName());
         tcpServer = new TCPServer(LEDCubeManager.getServerPort());
-        tcpServer.setConnectHanlder(new TCPServer.ConnectHandler() {
+        tcpServer.setConnectHandler(new TCPServer.ConnectHandler() {
             @Override
             public boolean onClientConnected(TCPClient client) {
-                if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) {
-                    client.queuePacket(new PacketAudioInit(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioFormat()));
+                if (client.hasCapabilities(Packet.Capabilities.AUDIO_DATA)) {
+                    if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) {
+                        client.queuePacket(new PacketAudioInit(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioFormat()));
+                    }
+                }
+                if (client.hasCapabilities(Packet.Capabilities.CONTROL_DATA)) {
+                    ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
+                    client.queuePacket(new PacketAnimationList(LEDCubeManager.getLEDCube().getAnimationNames().toArray(new String[0]), LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null ? "" : LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().getName()));
+                    client.queuePacket(new PacketSetColorPicker(screen.redColorSlider.getValue(), screen.greenColorSlider.getValue(), screen.blueColorSlider.getValue()));
+                    client.queuePacket(ControlUtil.getAnimationOptionsPacket());
                 }
                 return true;
             }
@@ -119,7 +131,7 @@ public class CommThread extends Thread {
             if (currentAnimation != null) {
                 currentAnimation.reset();
                 currentAnimation.loadOptions();
-                LEDCubeManager.getControlServer().sendAnimationOptions();
+                tcpServer.sendPacket(ControlUtil.getAnimationOptionsPacket());
             }
         }
     }

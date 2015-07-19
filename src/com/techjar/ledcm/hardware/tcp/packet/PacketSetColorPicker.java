@@ -40,6 +40,11 @@ public class PacketSetColorPicker extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.CONTROL_DATA;
+    }
+
+    @Override
     public void process() {
         ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
         screen.redColorSlider.setValue(red);

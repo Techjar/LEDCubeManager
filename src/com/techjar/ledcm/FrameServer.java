@@ -23,11 +23,10 @@ import lombok.SneakyThrows;
  */
 public class FrameServer {
     private Thread sendThread;
-    @Getter private TCPServer tcpServer;
+    public volatile int numClients;
     private Queue<BufferedImage> sendQueue = new ConcurrentLinkedQueue<>();
 
-    public FrameServer(int port) throws IOException {
-        tcpServer = new TCPServer(port);
+    public FrameServer() throws IOException {
         sendThread = new Thread("Frame Send Thread") {
             @Override
             @SneakyThrows(InterruptedException.class)
@@ -47,7 +46,7 @@ public class FrameServer {
                                 writer.dispose();
                                 imageBytes = baos.toByteArray();
                             }
-                            tcpServer.sendPacket(new PacketVisualFrame(imageBytes));
+                            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketVisualFrame(imageBytes));
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }

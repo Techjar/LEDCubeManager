@@ -26,38 +26,21 @@ import lombok.Getter;
  *
  * @author Techjar
  */
-public class ControlServer {
-    @Getter private TCPServer tcpServer;
-
-    public ControlServer(int port) throws IOException {
-        tcpServer = new TCPServer(port);
-        tcpServer.setConnectHanlder(new TCPServer.ConnectHandler() {
-            @Override
-            public boolean onClientConnected(TCPClient client) {
-                ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
-                client.queuePacket(new PacketAnimationList(LEDCubeManager.getLEDCube().getAnimationNames().toArray(new String[0]), LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null ? "" : LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().getName()));
-                client.queuePacket(new PacketSetColorPicker(screen.redColorSlider.getValue(), screen.greenColorSlider.getValue(), screen.blueColorSlider.getValue()));
-                sendAnimationOptions();
-                return true;
-            }
-        });
+public class ControlUtil {
+    private ControlUtil() {
     }
 
-    public void sendPacket(Packet packet) {
-        tcpServer.sendPacket(packet);
-    }
-
-    public void sendAnimationOptions() {
+    public static Packet getAnimationOptionsPacket() {
         Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
         AnimationOption[] options = anim.getOptions();
         String[] optionValues = new String[options.length];
         for (int i = 0; i < options.length; i++) {
             optionValues[i] = fetchOptionValue(options[i].getId());
         }
-        sendPacket(new PacketAnimationOptionList(options, optionValues));
+        return new PacketAnimationOptionList(options, optionValues);
     }
 
-    private String fetchOptionValue(String optionId) {
+    private static String fetchOptionValue(String optionId) {
         ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
         List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);
         if (components.size() > 0) {

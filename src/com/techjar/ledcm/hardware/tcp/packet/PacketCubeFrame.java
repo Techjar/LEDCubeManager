@@ -33,6 +33,11 @@ public class PacketCubeFrame extends Packet {
     }
 
     @Override
+    public int getRequiredCapabilities() {
+        return Capabilities.LED_DATA;
+    }
+
+    @Override
     public void process() {
         throw new UnsupportedOperationException();
     }
