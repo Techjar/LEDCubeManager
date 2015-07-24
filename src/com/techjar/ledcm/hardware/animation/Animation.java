@@ -210,6 +210,7 @@ public abstract class Animation {
         } else {
             screen.animOptionsWindow.setVisible(false);
             screen.animOptionsBtn.setEnabled(false);
+            screen.animOptionsBtn.setVisible(false);
         }
     }
 }
