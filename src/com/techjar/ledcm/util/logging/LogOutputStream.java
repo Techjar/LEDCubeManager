@@ -23,13 +23,13 @@ public class LogOutputStream extends ByteArrayOutputStream {
     
     @Override
     public void flush() throws IOException {
-        String record;
         synchronized(this) {
             super.flush();
-            record = this.toString();
+            String record = this.toString();
             super.reset();
-            if (record.length() > 0 && !record.equals(lineSeparator))
+            if (record.length() > 0 && !record.equals(lineSeparator) && !record.toLowerCase().contains("failed to poll device")) {
                 logger.log(level, record);
+            }
         }
     }
 }
