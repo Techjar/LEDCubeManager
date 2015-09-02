@@ -49,11 +49,20 @@ import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
 import com.techjar.ledcm.util.logging.LogHelper;
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.MenuItem;
+import java.awt.PopupMenu;
+import java.awt.SystemTray;
 import java.awt.Toolkit;
+import java.awt.TrayIcon;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -83,6 +92,9 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import lombok.Getter;
 import lombok.Setter;
@@ -135,6 +147,7 @@ public class LEDCubeManager {
     @Getter private static int serverPort = 7545;
     @Getter private static ControlUtil controlServer;
     @Getter private static FrameServer frameServer;
+    @Getter private static SystemTray systemTray;
     @Getter @Setter private static boolean convertingAudio;
     private static LEDCube ledCube;
     private List<Screen> screenList = new ArrayList<>();
@@ -226,7 +239,7 @@ public class LEDCubeManager {
         LogHelper.config("AA Supported: %s / Max Samples: %d", antiAliasingSupported ? "yes" : "no", antiAliasingMaxSamples);
     }
 
-    public void start() throws LWJGLException, IOException {
+    public void start() throws LWJGLException, IOException, AWTException {
         if (running) throw new IllegalStateException("Client already running!");
         running = true;
         Runtime.getRuntime().addShutdownHook(new ShutdownThread());
@@ -238,6 +251,7 @@ public class LEDCubeManager {
 
         Display.setDisplayMode(displayMode);
         makeFrame();
+        setupSystemTray();
         
         Display.create();
         Keyboard.create();
@@ -335,7 +349,11 @@ public class LEDCubeManager {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                closeRequested = true;
+                if (systemTray == null) {
+                    closeRequested = true;
+                } else {
+                    frame.setVisible(false);
+                }
             }
         });
 
@@ -483,6 +501,54 @@ public class LEDCubeManager {
             throw new RuntimeException("Depth texture framebuffer is invalid.");
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    private void setupSystemTray() throws AWTException {
+        if (!SystemTray.isSupported()) {
+            LogHelper.warning("System tray is not supported.");
+            return;
+        }
+
+        systemTray = SystemTray.getSystemTray();
+        Image image = Toolkit.getDefaultToolkit().getImage("resources/textures/icon16.png");
+        PopupMenu menu = new PopupMenu();
+        MenuItem item = new MenuItem("Exit");
+        item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                shutdown();
+            }
+        });
+        menu.add(item);
+        TrayIcon trayIcon = new TrayIcon(image, Constants.APP_TITLE, menu);
+        trayIcon.setImageAutoSize(true);
+        trayIcon.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() >= 2) {
+                    frame.setVisible(true);
+                    e.consume();
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+        });
+        systemTray.add(trayIcon);
+        LogHelper.info("System tray icon initialized.");
     }
 
     private void initDisplayModes() throws LWJGLException {
