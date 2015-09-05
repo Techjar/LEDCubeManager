@@ -450,7 +450,7 @@ public class LEDCubeManager {
         this.processMouse();
         this.processController();
         this.update();
-        if (frame.getState() != Frame.ICONIFIED || frameServer.numClients > 0) this.render();
+        if ((frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
         else Thread.sleep(20);
         Display.update();
     }
