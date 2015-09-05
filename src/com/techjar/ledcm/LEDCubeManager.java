@@ -52,6 +52,7 @@ import com.techjar.ledcm.util.logging.LogHelper;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.MenuItem;
@@ -420,7 +421,7 @@ public class LEDCubeManager {
         shutdownInternal();
     }
 
-    private void runGameLoop() throws LWJGLException {
+    private void runGameLoop() throws LWJGLException, InterruptedException {
         if (fullscreen && !frame.isFocused()) setFullscreen(false);
         if (newDisplayMode != null || newFullscreen != fullscreen) {
             if (newDisplayMode != null) {
@@ -449,7 +450,8 @@ public class LEDCubeManager {
         this.processMouse();
         this.processController();
         this.update();
-        this.render();
+        if ((frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
+        else Thread.sleep(20);
         Display.update();
     }
 
