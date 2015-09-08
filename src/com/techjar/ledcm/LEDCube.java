@@ -344,6 +344,7 @@ public class LEDCube {
         addAnimation(new AnimationNone());
         addAnimation(new AnimationSpectrumDots());
         addAnimation(new AnimationSpectrumTicker());
+        //addAnimation(new AnimationScreenBlend()); // Causes massive system lag, do not use!
         //addAnimation(new AnimationIndividualTest());
         addAnimation(new AnimationStaticFill());
         addAnimation(new AnimationStaticHue());
