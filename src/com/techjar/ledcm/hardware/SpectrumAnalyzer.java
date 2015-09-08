@@ -10,6 +10,7 @@ import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.util.BufferHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.PrintStreamRelayer;
+import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.logging.LogHelper;
 import ddf.minim.AudioListener;
 import ddf.minim.AudioPlayer;
@@ -56,6 +57,7 @@ public class SpectrumAnalyzer {
     @Getter @Setter private float mixerGain = 1;
     private TargetDataLine dataLine;
     private Thread inputThread;
+    private Timer audioInputRestartTimer = new Timer();
 
     public SpectrumAnalyzer() {
         super();
@@ -220,6 +222,7 @@ public class SpectrumAnalyzer {
             inputThread = new Thread("Audio Input") {
                 @Override
                 public void run() {
+                    audioInputRestartTimer.restart();
                     byte[] buffer = new byte[bufferSize];
                     float[] floats = new float[bufferSize / 2];
                     while (dataLine.isOpen()) {
@@ -229,6 +232,18 @@ public class SpectrumAnalyzer {
                             floats[i / 2] = MathHelper.clamp((val / 32768F) * mixerGain, -1, 1);
                         }
                         listener.samples(floats);
+                        // Really dumb fix for weird latency build-up issue
+                        if (audioInputRestartTimer.getHours() >= 1) {
+                            audioInputRestartTimer.restart();
+                            try {
+                                dataLine.close();
+                                dataLine.open(format, bufferSize * 8);
+                                dataLine.start();
+                            } catch (LineUnavailableException ex) {
+                                ex.printStackTrace();
+                                LEDCubeManager.getInstance().getScreenMainControl().audioInputBtnBg.setBackgroundColor(new Color(255, 127, 0));
+                            }
+                        }
                     }
                     dataLine = null;
                 }
