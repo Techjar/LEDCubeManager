@@ -233,7 +233,7 @@ public class SpectrumAnalyzer {
                         }
                         listener.samples(floats);
                         // Really dumb fix for weird latency build-up issue
-                        if (audioInputRestartTimer.getHours() >= 1) {
+                        if (audioInputRestartTimer.getMinutes() >= 30) {
                             audioInputRestartTimer.restart();
                             try {
                                 dataLine.close();
