@@ -1,4 +1,3 @@
-
 package com.techjar.ledcm.hardware;
 
 import com.techjar.ledcm.LEDCubeManager;
@@ -14,24 +13,38 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
 
 /**
- *
  * @author Techjar
  */
 public class CommThread extends Thread {
+
     private final Object lock = new Object();
     private final LEDManager ledManager;
+    OutputStream outputStream;
     private long updateTime;
     private long ticks;
-    @Getter @Setter private int refreshRate = 60;
-    @Getter private Animation currentAnimation;
-    @Getter private AnimationSequence currentSequence;
+    @Getter
+    @Setter
+    private int refreshRate = 60;
+    @Getter
+    private Animation currentAnimation;
+    @Getter
+    private AnimationSequence currentSequence;
     private SerialPort port;
-    @Getter private TCPServer tcpServer;
+    @Getter
+    @Setter
+    private boolean clientOnline;
+    @Getter
+    @Setter
+    private boolean frozen;
     /*int numRecv;
     Timer timer = new Timer();
     int lastRecv = -1;*/
+    @Getter
+    private TCPServer tcpServer;
 
     public CommThread() throws IOException {
         this.setName("Animation / Communication");
@@ -40,6 +53,7 @@ public class CommThread extends Thread {
         port = new SerialPort(LEDCubeManager.getSerialPortName());
         tcpServer = new TCPServer(LEDCubeManager.getServerPort());
         tcpServer.setConnectHanlder(new TCPServer.ConnectHandler() {
+
             @Override
             public boolean onClientConnected(TCPClient client) {
                 if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) {
@@ -48,6 +62,11 @@ public class CommThread extends Thread {
                 return true;
             }
         });
+
+        String clientIp = LEDCubeManager.getClientIp();
+        if (clientIp != null && !clientIp.isEmpty())
+            outputStream = new Socket(clientIp, LEDCubeManager.getClientPort()).getOutputStream();
+
         Runtime.getRuntime().addShutdownHook(new ShutdownThread());
     }
 
@@ -55,19 +74,16 @@ public class CommThread extends Thread {
     @SneakyThrows(InterruptedException.class)
     public void run() {
         while (true) {
-            /*if (timer.getSeconds() >= 1) {
-                timer.restart();
-                System.out.println("Recv rate: " + numRecv);
-                numRecv = 0;
-            }*/
+
             long interval = 1000000000 / refreshRate;
             long diff = System.nanoTime() - updateTime;
             if (diff >= interval) {
                 updateTime = System.nanoTime();
                 ticks++;
                 synchronized (ledManager) {
-                    if (currentSequence != null) currentSequence.update();
-                    if (currentAnimation != null) {
+                    if (currentSequence != null && !frozen)
+                        currentSequence.update();
+                    if (currentAnimation != null && !frozen) {
                         try {
                             currentAnimation.refresh();
                             currentAnimation.incTicks();
@@ -81,28 +97,24 @@ public class CommThread extends Thread {
                 tcpServer.sendPacket(new PacketCubeFrame(data));
                 synchronized (lock) {
                     try {
+                        if (clientOnline) {
+                            outputStream.write(data);
+                            outputStream.flush();
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        clientOnline = false;
+                    }
+                    try {
                         if (port.isOpened()) {
-                            /*if (ticks % 30 == 0)*/ port.writeBytes(data);
-                            /*byte[] bytes = port.readBytes();
-                            if (bytes != null) {
-                                numRecv += bytes.length;
-                            }*/
-                            //while (port.readBytes(1, 3000)[0] != 1){}
-                            /*byte[] bytes = port.readBytes(data.length, 1000);
-                            if (bytes != null) {
-                                System.out.println("CHECK DATA");
-                                for (int i = 0; i < data.length; i++) {
-                                    if (bytes[i] != data[i]) System.out.println("ERROR @ " + i + " = " + (bytes[i] & 0xFF));
-                                }
-                            }*/
+                            port.writeBytes(data);
                         }
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         closePort();
                     }
                 }
-            }
-            else if (interval - diff > 1000000) {
+            } else if (interval - diff > 1000000) {
                 Thread.sleep(1);
             }
         }
@@ -123,7 +135,8 @@ public class CommThread extends Thread {
         synchronized (lock) {
             this.currentSequence = currentSequence;
             LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setEnabled(currentSequence == null);
-            if (currentSequence != null) currentSequence.start();
+            if (currentSequence != null)
+                currentSequence.start();
         }
     }
 
@@ -162,6 +175,7 @@ public class CommThread extends Thread {
     }
 
     private class ShutdownThread extends Thread {
+
         @Override
         public void run() {
             closePort();

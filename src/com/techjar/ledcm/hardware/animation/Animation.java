@@ -2,25 +2,10 @@
 package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.gui.GUI;
-import com.techjar.ledcm.gui.GUIAlignment;
-import com.techjar.ledcm.gui.GUIBackground;
-import com.techjar.ledcm.gui.GUIBox;
-import com.techjar.ledcm.gui.GUIButton;
-import com.techjar.ledcm.gui.GUICallback;
-import com.techjar.ledcm.gui.GUICheckBox;
-import com.techjar.ledcm.gui.GUIComboBox;
-import com.techjar.ledcm.gui.GUIComboButton;
-import com.techjar.ledcm.gui.GUIContainer;
-import com.techjar.ledcm.gui.GUILabel;
-import com.techjar.ledcm.gui.GUIRadioButton;
-import com.techjar.ledcm.gui.GUIScrollBox;
-import com.techjar.ledcm.gui.GUISlider;
-import com.techjar.ledcm.gui.GUITextField;
+import com.techjar.ledcm.gui.*;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.util.Dimension3D;
-import com.techjar.ledcm.util.Vector3;
 import org.lwjgl.util.Color;
 
 /**

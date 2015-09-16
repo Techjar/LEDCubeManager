@@ -1,40 +1,27 @@
-
 package com.techjar.ledcm.gui.screen;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.RenderHelper;
-import com.techjar.ledcm.gui.GUIAlignment;
-import com.techjar.ledcm.gui.GUIBackground;
-import com.techjar.ledcm.gui.GUIButton;
-import com.techjar.ledcm.gui.GUICallback;
-import com.techjar.ledcm.gui.GUIComboBox;
-import com.techjar.ledcm.gui.GUIComboButton;
-import com.techjar.ledcm.gui.GUILabel;
-import com.techjar.ledcm.gui.GUIRadioButton;
-import com.techjar.ledcm.gui.GUIScrollBox;
-import com.techjar.ledcm.gui.GUISlider;
-import com.techjar.ledcm.gui.GUITextField;
-import com.techjar.ledcm.gui.GUIWindow;
+import com.techjar.ledcm.gui.*;
+import com.techjar.ledcm.hardware.CommThread;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
-import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
-import com.techjar.ledcm.util.PrintStreamRelayer;
-import java.io.File;
-import java.io.IOException;
-import javax.swing.JFileChooser;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
-import org.lwjgl.util.ReadableColor;
 import org.newdawn.slick.UnicodeFont;
 
+import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
+
 /**
- *
  * @author Techjar
  */
 public class ScreenMainControl extends Screen {
+
     public final UnicodeFont font;
     public final GUISlider progressSlider;
     public final GUIWindow layersWindow;
@@ -46,7 +33,9 @@ public class ScreenMainControl extends Screen {
     public final GUIButton animOptionsBtn;
     public final GUIButton settingsBtn;
     public final GUIButton audioInputBtn;
+    public final GUIButton colorCorrectionBtn;
     public final GUIBackground audioInputBtnBg;
+    public final GUIBackground colorCorrectionBtnBg;
     public final GUISlider mixerGainSlider;
     public final GUISlider layerSlider;
     public final GUIComboBox animComboBox;
@@ -82,7 +71,11 @@ public class ScreenMainControl extends Screen {
     public final GUIButton sequencePlayBtn;
     public final GUIButton sequenceStopBtn;
     public final GUIButton settingsApplyBtn;
-    
+    public final GUIButton clearBtn;
+    public final GUIButton toggleClientBtn;
+    public final GUIBackground freezeBtnBg;
+    public final GUIButton freezeBtn;
+
     public ScreenMainControl() {
         super();
         final LEDManager ledManager = LEDCubeManager.getLEDManager();
@@ -94,6 +87,7 @@ public class ScreenMainControl extends Screen {
         playBtn.setDimension(100, 40);
         playBtn.setPosition(5, -5);
         playBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
@@ -105,6 +99,7 @@ public class ScreenMainControl extends Screen {
         pauseBtn.setDimension(100, 40);
         pauseBtn.setPosition(110, -5);
         pauseBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().pause();
@@ -116,6 +111,7 @@ public class ScreenMainControl extends Screen {
         stopBtn.setDimension(100, 40);
         stopBtn.setPosition(215, -5);
         stopBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
@@ -127,12 +123,15 @@ public class ScreenMainControl extends Screen {
         chooseFileBtn.setDimension(200, 40);
         chooseFileBtn.setPosition(320, -5);
         chooseFileBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 new Thread(new Runnable() {
+
                     @Override
                     public void run() {
-                        if (LEDCubeManager.isConvertingAudio()) return;
+                        if (LEDCubeManager.isConvertingAudio())
+                            return;
                         int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
                         if (option == JFileChooser.APPROVE_OPTION) {
                             try {
@@ -153,6 +152,7 @@ public class ScreenMainControl extends Screen {
         volumeSlider.setPosition(525, -10);
         volumeSlider.setValue(1);
         volumeSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setVolume(volumeSlider.getValue());
@@ -164,6 +164,7 @@ public class ScreenMainControl extends Screen {
         progressSlider.setDimension(310, 30);
         progressSlider.setPosition(5, -55);
         progressSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setPosition(progressSlider.getValue());
@@ -175,24 +176,16 @@ public class ScreenMainControl extends Screen {
         togglePortBtn.setDimension(190, 35);
         togglePortBtn.setPosition(-410, 5);
         togglePortBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
-                if (LEDCubeManager.getLEDCube().getCommThread().isPortOpen()) LEDCubeManager.getLEDCube().getCommThread().closePort();
-                else LEDCubeManager.getLEDCube().getCommThread().openPort();
+                if (LEDCubeManager.getLEDCube().getCommThread().isPortOpen())
+                    LEDCubeManager.getLEDCube().getCommThread().closePort();
+                else
+                    LEDCubeManager.getLEDCube().getCommThread().openPort();
             }
         });
         container.addComponent(togglePortBtn);
-        /*GUIButton openPortBtn = new GUIButton(font, new Color(255, 255, 255), "Open", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
-        openPortBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
-        openPortBtn.setDimension(100, 35);
-        openPortBtn.setPosition(-515, 5);
-        openPortBtn.setClickHandler(new GUICallback() {
-            @Override
-            public void run() {
-                CubeDesigner.getSerialThread().openPort();
-            }
-        });
-        container.addComponent(openPortBtn);*/
         redColorSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
         redColorSlider.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
         redColorSlider.setDimension(30, 150);
@@ -202,6 +195,7 @@ public class ScreenMainControl extends Screen {
         redColorSlider.setVertical(true);
         redColorSlider.setShowNotches(false);
         redColorSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getPaintColor().setRed(Math.round(255 * redColorSlider.getValue()));
@@ -217,6 +211,7 @@ public class ScreenMainControl extends Screen {
         greenColorSlider.setVertical(true);
         greenColorSlider.setShowNotches(false);
         greenColorSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getPaintColor().setGreen(Math.round(255 * greenColorSlider.getValue()));
@@ -232,6 +227,7 @@ public class ScreenMainControl extends Screen {
         blueColorSlider.setVertical(true);
         blueColorSlider.setShowNotches(false);
         blueColorSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getPaintColor().setBlue(Math.round(255 * blueColorSlider.getValue()));
@@ -244,6 +240,7 @@ public class ScreenMainControl extends Screen {
         xScaleSlider.setPosition(-10, -240);
         xScaleSlider.setIncrement(1F / (ledDim.x - 1));
         xScaleSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getPaintSize().setX(Math.round((ledDim.x - 1) * xScaleSlider.getValue()));
@@ -261,6 +258,7 @@ public class ScreenMainControl extends Screen {
         yScaleSlider.setPosition(-10, -205);
         yScaleSlider.setIncrement(1F / (ledDim.y - 1));
         yScaleSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getPaintSize().setY(Math.round((ledDim.y - 1) * yScaleSlider.getValue()));
@@ -278,6 +276,7 @@ public class ScreenMainControl extends Screen {
         zScaleSlider.setPosition(-10, -170);
         zScaleSlider.setIncrement(1F / (ledDim.z - 1));
         zScaleSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getPaintSize().setZ(Math.round((ledDim.z - 1) * zScaleSlider.getValue()));
@@ -294,10 +293,12 @@ public class ScreenMainControl extends Screen {
         layersBtn.setDimension(120, 35);
         layersBtn.setPosition(-10, -275);
         layersBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 layersWindow.setVisible(!layersWindow.isVisible());
-                if (layersWindow.isVisible()) layersWindow.setToBePutOnTop(true);
+                if (layersWindow.isVisible())
+                    layersWindow.setToBePutOnTop(true);
             }
         });
         container.addComponent(layersBtn);
@@ -314,6 +315,7 @@ public class ScreenMainControl extends Screen {
         radioOff.setPosition(5, 5);
         radioOff.setSelected(true);
         radioOff.setSelectHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().setLayerIsolation(0);
@@ -332,6 +334,7 @@ public class ScreenMainControl extends Screen {
         radioX.setDimension(30, 30);
         radioX.setPosition(5, 40);
         radioX.setSelectHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().setLayerIsolation(1);
@@ -339,6 +342,7 @@ public class ScreenMainControl extends Screen {
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(1F / (ledDim.x - 1));
                 layerSlider.setChangeHandler(new GUICallback() {
+
                     @Override
                     public void run() {
                         LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.x - 1) * layerSlider.getValue()));
@@ -356,6 +360,7 @@ public class ScreenMainControl extends Screen {
         radioY.setDimension(30, 30);
         radioY.setPosition(5, 75);
         radioY.setSelectHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().setLayerIsolation(2);
@@ -363,6 +368,7 @@ public class ScreenMainControl extends Screen {
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(1F / (ledDim.y - 1));
                 layerSlider.setChangeHandler(new GUICallback() {
+
                     @Override
                     public void run() {
                         LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.y - 1) * layerSlider.getValue()));
@@ -380,6 +386,7 @@ public class ScreenMainControl extends Screen {
         radioZ.setDimension(30, 30);
         radioZ.setPosition(5, 110);
         radioZ.setSelectHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().setLayerIsolation(3);
@@ -387,6 +394,7 @@ public class ScreenMainControl extends Screen {
                 layerSlider.setValue(0);
                 layerSlider.setIncrement(1F / (ledDim.z - 1));
                 layerSlider.setChangeHandler(new GUICallback() {
+
                     @Override
                     public void run() {
                         LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.z - 1) * layerSlider.getValue()));
@@ -425,6 +433,7 @@ public class ScreenMainControl extends Screen {
         sequenceLoadBtn.setDimension(200, 40);
         sequenceLoadBtn.setPosition(320, -50);
         sequenceLoadBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 sequenceWindow.setVisible(!sequenceWindow.isVisible());
@@ -455,6 +464,7 @@ public class ScreenMainControl extends Screen {
         sequencePlayBtn.setDimension(100, 40);
         sequencePlayBtn.setPosition(-55, 65);
         sequencePlayBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 Object item = sequenceComboBox.getSelectedItem();
@@ -478,6 +488,7 @@ public class ScreenMainControl extends Screen {
         sequenceStopBtn.setDimension(100, 40);
         sequenceStopBtn.setPosition(55, 65);
         sequenceStopBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(null);
@@ -496,35 +507,39 @@ public class ScreenMainControl extends Screen {
         animOptionsWindow.setVisible(false);
         container.addComponent(animOptionsWindow);
         animOptionsScrollBox = new GUIScrollBox(new Color(255, 0, 0));
-        animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
+        animOptionsScrollBox.setDimension((int) animOptionsWindow.getContainerBox().getWidth(), (int) animOptionsWindow.getContainerBox().getHeight());
         animOptionsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
         animOptionsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
         animOptionsWindow.setDimensionChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
-                animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
+                animOptionsScrollBox.setDimension((int) animOptionsWindow.getContainerBox().getWidth(), (int) animOptionsWindow.getContainerBox().getHeight());
             }
         });
         animOptionsWindow.addComponent(animOptionsScrollBox);
         animOptionsBtn = new GUIButton(font, new Color(255, 255, 255), "Options", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
         animOptionsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
         animOptionsBtn.setDimension(140, 35);
-        animOptionsBtn.setPosition(-605, 5);
+        animOptionsBtn.setPosition(-850, 5);
         animOptionsBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 animOptionsWindow.setVisible(!animOptionsWindow.isVisible());
-                if (animOptionsWindow.isVisible()) animOptionsWindow.setToBePutOnTop(true);
+                if (animOptionsWindow.isVisible())
+                    animOptionsWindow.setToBePutOnTop(true);
             }
         });
         container.addComponent(animOptionsBtn);
-        
+
         animComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         animComboBox.setParentAlignment(GUIAlignment.TOP_RIGHT);
         animComboBox.setDimension(400, 35);
         animComboBox.setPosition(-5, 5);
         animComboBox.setVisibleItems(8);
         animComboBox.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 if (animComboBox.getSelectedItem() != null) {
@@ -545,13 +560,14 @@ public class ScreenMainControl extends Screen {
         settingsWindow.setVisible(false);
         container.addComponent(settingsWindow);
         settingsScrollBox = new GUIScrollBox(new Color(255, 0, 0));
-        settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
+        settingsScrollBox.setDimension((int) settingsWindow.getContainerBox().getWidth(), (int) settingsWindow.getContainerBox().getHeight() - 60);
         settingsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
         settingsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
         settingsWindow.setDimensionChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
-                settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
+                settingsScrollBox.setDimension((int) settingsWindow.getContainerBox().getWidth(), (int) settingsWindow.getContainerBox().getHeight() - 60);
             }
         });
         settingsWindow.addComponent(settingsScrollBox);
@@ -560,6 +576,7 @@ public class ScreenMainControl extends Screen {
         settingsApplyBtn.setDimension(200, 40);
         settingsApplyBtn.setPosition(0, -30);
         settingsApplyBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 settingsWindow.setVisible(false);
@@ -593,10 +610,12 @@ public class ScreenMainControl extends Screen {
         settingsBtn.setDimension(160, 35);
         settingsBtn.setPosition(-5, 45);
         settingsBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 settingsWindow.setVisible(!settingsWindow.isVisible());
-                if (settingsWindow.isVisible()) settingsWindow.setToBePutOnTop(true);
+                if (settingsWindow.isVisible())
+                    settingsWindow.setToBePutOnTop(true);
             }
         });
         container.addComponent(settingsBtn);
@@ -636,12 +655,15 @@ public class ScreenMainControl extends Screen {
         audioInputBtn.setDimension(200, 35);
         audioInputBtn.setPosition(-5, 85);
         audioInputBtn.setClickHandler(new GUICallback() {
+
             @Override
             public void run() {
                 boolean running = LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isRunningAudioInput();
                 audioInputBtnBg.setBackgroundColor(running ? new Color(255, 0, 0) : new Color(0, 255, 0));
-                if (running) LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stopAudioInput();
-                else LEDCubeManager.getLEDCube().getSpectrumAnalyzer().startAudioInput();
+                if (running)
+                    LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stopAudioInput();
+                else
+                    LEDCubeManager.getLEDCube().getSpectrumAnalyzer().startAudioInput();
             }
         });
         container.addComponent(audioInputBtn);
@@ -651,12 +673,76 @@ public class ScreenMainControl extends Screen {
         mixerGainSlider.setPosition(-5, 125);
         mixerGainSlider.setValue(0.05F);
         mixerGainSlider.setChangeHandler(new GUICallback() {
+
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(mixerGainSlider.getValue() * 20);
             }
         });
         container.addComponent(mixerGainSlider);
+
+        colorCorrectionBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
+        colorCorrectionBtn = new GUIButton(font, new Color(255, 255, 255), "Gamma Correction", colorCorrectionBtnBg);
+        colorCorrectionBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        colorCorrectionBtn.setDimension(280, 35);
+        colorCorrectionBtn.setPosition(-5, 160);
+        colorCorrectionBtn.setClickHandler(new GUICallback() {
+
+            @Override
+            public void run() {
+                boolean enabled = LEDCubeManager.getLEDCube().getLEDManager().getGammaCorrection();
+                colorCorrectionBtnBg.setBackgroundColor(enabled ? new Color(255, 0, 0) : new Color(0, 255, 0));
+                LEDCubeManager.getLEDCube().getLEDManager().setGammaCorrection(!enabled);
+            }
+        });
+        container.addComponent(colorCorrectionBtn);
+
+        clearBtn = new GUIButton(font, new Color(255, 255, 255), "Clear", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        clearBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        clearBtn.setDimension(140, 35);
+        clearBtn.setPosition(-5, 200);
+        clearBtn.setClickHandler(new GUICallback() {
+
+            @Override
+            public void run() {
+                LEDManager ledManager1 = LEDCubeManager.getLEDCube().getLEDManager();
+                Dimension3D dimensions = ledManager1.getDimensions();
+                for (int x = 0; x < dimensions.getX(); x++)
+                    for (int y = 0; y < dimensions.getY(); y++)
+                        for (int z = 0; z < dimensions.getZ(); z++)
+                            ledManager1.setLEDColor(x, y, z, new Color(0, 0, 0));
+            }
+        });
+        container.addComponent(clearBtn);
+        toggleClientBtn = new GUIButton(font, new Color(255, 255, 255), "Toggle Network", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        toggleClientBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        toggleClientBtn.setDimension(240, 35);
+        toggleClientBtn.setPosition(-605, 5);
+        toggleClientBtn.setClickHandler(new GUICallback() {
+
+            @Override
+            public void run() {
+                LEDCubeManager.getLEDCube().getCommThread().setClientOnline(!LEDCubeManager.getLEDCube().getCommThread().isClientOnline());
+            }
+        });
+        container.addComponent(toggleClientBtn);
+
+        freezeBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
+        freezeBtn = new GUIButton(font, new Color(255, 255, 255), "Freeze", freezeBtnBg);
+        freezeBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        freezeBtn.setDimension(150, 35);
+        freezeBtn.setPosition(-5, 240);
+        freezeBtn.setClickHandler(new GUICallback() {
+
+            @Override
+            public void run() {
+                CommThread commThread = LEDCubeManager.getLEDCube().getCommThread();
+                boolean frozen = commThread.isFrozen();
+                freezeBtnBg.setBackgroundColor(frozen ? new Color(255, 0, 0) : new Color(0, 255, 0));
+                commThread.setFrozen(!frozen);
+            }
+        });
+        container.addComponent(freezeBtn);
     }
 
     @Override
