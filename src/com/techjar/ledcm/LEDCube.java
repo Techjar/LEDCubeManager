@@ -187,7 +187,7 @@ public class LEDCube {
                         Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
                         Color color;
                         if (trueColor) {
-                            Color ledColor = ledArray.getLEDColor(x, y, z);
+                            Color ledColor = ledArray.getLEDColorReal(x, y, z);
                             color = new Color(Math.round(ledColor.getRed() * ledManager.getFactor()), Math.round(ledColor.getGreen() * ledManager.getFactor()), Math.round(ledColor.getBlue() * ledManager.getFactor()));
                         } else color = ledArray.getLEDColor(x, y, z);
                         faceCount += model.render(pos, new Quaternion(), color);

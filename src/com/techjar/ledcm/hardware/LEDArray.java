@@ -31,4 +31,12 @@ public class LEDArray {
         int index = manager.encodeVector(x, y, z);
         return new Color(red[index], green[index], blue[index]);
     }
+
+    public Color getLEDColorReal(int x, int y, int z) {
+        int index = manager.encodeVector(x, y, z);
+        Color color = new Color(red[index], green[index], blue[index]);
+        if (manager.getResolution() < 255) {
+            return new Color(Math.round(color.getRed() / manager.getFactor()), Math.round(color.getGreen() / manager.getFactor()), Math.round(color.getBlue() / manager.getFactor()));
+        } else return color;
+    }
 }
