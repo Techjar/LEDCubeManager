@@ -168,6 +168,7 @@ public class LEDCubeManager {
     private boolean regrab;
     public boolean renderFPS;
     public boolean debugMode;
+    public boolean debugGL;
     public boolean wireframe;
     public final boolean antiAliasingSupported;
     public final int antiAliasingMaxSamples;
@@ -214,6 +215,11 @@ public class LEDCubeManager {
             @Override
             public void runAction(String parameter) {
                 debugMode = true;
+            }
+        }, new ArgumentParser.Argument(false, "--debug-gl") {
+            @Override
+            public void runAction(String parameter) {
+                debugGL = true;
             }
         }, new ArgumentParser.Argument(false, "--wireframe") {
             @Override
@@ -883,7 +889,7 @@ public class LEDCubeManager {
     }
 
     private void checkGLError(String stage) {
-        if (debugMode) {
+        if (debugGL) {
             for (int error = glGetError(); error != GL_NO_ERROR; error = glGetError()) {
                 LogHelper.severe("########## GL ERROR ##########");
                 LogHelper.severe("@ %s", stage);
