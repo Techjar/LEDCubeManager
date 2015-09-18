@@ -17,10 +17,11 @@ public class ArduinoLEDManager implements LEDManager {
     private final int resolution;
     private final int outResolution;
     private final float factor;
+    private final byte[] red = new byte[512];
+    private final byte[] green = new byte[512];
+    private final byte[] blue = new byte[512];
     private boolean gammaCorrection;
-    private byte[] red = new byte[512];
-    private byte[] green = new byte[512];
-    private byte[] blue = new byte[512];
+    private LEDArray ledArray;
 
     public ArduinoLEDManager(int bits, boolean gammaCorrection, int outBits) {
         if (bits < 1 || bits > 8) throw new IllegalArgumentException("Invalid bits: " + bits);
@@ -31,6 +32,7 @@ public class ArduinoLEDManager implements LEDManager {
         this.resolution = (int)Math.pow(2, bits) - 1;
         this.outResolution = (int)Math.pow(2, outBits) - 1;
         this.factor = 255F / resolution;
+        updateLEDArray();
     }
 
     public ArduinoLEDManager(int bits, boolean gammaCorrection) {
@@ -108,6 +110,16 @@ public class ArduinoLEDManager implements LEDManager {
             }
             return array;
         }
+    }
+
+    @Override
+    public LEDArray getLEDArray() {
+        return ledArray;
+    }
+
+    @Override
+    public void updateLEDArray() {
+        ledArray = new LEDArray(this, red, green, blue);
     }
 
     @Override

@@ -49,7 +49,17 @@ public interface LEDManager {
     public byte[] getCommData();
 
     /**
-     * Gets the color of an LED as the raw value sent to the cube, not normalized into the 24-bit RGB color space.
+     * Returns immutable LEDArray instance.
+     */
+    public LEDArray getLEDArray();
+
+    /**
+     * Updates immutable LEDArray instance.
+     */
+    public void updateLEDArray();
+
+    /**
+     * Gets the color of an LED as the raw value sent to the cube, not normalized into the 24-bit RGB color space. May not exceed 8-bit resolution.
      */
     public Color getLEDColorReal(int x, int y, int z);
 
@@ -59,7 +69,7 @@ public interface LEDManager {
     public Color getLEDColor(int x, int y, int z);
 
     /**
-     * Sets the color of an LED as the real value sent to the cube, not normalized into the 24-bit RGB color space.
+     * Sets the color of an LED as the real value sent to the cube, not normalized into the 24-bit RGB color space. May not exceed 8-bit resolution.
      */
     public void setLEDColorReal(int x, int y, int z, ReadableColor color);
 
