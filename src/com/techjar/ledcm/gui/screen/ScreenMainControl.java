@@ -649,11 +649,12 @@ public class ScreenMainControl extends Screen {
         mixerGainSlider.setParentAlignment(GUIAlignment.TOP_RIGHT);
         mixerGainSlider.setDimension(200, 30);
         mixerGainSlider.setPosition(-5, 125);
-        mixerGainSlider.setValue(0.05F);
+        mixerGainSlider.setValue(Float.parseFloat(LEDCubeManager.getConfig().getProperty("sound.inputgain", 0.05F).toString()));
         mixerGainSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
                 LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(mixerGainSlider.getValue() * 20);
+                LEDCubeManager.getConfig().setProperty("sound.inputgain", mixerGainSlider.getValue());
             }
         });
         container.addComponent(mixerGainSlider);

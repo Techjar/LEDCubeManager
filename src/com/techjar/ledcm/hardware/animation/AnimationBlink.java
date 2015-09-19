@@ -54,7 +54,7 @@ public class AnimationBlink extends Animation {
         array[1] = new AnimationOption("test2", "Test 2", AnimationOption.OptionType.SLIDER, new Object[]{0.5, 0.1, true});
         array[2] = new AnimationOption("test3", "Test 3", AnimationOption.OptionType.CHECKBOX, new Object[]{false});
         //array[3] = new AnimationOption("testd", "Test Deluxe", AnimationOption.OptionType.COMBOBOX, objs);
-        array[3] = new AnimationOption("poop", "Watwat", AnimationOption.OptionType.TEXT, new Object[]{});
+        array[3] = new AnimationOption("poop", "Watwat", AnimationOption.OptionType.TEXT, new Object[]{""});
         return array;
     }*/
 }

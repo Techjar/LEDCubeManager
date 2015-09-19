@@ -362,6 +362,9 @@ public class LEDCube {
         addAnimation(new AnimationFaucetFill());
         addAnimation(new AnimationFaucetFillRainbow());
         addAnimation(new AnimationSlidingBoxes());
+        for (Animation anim : animations.values()) {
+            anim.postLoadUpdateOptions();
+        }
         if (LEDCubeManager.getInstance().getScreenMainControl() != null) {
             LEDCubeManager.getInstance().getScreenMainControl().populateAnimationList();
         }

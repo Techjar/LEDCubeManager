@@ -146,7 +146,6 @@ public class LEDCubeManager {
     @Getter private static JFileChooser fileChooser;
     @Getter private static String serialPortName = "COM3";
     @Getter private static int serverPort = 7545;
-    @Getter private static ControlUtil controlServer;
     @Getter private static FrameServer frameServer;
     @Getter private static SystemTray systemTray;
     @Getter @Setter private static boolean convertingAudio;
@@ -317,7 +316,7 @@ public class LEDCubeManager {
     /**
      *
      * @return
-     * @deprecated Get the LEDManager from the LEDCube instance.
+     * @deprecated Get the {@link LEDManager} from the {@link LEDCube} instance.
      */
     @Deprecated
     public static LEDManager getLEDManager() {
@@ -388,7 +387,7 @@ public class LEDCubeManager {
 
     private void shutdownInternal() throws LWJGLException {
         running = false;
-        //if (config != null && config.hasChanged()) config.save();
+        if (config != null && config.hasChanged()) config.save();
         if (soundManager != null) soundManager.getSoundSystem().cleanup();
         if (textureManager != null) textureManager.cleanup();
         if (fontManager != null) fontManager.cleanup();
@@ -437,6 +436,7 @@ public class LEDCubeManager {
                 config.setProperty("display.height", configDisplayMode.getHeight());
                 config.setProperty("display.antialiasing", antiAliasing);
                 config.setProperty("display.antialiasingsamples", antiAliasingSamples);
+                config.save();
             }
             fullscreen = newFullscreen;
             newDisplayMode = null;
@@ -573,7 +573,7 @@ public class LEDCubeManager {
 
     private void initConfig() {
         if (displayMode == null) displayMode = new DisplayMode(1024, 768);
-        config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"), true);
+        config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"), false);
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
         config.defaultProperty("display.height", displayMode.getHeight());

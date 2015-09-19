@@ -35,12 +35,12 @@ public class AnimationOption {
     }
 
     public static enum OptionType {
-        TEXT, // 0-1 params: default value
-        SLIDER, // 0-3 params: default value, increment, show notches
-        COMBOBOX, // 2+ params: default value, items (id & name interleaved)
+        TEXT, // 1 param: default value
+        SLIDER, // 1-3 params: default value, increment, show notches
+        COMBOBOX, // 3+ params: default value, items (id & name interleaved)
         COMBOBUTTON, // 2+ params: default value, items (id & name interleaved)
-        CHECKBOX, // 0-1 params: default value
-        RADIOGROUP, // 2+ params: default value, items (id & name interleaved)
+        CHECKBOX, // 1 param: default value
+        RADIOGROUP, // 3+ params: default value, items (id & name interleaved)
         BUTTON, // 1 param: text
     }
 }
