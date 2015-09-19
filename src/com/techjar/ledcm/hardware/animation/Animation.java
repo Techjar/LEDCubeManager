@@ -142,7 +142,7 @@ public abstract class Animation {
                         String selected = null;
                         for (int i = 1; i < option.params.length; i += 2) {
                             comboBox.addItem(option.params[i + 1].toString());
-                            if (option.params[i].equals(optionValues.get(option.getId()))) selected = option.params[i + 1].toString();
+                            if (option.params[i].toString().equals(optionValues.get(option.getId()))) selected = option.params[i + 1].toString();
                         }
                         comboBox.setSelectedItem(selected);
                         comboBox.setHeight(35);
@@ -159,7 +159,7 @@ public abstract class Animation {
                         selected = null;
                         for (int i = 1; i < option.params.length; i += 2) {
                             comboButton.addItem(option.params[i + 1].toString());
-                            if (option.params[i].equals(optionValues.get(option.getId()))) selected = option.params[i + 1].toString();
+                            if (option.params[i].toString().equals(optionValues.get(option.getId()))) selected = option.params[i + 1].toString();
                         }
                         comboButton.setSelectedItem(selected);
                         comboButton.setHeight(35);
@@ -189,7 +189,7 @@ public abstract class Animation {
                         int xPos = 0;
                         for (int i = 1; i < option.params.length; i += 2) {
                             final GUIRadioButton radioButton = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-                            if (option.params[0].equals(optionValues.get(option.getId()))) radioButton.setSelected(true);
+                            if (option.params[0].toString().equals(optionValues.get(option.getId()))) radioButton.setSelected(true);
                             radioButton.setDimension(30, 30);
                             radioButton.setName(option.params[i].toString());
                             final int j = i;
