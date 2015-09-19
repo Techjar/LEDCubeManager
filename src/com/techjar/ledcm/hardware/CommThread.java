@@ -82,18 +82,17 @@ public class CommThread extends Thread {
             if (diff >= interval) {
                 updateTime = System.nanoTime();
                 ticks++;
-                synchronized (ledManager) {
-                    if (currentSequence != null) currentSequence.update();
-                    if (currentAnimation != null) {
-                        try {
-                            currentAnimation.refresh();
-                            currentAnimation.incTicks();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            currentAnimation = null;
-                        }
+                if (currentSequence != null) currentSequence.update();
+                if (currentAnimation != null) {
+                    try {
+                        currentAnimation.refresh();
+                        currentAnimation.incTicks();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        currentAnimation = null;
                     }
                 }
+                ledManager.updateLEDArray();
                 byte[] data = ledManager.getCommData();
                 tcpServer.sendPacket(new PacketCubeFrame(data));
                 synchronized (lock) {

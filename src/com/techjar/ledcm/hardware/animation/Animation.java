@@ -3,7 +3,6 @@ package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.GUI;
-import com.techjar.ledcm.gui.GUIAlignment;
 import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUIButton;
@@ -20,7 +19,8 @@ import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.util.Dimension3D;
-import com.techjar.ledcm.util.Vector3;
+import java.util.HashMap;
+import java.util.Map;
 import org.lwjgl.util.Color;
 
 /**
@@ -30,11 +30,22 @@ import org.lwjgl.util.Color;
 public abstract class Animation {
     protected final LEDManager ledManager;
     protected final Dimension3D dimension;
+    private final Map<String, String> optionValues;
     protected long ticks;
 
     public Animation() {
         this.ledManager = LEDCubeManager.getLEDManager();
         this.dimension = this.ledManager.getDimensions();
+        this.optionValues = new HashMap<>();
+
+        AnimationOption[] options = getOptions();
+        for (final AnimationOption option : options) {
+            if (option.getType() != AnimationOption.OptionType.BUTTON) {
+                String property = "animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + option.getId();
+                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0].toString());
+                optionValues.put(option.getId(), LEDCubeManager.getConfig().getString(property));
+            }
+        }
     }
 
     public abstract String getName();
@@ -44,6 +55,10 @@ public abstract class Animation {
     public boolean isHidden() {
         return false;
     }
+
+    public void incTicks() {
+        ticks++;
+    }
     
     public AnimationOption[] getOptions() {
         return new AnimationOption[0];
@@ -52,8 +67,25 @@ public abstract class Animation {
     public void optionChanged(String name, String value) {
     }
 
-    public void incTicks() {
-        ticks++;
+    public final String getOption(String name, String value) {
+        return optionValues.get(name);
+    }
+
+    public final void setOption(String name, String value) {
+        if (optionValues.containsKey(name)) {
+            optionValues.put(name, value);
+            LEDCubeManager.getConfig().setProperty("animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + name, value);
+        }
+        optionChanged(name, value);
+    }
+
+    /**
+     * Only intended to be called by animation loading routine, after all animations have been constructed
+     */
+    public final void postLoadUpdateOptions() {
+        for (Map.Entry<String, String> entry : optionValues.entrySet()) {
+            optionChanged(entry.getKey(), entry.getValue());
+        }
     }
 
     public final void loadOptions() {
@@ -80,27 +112,27 @@ public abstract class Animation {
                     case TEXT:
                         final GUITextField textField = new GUITextField(screen.font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
                         gui = textField;
-                        if (option.params.length >= 1) textField.setText(option.params[0].toString());
+                        textField.setText(optionValues.get(option.getId()));
                         textField.setHeight(35);
                         textField.setCanLoseFocus(true);
                         textField.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, textField.getText());
+                                setOption(option.id, textField.getText());
                             }
                         });
                         break;
                     case SLIDER:
                         final GUISlider slider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
                         gui = slider;
-                        if (option.params.length >= 1) slider.setValue(Float.parseFloat(option.params[0].toString()));
+                        slider.setValue(Float.parseFloat(optionValues.get(option.getId())));
                         if (option.params.length >= 2) slider.setIncrement(Float.parseFloat(option.params[1].toString()));
                         if (option.params.length >= 3) slider.setShowNotches(Boolean.parseBoolean(option.params[2].toString()));
                         slider.setHeight(30);
                         slider.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, Float.toString(slider.getValue()));
+                                setOption(option.id, Float.toString(slider.getValue()));
                             }
                         });
                         break;
@@ -110,14 +142,14 @@ public abstract class Animation {
                         String selected = null;
                         for (int i = 1; i < option.params.length; i += 2) {
                             comboBox.addItem(option.params[i + 1].toString());
-                            if (option.params[i].equals(option.params[0])) selected = option.params[i + 1].toString();
+                            if (option.params[i].equals(optionValues.get(option.getId()))) selected = option.params[i + 1].toString();
                         }
                         comboBox.setSelectedItem(selected);
                         comboBox.setHeight(35);
                         comboBox.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, comboBox.getSelectedItem() != null ? option.params[comboBox.getSelectedIndex() * 2 + 1].toString() : null);
+                                setOption(option.id, comboBox.getSelectedItem() != null ? option.params[comboBox.getSelectedIndex() * 2 + 1].toString() : null);
                             }
                         });
                         break;
@@ -127,26 +159,26 @@ public abstract class Animation {
                         selected = null;
                         for (int i = 1; i < option.params.length; i += 2) {
                             comboButton.addItem(option.params[i + 1].toString());
-                            if (option.params[i].equals(option.params[0])) selected = option.params[i + 1].toString();
+                            if (option.params[i].equals(optionValues.get(option.getId()))) selected = option.params[i + 1].toString();
                         }
                         comboButton.setSelectedItem(selected);
                         comboButton.setHeight(35);
                         comboButton.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, comboButton.getSelectedItem() != null ? option.params[comboButton.getSelectedIndex() * 2 + 1].toString() : null);
+                                setOption(option.id, comboButton.getSelectedItem() != null ? option.params[comboButton.getSelectedIndex() * 2 + 1].toString() : null);
                             }
                         });
                         break;
                     case CHECKBOX:
                         final GUICheckBox checkBox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
                         gui = checkBox;
-                        if (option.params.length >= 1) checkBox.setChecked(Boolean.parseBoolean(option.params[0].toString()));
+                        checkBox.setChecked(Boolean.parseBoolean(optionValues.get(option.getId())));
                         checkBox.setDimension(30, 30);
                         checkBox.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, Boolean.toString(checkBox.isChecked()));
+                                setOption(option.id, Boolean.toString(checkBox.isChecked()));
                             }
                         });
                         break;
@@ -157,14 +189,14 @@ public abstract class Animation {
                         int xPos = 0;
                         for (int i = 1; i < option.params.length; i += 2) {
                             final GUIRadioButton radioButton = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-                            if (option.params[0].equals(option.params[i])) radioButton.setSelected(true);
+                            if (option.params[0].equals(optionValues.get(option.getId()))) radioButton.setSelected(true);
                             radioButton.setDimension(30, 30);
                             radioButton.setName(option.params[i].toString());
                             final int j = i;
                             radioButton.setSelectHandler(new GUICallback() {
                                 @Override
                                 public void run() {
-                                    optionChanged(option.id, option.params[j].toString());
+                                    setOption(option.id, option.params[j].toString());
                                 }
                             });
                             GUILabel radioLabel = new GUILabel(screen.font, new Color(255, 255, 255), option.params[i + 1].toString());
@@ -190,7 +222,7 @@ public abstract class Animation {
                         button.setClickHandler(new GUICallback() {
                             @Override
                             public void run() {
-                                optionChanged(option.id, null);
+                                setOption(option.id, null);
                             }
                         });
                         break;

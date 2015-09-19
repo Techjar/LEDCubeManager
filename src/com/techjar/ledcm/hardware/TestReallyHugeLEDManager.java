@@ -12,13 +12,15 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class TestReallyHugeLEDManager implements LEDManager {
+    private final byte[] red = new byte[64 * 64 * 64];
+    private final byte[] green = new byte[64 * 64 * 64];
+    private final byte[] blue = new byte[64 * 64 * 64];
     private boolean gammaCorrection;
-    private byte[] red = new byte[64 * 64 * 64];
-    private byte[] green = new byte[64 * 64 * 64];
-    private byte[] blue = new byte[64 * 64 * 64];
+    private LEDArray ledArray;
 
     public TestReallyHugeLEDManager(boolean gammaCorrection) {
         this.gammaCorrection = gammaCorrection;
+        updateLEDArray();
     }
 
     @Override
@@ -56,6 +58,16 @@ public class TestReallyHugeLEDManager implements LEDManager {
         synchronized (this) {
             return new byte[98304];
         }
+    }
+
+    @Override
+    public LEDArray getLEDArray() {
+        return ledArray;
+    }
+
+    @Override
+    public void updateLEDArray() {
+        ledArray = new LEDArray(this, red, green, blue);
     }
 
     @Override

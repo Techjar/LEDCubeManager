@@ -87,7 +87,7 @@ public class AnimationSequence {
         }
         if (item.options != null) {
             for (SequenceItem.Option option : item.options) {
-                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().optionChanged(option.name, option.value);
+                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(option.name, option.value);
             }
         }
     }

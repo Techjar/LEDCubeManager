@@ -248,6 +248,8 @@ public class SpectrumAnalyzer {
                     dataLine = null;
                 }
             };
+            inputThread.setPriority(Thread.MAX_PRIORITY);
+            inputThread.setDaemon(true);
             inputThread.start();
         } catch (LineUnavailableException ex) {
             ex.printStackTrace();

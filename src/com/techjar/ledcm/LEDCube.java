@@ -4,6 +4,7 @@ package com.techjar.ledcm;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.ArduinoLEDManager;
 import com.techjar.ledcm.hardware.CommThread;
+import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
@@ -139,14 +140,15 @@ public class LEDCube {
                     }
                 }
                 if (!drawClick && Mouse.getEventButtonState() && Mouse.getEventButton() == 1) {
-                    Color targetColor = ledManager.getLEDColor((int)led.getX(), (int)led.getY(), (int)led.getZ());
+                    LEDArray ledArray = ledManager.getLEDArray();
+                    Color targetColor = ledArray.getLEDColor((int)led.getX(), (int)led.getY(), (int)led.getZ());
                     if (!targetColor.equals(paintColor)) {
                         boolean[] processed = new boolean[ledManager.getLEDCount()];
                         LinkedList<Vector3> stack = new LinkedList<>();
                         stack.push(led);
                         while (!stack.isEmpty()) {
                             Vector3 current = stack.pop();
-                            Color color = ledManager.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
+                            Color color = ledArray.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
                             if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
                                 ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
                                 processed[Util.encodeCubeVector(current)] = true;
@@ -179,28 +181,18 @@ public class LEDCube {
         float mult = ledSpaceMult;
 
         Dimension3D dim = ledManager.getDimensions();
-        Color[] colors = new Color[ledManager.getLEDCount()];
-        synchronized (ledManager) {
-            for (int y = 0; y < dim.y; y++) {
-                for (int z = 0; z < dim.z; z++) {
-                    for (int x = 0; x < dim.x; x++) {
-                        if (trueColor) {
-                            Color color = ledManager.getLEDColorReal(x, y, z);
-                            colors[Util.encodeCubeVector(x, y, z)] = new Color(Math.round(color.getRed() * ledManager.getFactor()), Math.round(color.getGreen() * ledManager.getFactor()), Math.round(color.getBlue() * ledManager.getFactor()));
-                        } else {
-                            colors[Util.encodeCubeVector(x, y, z)] = ledManager.getLEDColor(x, y, z);
-                        }
-                    }
-
-                }
-            }
-        }
+        LEDArray ledArray = ledManager.getLEDArray();
         for (int y = 0; y < dim.y; y++) {
             for (int z = 0; z < dim.z; z++) {
                 for (int x = 0; x < dim.x; x++) {
                     if (isLEDWithinIsolation(x, y, z)) {
                         Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
-                        faceCount += model.render(pos, new Quaternion(), colors[Util.encodeCubeVector(x, y, z)]);
+                        Color color;
+                        if (trueColor) {
+                            Color ledColor = ledArray.getLEDColorReal(x, y, z);
+                            color = new Color(Math.round(ledColor.getRed() * ledManager.getFactor()), Math.round(ledColor.getGreen() * ledManager.getFactor()), Math.round(ledColor.getBlue() * ledManager.getFactor()));
+                        } else color = ledArray.getLEDColor(x, y, z);
+                        faceCount += model.render(pos, new Quaternion(), color);
                     }
                 }
             }
@@ -358,6 +350,9 @@ public class LEDCube {
         addAnimation(new AnimationPingPong());
         addAnimation(new AnimationTicker());
         addAnimation(new AnimationProgressiveFill());
+        for (Animation anim : animations.values()) {
+            anim.postLoadUpdateOptions();
+        }
         if (LEDCubeManager.getInstance().getScreenMainControl() != null) {
             LEDCubeManager.getInstance().getScreenMainControl().populateAnimationList();
         }

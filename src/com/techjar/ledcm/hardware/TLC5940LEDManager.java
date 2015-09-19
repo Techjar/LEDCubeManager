@@ -12,13 +12,15 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class TLC5940LEDManager implements LEDManager {
+    private final byte[] red = new byte[512];
+    private final byte[] green = new byte[512];
+    private final byte[] blue = new byte[512];
     private boolean gammaCorrection;
-    private byte[] red = new byte[512];
-    private byte[] green = new byte[512];
-    private byte[] blue = new byte[512];
+    private LEDArray ledArray;
 
     public TLC5940LEDManager(boolean gammaCorrection) {
         this.gammaCorrection = gammaCorrection;
+        updateLEDArray();
     }
 
     @Override
@@ -85,6 +87,16 @@ public class TLC5940LEDManager implements LEDManager {
     }
 
     @Override
+    public LEDArray getLEDArray() {
+        return ledArray;
+    }
+
+    @Override
+    public void updateLEDArray() {
+        ledArray = new LEDArray(this, red, green, blue);
+    }
+
+    @Override
     public Color getLEDColorReal(int x, int y, int z) {
         return getLEDColor(x, y, z);
     }
@@ -116,14 +128,6 @@ public class TLC5940LEDManager implements LEDManager {
         blue[index] = color.getBlueByte();
     }
 
-    private byte[] encode12BitValues(int value1, int value2) {
-        byte[] bytes = new byte[3];
-        bytes[0] = (byte)(value1 >> 4);
-        bytes[1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
-        bytes[2] = (byte)value2;
-        return bytes;
-    }
-
     @Override
     public int encodeVector(Vector3 vector) {
         return encodeVector((int)vector.getY(), (int)vector.getX(), (int)vector.getZ());
@@ -137,5 +141,13 @@ public class TLC5940LEDManager implements LEDManager {
     @Override
     public Vector3 decodeVector(int value) {
         return new Vector3((value >> 3) & 7, (value >> 6) & 7, value & 7);
+    }
+
+    private byte[] encode12BitValues(int value1, int value2) {
+        byte[] bytes = new byte[3];
+        bytes[0] = (byte)(value1 >> 4);
+        bytes[1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
+        bytes[2] = (byte)value2;
+        return bytes;
     }
 }

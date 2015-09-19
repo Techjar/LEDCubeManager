@@ -12,12 +12,13 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class StripLEDManager implements LEDManager {
-    private boolean gammaCorrection;
     private final int count;
     private final float factor;
-    private byte[] red;
-    private byte[] green;
-    private byte[] blue;
+    private final byte[] red;
+    private final byte[] green;
+    private final byte[] blue;
+    private boolean gammaCorrection;
+    private LEDArray ledArray;
 
     public StripLEDManager(int count, boolean gammaCorrection) {
         if (count % 2 != 0) throw new IllegalArgumentException("Strip LED count must be a multiple of 2");
@@ -27,6 +28,7 @@ public class StripLEDManager implements LEDManager {
         green = new byte[count];
         blue = new byte[count];
         factor = 255F / 127F;
+        updateLEDArray();
     }
 
     @Override
@@ -85,6 +87,16 @@ public class StripLEDManager implements LEDManager {
             }
             return array;
         }
+    }
+
+    @Override
+    public LEDArray getLEDArray() {
+        return ledArray;
+    }
+
+    @Override
+    public void updateLEDArray() {
+        ledArray = new LEDArray(this, red, green, blue);
     }
 
     @Override

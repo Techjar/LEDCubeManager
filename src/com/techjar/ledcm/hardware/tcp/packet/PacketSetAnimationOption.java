@@ -76,7 +76,7 @@ public class PacketSetAnimationOption extends Packet {
             } else if (component instanceof GUICheckBox) {
                 ((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
             } else {
-                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().optionChanged(optionId, value);
+                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(optionId, value);
             }
         }
     }
