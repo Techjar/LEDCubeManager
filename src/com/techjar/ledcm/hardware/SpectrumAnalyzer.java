@@ -271,7 +271,7 @@ public class SpectrumAnalyzer {
                 ProcessBuilder pb = new ProcessBuilder();
                 pb.directory(new File(System.getProperty("user.dir")));
                 pb.redirectErrorStream(true);
-                pb.command("ffmpeg", "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", Integer.toString(sampleRate), file2.getAbsolutePath());
+                pb.command(LEDCubeManager.getConfig().getString("misc.ffmpegpath"), "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", Integer.toString(sampleRate), file2.getAbsolutePath());
                 Process proc = pb.start();
                 LEDCubeManager.setConvertingAudio(true);
                 Thread psrThread = new PrintStreamRelayer(proc.getInputStream(), System.out);
