@@ -351,7 +351,7 @@ public class LEDCube {
         addAnimation(new AnimationTicker());
         addAnimation(new AnimationProgressiveFill());
         for (Animation anim : animations.values()) {
-            anim.postLoadUpdateOptions();
+            anim.postLoadInitOptions();
         }
         if (LEDCubeManager.getInstance().getScreenMainControl() != null) {
             LEDCubeManager.getInstance().getScreenMainControl().populateAnimationList();

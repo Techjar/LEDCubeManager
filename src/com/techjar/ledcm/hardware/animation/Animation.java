@@ -37,15 +37,6 @@ public abstract class Animation {
         this.ledManager = LEDCubeManager.getLEDManager();
         this.dimension = this.ledManager.getDimensions();
         this.optionValues = new HashMap<>();
-
-        AnimationOption[] options = getOptions();
-        for (final AnimationOption option : options) {
-            if (option.getType() != AnimationOption.OptionType.BUTTON) {
-                String property = "animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + option.getId();
-                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0].toString());
-                optionValues.put(option.getId(), LEDCubeManager.getConfig().getString(property));
-            }
-        }
     }
 
     public abstract String getName();
@@ -82,7 +73,15 @@ public abstract class Animation {
     /**
      * Only intended to be called by animation loading routine, after all animations have been constructed
      */
-    public final void postLoadUpdateOptions() {
+    public final void postLoadInitOptions() {
+        AnimationOption[] options = getOptions();
+        for (final AnimationOption option : options) {
+            if (option.getType() != AnimationOption.OptionType.BUTTON) {
+                String property = "animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + option.getId();
+                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0].toString());
+                optionValues.put(option.getId(), LEDCubeManager.getConfig().getString(property));
+            }
+        }
         for (Map.Entry<String, String> entry : optionValues.entrySet()) {
             optionChanged(entry.getKey(), entry.getValue());
         }
