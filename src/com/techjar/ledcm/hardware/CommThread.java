@@ -52,7 +52,7 @@ public class CommThread extends Thread {
             @Override
             public boolean onClientConnected(TCPClient client) {
                 if (client.hasCapabilities(Packet.Capabilities.AUDIO_DATA)) {
-                    if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().playerExists()) {
+                    if (LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioFormat() != null) {
                         client.queuePacket(new PacketAudioInit(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getAudioFormat()));
                     }
                 }

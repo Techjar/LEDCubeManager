@@ -43,7 +43,7 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class SpectrumAnalyzer {
-    private final int bufferSize = 2048;
+    private final int baseBufferSize = 2048;
     private final int sampleRate = 48000;
     private final Minim minim;
     private FFT fft;
@@ -56,6 +56,7 @@ public class SpectrumAnalyzer {
     @Getter private String currentMixerName;
     @Getter @Setter private float mixerGain = 1;
     private TargetDataLine dataLine;
+    private AudioFormat dataLineFormat;
     private Thread inputThread;
     private Timer audioInputRestartTimer = new Timer();
 
@@ -166,7 +167,7 @@ public class SpectrumAnalyzer {
         if (player != null) {
             return player.getFormat();
         }
-        return null;
+        return dataLineFormat;
     }
 
     public void setMixer(String name) {
@@ -196,10 +197,12 @@ public class SpectrumAnalyzer {
         try {
             TargetDataLine.Info lineInfo = (TargetDataLine.Info)currentMixer.getTargetLineInfo()[0];
             AudioFormat supportedFormat = null;
-            for (AudioFormat fmt : lineInfo.getFormats()) {
-                if (fmt.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && fmt.getSampleSizeInBits() == 16 && fmt.getChannels() == 1) {
-                    supportedFormat = fmt;
-                    break;
+            outerLoop: for (int i = 2; i >= 1; i--) {
+                for (AudioFormat fmt : lineInfo.getFormats()) {
+                    if (fmt.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED) && fmt.getSampleSizeInBits() == 16 && fmt.getChannels() == i) {
+                        supportedFormat = fmt;
+                        break outerLoop;
+                    }
                 }
             }
             if (supportedFormat == null) {
@@ -207,31 +210,51 @@ public class SpectrumAnalyzer {
                 return;
             }
             final AudioFormat format = new AudioFormat(supportedFormat.getEncoding(), sampleRate, supportedFormat.getSampleSizeInBits(), supportedFormat.getChannels(), supportedFormat.getFrameSize(), sampleRate, false);
+            dataLineFormat = format;
             DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
             if (!currentMixer.isLineSupported(info)) {
                 LogHelper.severe("Mixer doesn't support requested line!");
                 return;
             }
+            final int bufferSize = baseBufferSize * format.getChannels();
             dataLine = (TargetDataLine)currentMixer.getLine(info);
             dataLine.open(format, bufferSize * 8);
             dataLine.start();
-            fft = new FFT(bufferSize / 2, sampleRate);
-            beatDetect = new BeatDetect(bufferSize / 2, sampleRate);
+            fft = new FFT(baseBufferSize / 2, sampleRate);
+            beatDetect = new BeatDetect(baseBufferSize / 2, sampleRate);
             beatDetect.detectMode(beatDetectMode);
+            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioInit(format));
             final AudioListener listener = new AnalyzerAudioListener(fft, beatDetect);
+            final AudioListener listener2 = new StreamingAudioListener(true);
             inputThread = new Thread("Audio Input") {
                 @Override
                 public void run() {
                     audioInputRestartTimer.restart();
                     byte[] buffer = new byte[bufferSize];
                     float[] floats = new float[bufferSize / 2];
+                    float[] floatsL = new float[bufferSize / 4];
+                    float[] floatsR = new float[bufferSize / 4];
                     while (dataLine.isOpen()) {
                         dataLine.read(buffer, 0, bufferSize);
-                        for (int i = 0; i < bufferSize; i += 2) {
-                            int val = (short)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
-                            floats[i / 2] = MathHelper.clamp((val / 32768F) * mixerGain, -1, 1);
+                        if (format.getChannels() == 2) {
+                            for (int i = 0; i < bufferSize; i += 4) {
+                                int val = (short)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
+                                floatsL[i / 4] = MathHelper.clamp((val / 32768F) * mixerGain, -1, 1);
+                            }
+                            for (int i = 2; i < bufferSize; i += 4) {
+                                int val = (short)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
+                                floatsR[i / 4] = MathHelper.clamp((val / 32768F) * mixerGain, -1, 1);
+                            }
+                            listener.samples(floatsL, floatsR);
+                            listener2.samples(floatsL, floatsR);
+                        } else {
+                            for (int i = 0; i < bufferSize; i += 2) {
+                                int val = (short)((buffer[i] & 0xFF) | ((buffer[i + 1] & 0xFF) << 8));
+                                floats[i / 2] = MathHelper.clamp((val / 32768F) * mixerGain, -1, 1);
+                            }
+                            listener.samples(floats);
+                            listener2.samples(floats);
                         }
-                        listener.samples(floats);
                         // Really dumb fix for weird latency build-up issue
                         if (audioInputRestartTimer.getMinutes() >= 30) {
                             audioInputRestartTimer.restart();
@@ -253,12 +276,14 @@ public class SpectrumAnalyzer {
             inputThread.start();
         } catch (LineUnavailableException ex) {
             ex.printStackTrace();
+            dataLineFormat = null;
         }
     }
 
     public void stopAudioInput() {
         if (dataLine != null) {
             dataLine.close();
+            dataLineFormat = null;
             inputThread = null;
         }
     }
@@ -405,9 +430,10 @@ public class SpectrumAnalyzer {
         }
 
         private void send(short[] samples) {
-            ByteBuffer buf = ByteBuffer.allocate(samples.length * 2 + 2);
-            buf.order(ByteOrder.BIG_ENDIAN);
-            buf.putShort((short)samples.length);
+            AudioFormat format = getAudioFormat();
+            if (format == null) return;
+            ByteBuffer buf = ByteBuffer.allocate(samples.length * 2);
+            buf.order(format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
             for (int i = 0; i < samples.length; i++) {
                 buf.putShort(samples[i]);
             }
