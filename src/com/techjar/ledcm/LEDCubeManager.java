@@ -585,6 +585,7 @@ public class LEDCubeManager {
         config.defaultProperty("sound.effectvolume", 1.0F);
         config.defaultProperty("sound.musicvolume", 1.0F);
         config.defaultProperty("sound.inputdevice", "");
+        config.defaultProperty("sound.inputgain", 0.05F);
         config.defaultProperty("misc.ffmpegpath", "ffmpeg");
 
         if (!internalSetDisplayMode(config.getInteger("display.width"), config.getInteger("display.height"))) {
