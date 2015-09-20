@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +23,7 @@ public class ConfigManager {
     public File file;
     private boolean autoSave;
     private final Yaml yaml;
-    private Map<String, Object> config;
+    private ConfigMap config;
     private boolean changed;
     
     
@@ -39,7 +41,7 @@ public class ConfigManager {
         
         this.autoSave = autoSave;
         this.file = file;
-        this.config = new HashMap<String, Object>();
+        this.config = new ConfigMap(this, new HashMap<String, Object>());
     }
 
     /**
@@ -63,7 +65,7 @@ public class ConfigManager {
 
         this.autoSave = false;
         this.file = null;
-        this.config = (Map)yaml.load(data);
+        this.config = new ConfigMap(this, (Map)yaml.load(data));
     }
     
     /**
@@ -81,204 +83,103 @@ public class ConfigManager {
     public boolean hasChanged() {
         return changed;
     }
-    
+
     /**
-     * Gets the property or returns the value of <tt>def</tt>. Only intended for internal use, you should call {@link #defaultProperty} in your config initialization instead of using this.
-     * @param name The property key.
-     * @param def The default value
-     * @return The value of the property or the value of <tt>def</tt> if it doesn't exist.
+     * See {@link ConfigMap#getProperty(String, Object) ConfigMap.getProperty}
      */
     public Object getProperty(String name, Object def) {
-        if (containsYamlKey(config, name))
-            return getYamlKey(config, name);
-        return def;
+        return config.getProperty(name, def);
     }
-    
+
     /**
-     * Gets the property.
-     * @param name The property key.
-     * @return The value of the property or <tt>null</tt> if it doesn't exist.
+     * See {@link ConfigMap#getProperty(String) ConfigMap.getProperty}
      */
     public Object getProperty(String name) {
-        return getProperty(name, null);
+        return config.getProperty(name);
     }
 
     /**
-     * Gets the property as a {@link List}.
-     * @param name The property key.
-     * @return {@link List} value of the property or <tt>null</tt> if it's not a list.
+     * See {@link ConfigMap#getList}
      */
     public List getList(String name) {
-        Object obj = getProperty(name, null);
-        return obj instanceof List ? (List)obj : null;
+        return config.getList(name);
     }
 
     /**
-     * Gets the property as a {@link String}.
-     * @param name The property key.
-     * @return {@link String} value of the property.
+     * See {@link ConfigMap#getMapList}
+     */
+    public List<ConfigMap> getMapList(String name) {
+        return config.getMapList(name);
+    }
+
+    /**
+     * See {@link ConfigMap#getString}
      */
     public String getString(String name) {
-        return getProperty(name, "").toString();
+        return config.getString(name);
     }
 
     /**
-     * Gets the property as a boolean.
-     * @param name The property key.
-     * @return Boolean value of the property.
+     * See {@link ConfigMap#getBoolean}
      */
     public boolean getBoolean(String name) {
-        return Boolean.parseBoolean(getProperty(name, false).toString());
+        return config.getBoolean(name);
     }
 
     /**
-     * Gets the property as an integer.
-     * @param name The property key.
-     * @return Integer value of the property.
+     * See {@link ConfigMap#getInteger}
      */
     public int getInteger(String name) {
-        return Integer.parseInt(getProperty(name, 0).toString());
+        return config.getInteger(name);
     }
 
     /**
-     * Gets the property as a long.
-     * @param name The property key.
-     * @return Long value of the property.
+     * See {@link ConfigMap#getLong}
      */
     public long getLong(String name) {
-        return Long.parseLong(getProperty(name, 0).toString());
+        return config.getLong(name);
     }
 
     /**
-     * Gets a property as a float.
-     * @param name The property key.
-     * @return Float value of the property.
+     * See {@link ConfigMap#getFloat}
      */
     public float getFloat(String name) {
-        return Float.parseFloat(getProperty(name, 0).toString());
+        return config.getFloat(name);
     }
 
     /**
-     * Gets a property as a double.
-     * @param name The property key.
-     * @return Double value of the property.
+     * See {@link ConfigMap#getDouble}
      */
     public double getDouble(String name) {
-        return Double.parseDouble(getProperty(name, 0).toString());
+        return config.getDouble(name);
     }
-    
+
     /**
-     * Sets a property.
-     * @param name The property key.
-     * @param value The value to be set.
+     * See {@link ConfigMap#setProperty}
      */
     public void setProperty(String name, Object value) {
-        putYamlKey(config, name, value);
-        if (autoSave) save();
+        config.setProperty(name, value);
     }
-    
+
     /**
-     * Removes a property.
-     * @param name The property key.
+     * See {@link ConfigMap#removeProperty}
      */
     public void removeProperty(String name) {
-        if (containsYamlKey(config, name)) {
-            removeYamlKey(config, name);
-            if (autoSave) save();
-        }
+        config.removeProperty(name);
     }
-    
+
     /**
-     * Set a property only if it doesn't exist already.
-     * @param name The property key.
-     * @param value The value to be set.
+     * See {@link ConfigMap#defaultProperty}
      */
     public void defaultProperty(String name, Object value) {
-        if (!containsYamlKey(config, name)) {
-            putYamlKey(config, name, value);
-            if (autoSave) save();
-        }
+        config.defaultProperty(name, value);
     }
-    
+
     /**
-     * Returns whether or not the property exists.
-     * @param name The property key.
-     * @return <tt>true</tt> if the specified property exists.
+     * See {@link ConfigMap#propertyExists}
      */
     public boolean propertyExists(String name) {
-        return containsYamlKey(config, name);
-    }
-
-    private Object getYamlKey(Map<String, Object> map, String key) {
-        if (key.indexOf('.') == -1) {
-            return map.get(key);
-        }
-        Map<String, Object> curmap = map;
-        while (key.indexOf('.') != -1) {
-            String subkey = key.substring(0, key.indexOf('.'));
-            key = key.substring(key.indexOf('.') + 1);
-            if (curmap.get(subkey) == null) return null;
-            if (!(curmap.get(subkey) instanceof Map)) {
-                throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
-            }
-            curmap = (Map)curmap.get(subkey);
-        }
-        return curmap.get(key);
-    }
-
-    private Object putYamlKey(Map<String, Object> map, String key, Object value) {
-        if (key.indexOf('.') == -1) {
-            changed = true;
-            return map.put(key, value);
-        }
-        Map<String, Object> curmap = map;
-        while (key.indexOf('.') != -1) {
-            String subkey = key.substring(0, key.indexOf('.'));
-            key = key.substring(key.indexOf('.') + 1);
-            if (curmap.get(subkey) == null) curmap.put(subkey, new HashMap<String, Object>());
-            if (!(curmap.get(subkey) instanceof Map)) {
-                throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
-            }
-            curmap = (Map)curmap.get(subkey);
-        }
-        changed = true;
-        return curmap.put(key, value);
-    }
-
-    private Object removeYamlKey(Map<String, Object> map, String key) {
-        if (key.indexOf('.') == -1) {
-            changed = true;
-            return map.remove(key);
-        }
-        Map<String, Object> curmap = map;
-        while (key.indexOf('.') != -1) {
-            String subkey = key.substring(0, key.indexOf('.'));
-            key = key.substring(key.indexOf('.') + 1);
-            if (curmap.get(subkey) == null) return null;
-            if (!(curmap.get(subkey) instanceof Map)) {
-                throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
-            }
-            curmap = (Map)curmap.get(subkey);
-        }
-        changed = true;
-        return curmap.remove(key);
-    }
-
-    private boolean containsYamlKey(Map<String, Object> map, String key) {
-        if (key.indexOf('.') == -1) {
-            return map.containsKey(key);
-        }
-        Map<String, Object> curmap = map;
-        while (key.indexOf('.') != -1) {
-            String subkey = key.substring(0, key.indexOf('.'));
-            key = key.substring(key.indexOf('.') + 1);
-            if (curmap.get(subkey) == null) return false;
-            if (!(curmap.get(subkey) instanceof Map)) {
-                throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
-            }
-            curmap = (Map)curmap.get(subkey);
-        }
-        return curmap.containsKey(key);
+        return config.propertyExists(name);
     }
     
     /**
@@ -292,8 +193,9 @@ public class ConfigManager {
                 return;
             }
             FileReader fr = new FileReader(file);
-            config = (Map)yaml.load(fr);
-            if (config == null) config = new HashMap<String, Object>();
+            Map<String, Object> map = (Map)yaml.load(fr);
+            if (map == null) map = new HashMap<>();
+            config = new ConfigMap(this, map);
             fr.close();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -307,12 +209,247 @@ public class ConfigManager {
         if (file == null) throw new UnsupportedOperationException("ConfigManager does not have a file");
         try {
             FileWriter fw = new FileWriter(file);
-            yaml.dump(config, fw);
+            yaml.dump(config.map, fw);
             fw.flush();
             fw.close();
             changed = false;
         } catch (IOException ex) {
             ex.printStackTrace();
+        }
+    }
+
+    public static class ConfigMap {
+        private final ConfigManager manager;
+        private final Map<String, Object> map;
+
+        public ConfigMap(ConfigManager manager, Map<String, Object> map) {
+            this.manager = manager;
+            this.map = map;
+        }
+
+        /**
+         * Returns the {@link ConfigManager} responsible for this ConfigMap.
+         * @return the {@link ConfigManager}
+         */
+        public ConfigManager getManager() {
+            return manager;
+        }
+
+        /**
+         * Gets the property or returns the value of <tt>def</tt>. Only intended for internal use, you should call {@link #defaultProperty} in your config initialization instead of using this.
+         * @param name The property key.
+         * @param def The default value
+         * @return The value of the property or the value of <tt>def</tt> if it doesn't exist.
+         */
+        public Object getProperty(String name, Object def) {
+            if (containsYamlKey(map, name))
+                return getYamlKey(map, name);
+            return def;
+        }
+
+        /**
+         * Gets the property.
+         * @param name The property key.
+         * @return The value of the property or <tt>null</tt> if it doesn't exist.
+         */
+        public Object getProperty(String name) {
+            return getProperty(name, null);
+        }
+
+        /**
+         * Gets the property as a {@link List}.
+         * @param name The property key.
+         * @return {@link List} value of the property or <tt>null</tt> if it's not a list.
+         */
+        public List getList(String name) {
+            Object obj = getProperty(name, null);
+            return obj instanceof List ? (List)obj : null;
+        }
+
+        /**
+         * Gets the property as a {@link List} containing only maps, as {@link ConfigMap} instances for ease of use. The returned list is not modifiable.
+         * @param name The property key.
+         * @return The {@link List} or <tt>null</tt> if it's not a list.
+         */
+        public List<ConfigMap> getMapList(String name) {
+            Object obj = getProperty(name, null);
+            if (obj instanceof List) {
+                List<ConfigMap> list = new ArrayList<>();
+                for (Object item : (List)obj) {
+                    if (item instanceof Map) {
+                        list.add(new ConfigMap(manager, (Map)item));
+                    }
+                }
+                return Collections.unmodifiableList(list);
+            } else return null;
+        }
+
+        /**
+         * Gets the property as a {@link String}.
+         * @param name The property key.
+         * @return {@link String} value of the property.
+         */
+        public String getString(String name) {
+            return getProperty(name, "").toString();
+        }
+
+        /**
+         * Gets the property as a boolean.
+         * @param name The property key.
+         * @return Boolean value of the property.
+         */
+        public boolean getBoolean(String name) {
+            return Boolean.parseBoolean(getProperty(name, false).toString());
+        }
+
+        /**
+         * Gets the property as an integer.
+         * @param name The property key.
+         * @return Integer value of the property.
+         */
+        public int getInteger(String name) {
+            return Integer.parseInt(getProperty(name, 0).toString());
+        }
+
+        /**
+         * Gets the property as a long.
+         * @param name The property key.
+         * @return Long value of the property.
+         */
+        public long getLong(String name) {
+            return Long.parseLong(getProperty(name, 0).toString());
+        }
+
+        /**
+         * Gets a property as a float.
+         * @param name The property key.
+         * @return Float value of the property.
+         */
+        public float getFloat(String name) {
+            return Float.parseFloat(getProperty(name, 0).toString());
+        }
+
+        /**
+         * Gets a property as a double.
+         * @param name The property key.
+         * @return Double value of the property.
+         */
+        public double getDouble(String name) {
+            return Double.parseDouble(getProperty(name, 0).toString());
+        }
+
+        /**
+         * Sets a property.
+         * @param name The property key.
+         * @param value The value to be set.
+         */
+        public void setProperty(String name, Object value) {
+            putYamlKey(map, name, value);
+            if (manager.autoSave) manager.save();
+        }
+
+        /**
+         * Removes a property.
+         * @param name The property key.
+         */
+        public void removeProperty(String name) {
+            if (containsYamlKey(map, name)) {
+                removeYamlKey(map, name);
+                if (manager.autoSave) manager.save();
+            }
+        }
+
+        /**
+         * Set a property only if it doesn't exist already.
+         * @param name The property key.
+         * @param value The value to be set.
+         */
+        public void defaultProperty(String name, Object value) {
+            if (!containsYamlKey(map, name)) {
+                putYamlKey(map, name, value);
+                if (manager.autoSave) manager.save();
+            }
+        }
+
+        /**
+         * Returns whether or not the property exists.
+         * @param name The property key.
+         * @return <tt>true</tt> if the specified property exists.
+         */
+        public boolean propertyExists(String name) {
+            return containsYamlKey(map, name);
+        }
+
+        private Object getYamlKey(Map<String, Object> map, String key) {
+            if (key.indexOf('.') == -1) {
+                return map.get(key);
+            }
+            Map<String, Object> curmap = map;
+            while (key.indexOf('.') != -1) {
+                String subkey = key.substring(0, key.indexOf('.'));
+                key = key.substring(key.indexOf('.') + 1);
+                if (curmap.get(subkey) == null) return null;
+                if (!(curmap.get(subkey) instanceof Map)) {
+                    throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
+                }
+                curmap = (Map)curmap.get(subkey);
+            }
+            return curmap.get(key);
+        }
+
+        private Object putYamlKey(Map<String, Object> map, String key, Object value) {
+            if (key.indexOf('.') == -1) {
+                manager.changed = true;
+                return map.put(key, value);
+            }
+            Map<String, Object> curmap = map;
+            while (key.indexOf('.') != -1) {
+                String subkey = key.substring(0, key.indexOf('.'));
+                key = key.substring(key.indexOf('.') + 1);
+                if (curmap.get(subkey) == null) curmap.put(subkey, new HashMap<String, Object>());
+                if (!(curmap.get(subkey) instanceof Map)) {
+                    throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
+                }
+                curmap = (Map)curmap.get(subkey);
+            }
+            manager.changed = true;
+            return curmap.put(key, value);
+        }
+
+        private Object removeYamlKey(Map<String, Object> map, String key) {
+            if (key.indexOf('.') == -1) {
+                manager.changed = true;
+                return map.remove(key);
+            }
+            Map<String, Object> curmap = map;
+            while (key.indexOf('.') != -1) {
+                String subkey = key.substring(0, key.indexOf('.'));
+                key = key.substring(key.indexOf('.') + 1);
+                if (curmap.get(subkey) == null) return null;
+                if (!(curmap.get(subkey) instanceof Map)) {
+                    throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
+                }
+                curmap = (Map)curmap.get(subkey);
+            }
+            manager.changed = true;
+            return curmap.remove(key);
+        }
+
+        private boolean containsYamlKey(Map<String, Object> map, String key) {
+            if (key.indexOf('.') == -1) {
+                return map.containsKey(key);
+            }
+            Map<String, Object> curmap = map;
+            while (key.indexOf('.') != -1) {
+                String subkey = key.substring(0, key.indexOf('.'));
+                key = key.substring(key.indexOf('.') + 1);
+                if (curmap.get(subkey) == null) return false;
+                if (!(curmap.get(subkey) instanceof Map)) {
+                    throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
+                }
+                curmap = (Map)curmap.get(subkey);
+            }
+            return curmap.containsKey(key);
         }
     }
 }
