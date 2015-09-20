@@ -222,7 +222,7 @@ public class ConfigManager {
         private final ConfigManager manager;
         private final Map<String, Object> map;
 
-        public ConfigMap(ConfigManager manager, Map<String, Object> map) {
+        private ConfigMap(ConfigManager manager, Map<String, Object> map) {
             this.manager = manager;
             this.map = map;
         }
