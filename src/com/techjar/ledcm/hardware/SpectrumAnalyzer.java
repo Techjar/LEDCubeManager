@@ -311,7 +311,7 @@ public class SpectrumAnalyzer {
             }
             AudioPlayer oldPlayer = player;
             player = minim.loadFile(path);
-            //LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioInit(player.getFormat()));
+            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioInit(player.getFormat()));
             String path2 = path.replaceAll("\\\\", "/");
             currentTrack = path2.contains("/") ? path2.substring(path2.lastIndexOf('/') + 1) : path2;
             currentTrack = currentTrack.substring(0, currentTrack.lastIndexOf('.'));
@@ -320,7 +320,7 @@ public class SpectrumAnalyzer {
             beatDetect = new BeatDetect(player.bufferSize(), player.sampleRate());
             beatDetect.detectMode(beatDetectMode);
             player.addListener(new AnalyzerAudioListener(fft, beatDetect));
-            //player.addListener(new StreamingAudioListener(true));
+            player.addListener(new StreamingAudioListener(true));
             player.play();
         } catch (Exception ex) {
             ex.printStackTrace();
