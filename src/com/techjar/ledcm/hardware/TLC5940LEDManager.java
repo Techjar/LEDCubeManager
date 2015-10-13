@@ -78,7 +78,7 @@ public class TLC5940LEDManager implements LEDManager {
                 int[][] arrs = {red2, green2, blue2};
                 for (int[] arr : arrs) {
                     for (int i = 62; i >= 0; i -= 2, index -= 3) {
-                        System.arraycopy(encode12BitValues(arr[(i + 1) | (y << 6)], arr[i | (y << 6)]), 0, array, index, 3);
+                        encode12BitValues(arr[(i + 1) | (y << 6)], arr[i | (y << 6)], array, index);
                     }
                 }
             }
@@ -143,11 +143,9 @@ public class TLC5940LEDManager implements LEDManager {
         return new Vector3((value >> 3) & 7, (value >> 6) & 7, value & 7);
     }
 
-    private byte[] encode12BitValues(int value1, int value2) {
-        byte[] bytes = new byte[3];
-        bytes[0] = (byte)(value1 >> 4);
-        bytes[1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
-        bytes[2] = (byte)value2;
-        return bytes;
+    private void encode12BitValues(int value1, int value2, byte[] array, int index) {
+        array[index] = (byte)(value1 >> 4);
+        array[index + 1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
+        array[index + 2] = (byte)value2;
     }
 }
