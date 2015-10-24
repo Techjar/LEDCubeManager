@@ -14,6 +14,9 @@ import org.lwjgl.util.Color;
 public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     private float[] amplitudes = new float[64];
     private int bandIncrement = 4;
+    // Used to make the sensitivity inversely proportional to the index.
+    // Should be slightly higher than the highest possible index.
+    private float indexDivisor = 70F;
 
     @Override
     public String getName() {
@@ -26,7 +29,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
             float amplitude = amplitudes[i] - 2;
             Vector2 pos = spiralPosition(i);
             for (int j = 0; j < 8; j++) {
-                float increment = (5.0F * (j + 1)) * (1 - (i / 70F));
+                float increment = (5.0F * (j + 1)) * (1 - (i / indexDivisor));
                 ledManager.setLEDColorReal((int)pos.getX() + 3, j, (int)pos.getY() + 3, amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
                 amplitude -= increment;
             }
