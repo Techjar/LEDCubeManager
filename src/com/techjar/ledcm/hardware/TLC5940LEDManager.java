@@ -148,4 +148,9 @@ public class TLC5940LEDManager implements LEDManager {
         array[index + 1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
         array[index + 2] = (byte)value2;
     }
+
+    @Override
+    public int getBaudrate() {
+        return 2000000;
+    }
 }
