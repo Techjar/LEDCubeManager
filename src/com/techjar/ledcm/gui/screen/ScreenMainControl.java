@@ -82,6 +82,7 @@ public class ScreenMainControl extends Screen {
     public final GUIButton sequencePlayBtn;
     public final GUIButton sequenceStopBtn;
     public final GUIButton settingsApplyBtn;
+    public final GUIButton clearBtn;
     public final GUIButton freezeBtn;
     public final GUIBackground freezeBtnBg;
     
@@ -415,6 +416,23 @@ public class ScreenMainControl extends Screen {
             }
         });*/
         layersWindow.addComponent(layerSlider);
+        clearBtn = new GUIButton(font, new Color(255, 255, 255), "Clear", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        clearBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        clearBtn.setDimension(140, 35);
+        clearBtn.setPosition(-5, 200);
+        clearBtn.setClickHandler(new GUICallback() {
+
+            @Override
+            public void run() {
+                LEDManager ledManager1 = LEDCubeManager.getLEDCube().getLEDManager();
+                Dimension3D dimensions = ledManager1.getDimensions();
+                for (int x = 0; x < dimensions.getX(); x++)
+                    for (int y = 0; y < dimensions.getY(); y++)
+                        for (int z = 0; z < dimensions.getZ(); z++)
+                            ledManager1.setLEDColor(x, y, z, new Color(0, 0, 0));
+            }
+        });
+        container.addComponent(clearBtn);
         freezeBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
         freezeBtn = new GUIButton(font, new Color(255, 255, 255), "Freeze", freezeBtnBg);
         freezeBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
