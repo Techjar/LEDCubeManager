@@ -116,4 +116,9 @@ public class TestHugeLEDManager implements LEDManager {
     public Vector3 decodeVector(int value) {
         return new Vector3((value >> 5) & 31, (value >> 10) & 31, value & 31);
     }
+
+    @Override
+    public int getBaudrate() {
+        return 2000000;
+    }
 }

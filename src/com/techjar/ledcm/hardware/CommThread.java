@@ -148,7 +148,7 @@ public class CommThread extends Thread {
             if (!port.isOpened()) {
                 try {
                     port.openPort();
-                    port.setParams(2000000, 8, 1, 0);
+                    port.setParams(ledManager.getBaudrate(), 8, 1, 0);
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
