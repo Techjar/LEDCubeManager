@@ -44,6 +44,16 @@ public class TLC5940LEDManager implements LEDManager {
     }
 
     @Override
+    public boolean isMonochrome() {
+        return false;
+    }
+
+    @Override
+    public Color getMonochromeColor() {
+        return null;
+    }
+
+    @Override
     public boolean getGammaCorrection() {
         return gammaCorrection;
     }

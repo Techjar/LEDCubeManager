@@ -64,6 +64,16 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
+    public boolean isMonochrome() {
+        return false;
+    }
+
+    @Override
+    public Color getMonochromeColor() {
+        return null;
+    }
+
+    @Override
     public boolean getGammaCorrection() {
         return gammaCorrection;
     }
@@ -108,7 +118,7 @@ public class ArduinoLEDManager implements LEDManager {
                     array[index + (j / 8) + 128] |= ((blue2[j] & mask) >> i) << bit;
                 }
             }
-            return array;
+            return null;
         }
     }
 

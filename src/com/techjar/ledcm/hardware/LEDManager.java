@@ -34,6 +34,16 @@ public interface LEDManager {
     public int getLEDCount();
 
     /**
+     * Returns whether this LEDManager is monochrome.
+     */
+    public boolean isMonochrome();
+
+    /**
+     * Returns the monochrome color.
+     */
+    public Color getMonochromeColor();
+
+    /**
      * Get gamma correction
      */
     public boolean getGammaCorrection();

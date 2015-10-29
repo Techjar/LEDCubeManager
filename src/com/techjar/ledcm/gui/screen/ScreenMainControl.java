@@ -238,6 +238,15 @@ public class ScreenMainControl extends Screen {
             }
         });
         container.addComponent(blueColorSlider);
+        if (LEDCubeManager.getLEDCube().getLEDManager().isMonochrome()) {
+            Color color = LEDCubeManager.getLEDCube().getLEDManager().getMonochromeColor();
+            redColorSlider.setValue(color.getRed() / 255F);
+            redColorSlider.setEnabled(false);
+            greenColorSlider.setValue(color.getGreen() / 255F);
+            greenColorSlider.setEnabled(false);
+            blueColorSlider.setValue(color.getBlue() / 255F);
+            blueColorSlider.setEnabled(false);
+        }
         xScaleSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
         xScaleSlider.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
         xScaleSlider.setDimension(120, 30);
