@@ -38,6 +38,7 @@ public class CommThread extends Thread {
     @Getter private AnimationSequence currentSequence;
     private SerialPort port;
     @Getter private TCPServer tcpServer;
+    @Getter @Setter private boolean frozen;
     /*int numRecv;
     Timer timer = new Timer();
     int lastRecv = -1;*/
@@ -84,6 +85,7 @@ public class CommThread extends Thread {
                 ticks++;
                 if (currentSequence != null) currentSequence.update();
                 if (currentAnimation != null) {
+                if (currentAnimation != null && !frozen) {
                     try {
                         currentAnimation.refresh();
                         currentAnimation.incTicks();

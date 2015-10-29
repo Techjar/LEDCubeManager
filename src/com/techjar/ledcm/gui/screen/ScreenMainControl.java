@@ -82,6 +82,8 @@ public class ScreenMainControl extends Screen {
     public final GUIButton sequencePlayBtn;
     public final GUIButton sequenceStopBtn;
     public final GUIButton settingsApplyBtn;
+    public final GUIButton freezeBtn;
+    public final GUIBackground freezeBtnBg;
     
     public ScreenMainControl() {
         super();
@@ -413,7 +415,22 @@ public class ScreenMainControl extends Screen {
             }
         });*/
         layersWindow.addComponent(layerSlider);
+        freezeBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
+        freezeBtn = new GUIButton(font, new Color(255, 255, 255), "Freeze", freezeBtnBg);
+        freezeBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        freezeBtn.setDimension(150, 35);
+        freezeBtn.setPosition(-5, 240);
+        freezeBtn.setClickHandler(new GUICallback() {
 
+            @Override
+            public void run() {
+                CommThread commThread = LEDCubeManager.getLEDCube().getCommThread();
+                boolean frozen = commThread.isFrozen();
+                freezeBtnBg.setBackgroundColor(frozen ? new Color(255, 0, 0) : new Color(0, 255, 0));
+                commThread.setFrozen(!frozen);
+            }
+        });
+        container.addComponent(freezeBtn);
 
         sequenceComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         sequenceComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
