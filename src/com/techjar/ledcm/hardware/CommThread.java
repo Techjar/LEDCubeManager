@@ -14,7 +14,6 @@ import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
 import com.techjar.ledcm.hardware.tcp.packet.PacketSetColorPicker;
 import java.io.IOException;
-import jssc.SerialPort;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -26,23 +25,23 @@ import lombok.SneakyThrows;
 public class CommThread extends Thread {
     private final Object lock = new Object();
     private final LEDManager ledManager;
+    private final PortHandler portHandler;
     private long updateTime;
     private long ticks;
     @Getter @Setter private int refreshRate = 60;
     @Getter private Animation currentAnimation;
     @Getter private AnimationSequence currentSequence;
-    private SerialPort port;
     @Getter private TCPServer tcpServer;
     @Getter @Setter private boolean frozen;
     /*int numRecv;
     Timer timer = new Timer();
     int lastRecv = -1;*/
 
-    public CommThread() throws IOException {
+    public CommThread(PortHandler portHandler) throws IOException {
         this.setName("Animation / Communication");
-        ledManager = LEDCubeManager.getLEDManager();
+        this.portHandler = portHandler;
+        ledManager = LEDCubeManager.getLEDCube().getLEDManager();
         updateTime = System.nanoTime();
-        port = new SerialPort(LEDCubeManager.getSerialPortName());
         tcpServer = new TCPServer(LEDCubeManager.getServerPort());
         tcpServer.setConnectHandler(new TCPServer.ConnectHandler() {
             @Override
@@ -94,8 +93,8 @@ public class CommThread extends Thread {
                     tcpServer.sendPacket(new PacketCubeFrame(data));
                     synchronized (lock) {
                         try {
-                            if (port.isOpened()) {
-                                /*if (ticks % 30 == 0)*/ port.writeBytes(data);
+                            if (portHandler.isOpened()) {
+                                /*if (ticks % 30 == 0)*/ portHandler.writeBytes(data);
                                 /*byte[] bytes = port.readBytes();
                                 if (bytes != null) {
                                     numRecv += bytes.length;
@@ -143,11 +142,9 @@ public class CommThread extends Thread {
 
     public void openPort() {
         synchronized (lock) {
-            if (!port.isOpened()) {
+            if (!portHandler.isOpened()) {
                 try {
-                    port.openPort();
-                    port.setParams(ledManager.getBaudRate(), 8, 1, 0);
-
+                    portHandler.open(ledManager.getBaudRate());
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -157,9 +154,9 @@ public class CommThread extends Thread {
 
     public void closePort() {
         synchronized (lock) {
-            if (port.isOpened()) {
+            if (portHandler.isOpened()) {
                 try {
-                    port.closePort();
+                    portHandler.close();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -168,7 +165,7 @@ public class CommThread extends Thread {
     }
 
     public boolean isPortOpen() {
-        return port.isOpened();
+        return portHandler.isOpened();
     }
 
     public int getNumTCPClients() {

@@ -7,6 +7,7 @@ import com.techjar.ledcm.hardware.CommThread;
 import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.hardware.LEDUtil;
+import com.techjar.ledcm.hardware.SerialPortHandler;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
 import com.techjar.ledcm.hardware.TLC5940LEDManager;
 import com.techjar.ledcm.hardware.TestHugeLEDManager;
@@ -75,7 +76,7 @@ public class LEDCube {
         if (postInited) throw new IllegalStateException();
         postInited = true;
         spectrumAnalyzer = new SpectrumAnalyzer();
-        commThread = new CommThread();
+        commThread = new CommThread(new SerialPortHandler(LEDCubeManager.getSerialPortName()));
         commThread.start();
         LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
         LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
