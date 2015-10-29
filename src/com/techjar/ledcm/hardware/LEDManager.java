@@ -92,4 +92,9 @@ public interface LEDManager {
      * Decodes an integers into a vector for array indexing in this LEDManager.
      */
     public Vector3 decodeVector(int value);
+
+    /**
+     * Returns baudrate for COM-port
+     */
+    public int getBaudrate();
 }

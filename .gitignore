@@ -13,6 +13,11 @@ nbdist/
 nbactions.xml
 nb-con
 
+#IntelliJ
+out/
+.idea/
+generated/
+
 # Misc
 logs/
 resources/sounds/music/
