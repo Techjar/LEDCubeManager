@@ -123,7 +123,7 @@ public class ArduinoLEDManager implements LEDManager {
                     array[index + (j / 8) + 128] |= ((blue2[j] & mask) >> i) << bit;
                 }
             }
-            return null;
+            return array;
         }
     }
 
