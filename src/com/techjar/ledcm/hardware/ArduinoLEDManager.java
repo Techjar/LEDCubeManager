@@ -84,6 +84,11 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
+    public int getBaudRate() {
+        return 2000000;
+    }
+
+    @Override
     public byte[] getCommData() {
         synchronized (this) {
             byte[] array = new byte[192 * outBits];

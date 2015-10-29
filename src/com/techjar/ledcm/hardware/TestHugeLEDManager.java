@@ -64,6 +64,11 @@ public class TestHugeLEDManager implements LEDManager {
     }
 
     @Override
+    public int getBaudRate() {
+        return 2000000;
+    }
+
+    @Override
     public byte[] getCommData() {
         synchronized (this) {
             return new byte[98304];

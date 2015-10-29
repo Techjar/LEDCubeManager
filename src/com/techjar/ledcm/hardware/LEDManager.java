@@ -54,6 +54,11 @@ public interface LEDManager {
     public void setGammaCorrection(boolean gammaCorrection);
 
     /**
+     * Returns desired COM port baud rate for this LEDManager
+     */
+    public int getBaudRate();
+
+    /**
      * Returns byte array to be sent across the controller connection.
      */
     public byte[] getCommData();
