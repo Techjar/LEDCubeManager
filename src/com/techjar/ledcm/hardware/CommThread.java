@@ -5,19 +5,14 @@ import com.techjar.ledcm.ControlUtil;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.animation.Animation;
-import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
 import com.techjar.ledcm.hardware.tcp.TCPClient;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationList;
-import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationOptionList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
 import com.techjar.ledcm.hardware.tcp.packet.PacketSetColorPicker;
-import com.techjar.ledcm.util.Constants;
-import com.techjar.ledcm.util.MathHelper;
-import com.techjar.ledcm.util.Timer;
 import java.io.IOException;
 import jssc.SerialPort;
 import lombok.Getter;
@@ -38,6 +33,7 @@ public class CommThread extends Thread {
     @Getter private AnimationSequence currentSequence;
     private SerialPort port;
     @Getter private TCPServer tcpServer;
+    @Getter @Setter private boolean frozen;
     /*int numRecv;
     Timer timer = new Timer();
     int lastRecv = -1;*/
@@ -81,40 +77,42 @@ public class CommThread extends Thread {
             long diff = System.nanoTime() - updateTime;
             if (diff >= interval) {
                 updateTime = System.nanoTime();
-                ticks++;
-                if (currentSequence != null) currentSequence.update();
-                if (currentAnimation != null) {
-                    try {
-                        currentAnimation.refresh();
-                        currentAnimation.incTicks();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        currentAnimation = null;
-                    }
-                }
-                ledManager.updateLEDArray();
-                byte[] data = ledManager.getCommData();
-                tcpServer.sendPacket(new PacketCubeFrame(data));
-                synchronized (lock) {
-                    try {
-                        if (port.isOpened()) {
-                            /*if (ticks % 30 == 0)*/ port.writeBytes(data);
-                            /*byte[] bytes = port.readBytes();
-                            if (bytes != null) {
-                                numRecv += bytes.length;
-                            }*/
-                            //while (port.readBytes(1, 3000)[0] != 1){}
-                            /*byte[] bytes = port.readBytes(data.length, 1000);
-                            if (bytes != null) {
-                                System.out.println("CHECK DATA");
-                                for (int i = 0; i < data.length; i++) {
-                                    if (bytes[i] != data[i]) System.out.println("ERROR @ " + i + " = " + (bytes[i] & 0xFF));
-                                }
-                            }*/
+                if (!frozen) {
+                    ticks++;
+                    if (currentSequence != null) currentSequence.update();
+                    if (currentAnimation != null) {
+                        try {
+                            currentAnimation.refresh();
+                            currentAnimation.incTicks();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            currentAnimation = null;
                         }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        closePort();
+                    }
+                    ledManager.updateLEDArray();
+                    byte[] data = ledManager.getCommData();
+                    tcpServer.sendPacket(new PacketCubeFrame(data));
+                    synchronized (lock) {
+                        try {
+                            if (port.isOpened()) {
+                                /*if (ticks % 30 == 0)*/ port.writeBytes(data);
+                                /*byte[] bytes = port.readBytes();
+                                if (bytes != null) {
+                                    numRecv += bytes.length;
+                                }*/
+                                //while (port.readBytes(1, 3000)[0] != 1){}
+                                /*byte[] bytes = port.readBytes(data.length, 1000);
+                                if (bytes != null) {
+                                    System.out.println("CHECK DATA");
+                                    for (int i = 0; i < data.length; i++) {
+                                        if (bytes[i] != data[i]) System.out.println("ERROR @ " + i + " = " + (bytes[i] & 0xFF));
+                                    }
+                                }*/
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            closePort();
+                        }
                     }
                 }
             }

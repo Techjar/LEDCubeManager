@@ -54,7 +54,7 @@ public interface LEDManager {
     public void setGammaCorrection(boolean gammaCorrection);
 
     /**
-     * Returns desired COM port baud rate for this LEDManager
+     * Returns desired serial port baud rate for this LEDManager
      */
     public int getBaudRate();
 

@@ -110,6 +110,9 @@ public class LEDCube {
             } else if (Keyboard.getEventKey() == Keyboard.KEY_C) {
                 LEDUtil.clear(ledManager);
                 return false;
+            } else if (Keyboard.getEventKey() == Keyboard.KEY_X) {
+                commThread.setFrozen(!commThread.isFrozen());
+                return false;
             }
         }
         return true;
