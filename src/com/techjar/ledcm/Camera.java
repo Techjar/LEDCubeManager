@@ -6,6 +6,9 @@ import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.input.InputBinding;
+import com.techjar.ledcm.util.input.InputBindingManager;
+import com.techjar.ledcm.util.input.InputInfo;
 import lombok.Getter;
 import lombok.Setter;
 import org.lwjgl.input.Keyboard;
@@ -20,66 +23,130 @@ public class Camera {
     @Getter @Setter private float rotateMultiplier;
     @Getter @Setter private Vector3 position;
     @Getter private Angle angle;
-    private boolean pW, pS, pA, pD, pQ, pE, pShift;
+    private boolean pForward, pBack, pLeft, pRight, pDown, pUp, pTurbo;
 
     public Camera() {
         this.moveSpeed = 20;
         this.rotateMultiplier = 0.2F;
         this.position = new Vector3();
         this.angle = new Angle(Angle.Order.YXZ);
-    }
 
-    public boolean processKeyboardEvent() {
-        boolean pressed = Keyboard.getEventKeyState();
-        switch (Keyboard.getEventKey()) {
-            case Keyboard.KEY_W:
-                pW = pressed;
-                break;
-            case Keyboard.KEY_S:
-                pS = pressed;
-                break;
-            case Keyboard.KEY_A:
-                pA = pressed;
-                break;
-            case Keyboard.KEY_D:
-                pD = pressed;
-                break;
-            case Keyboard.KEY_Q:
-                pQ = pressed;
-                break;
-            case Keyboard.KEY_E:
-                pE = pressed;
-                break;
-            case Keyboard.KEY_LSHIFT:
-                pShift = pressed;
-                break;
-        }
-        return true;
+        InputBindingManager.addBinding(new InputBinding("camforward", "Forward", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_W)) {
+            @Override
+            public boolean onPressed() {
+                pForward = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pForward = false;
+                return false;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("camfback", "Back", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_S)) {
+            @Override
+            public boolean onPressed() {
+                pBack = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pBack = false;
+                return false;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("camleft", "Left", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_A)) {
+            @Override
+            public boolean onPressed() {
+                pLeft = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pLeft = false;
+                return false;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("camright", "Right", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_D)) {
+            @Override
+            public boolean onPressed() {
+                pRight = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pRight = false;
+                return false;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("camdown", "Down", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Q)) {
+            @Override
+            public boolean onPressed() {
+                pDown = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pDown = false;
+                return false;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("camup", "Up", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_E)) {
+            @Override
+            public boolean onPressed() {
+                pUp = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pUp = false;
+                return false;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("camturbo", "Turbo", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_LSHIFT)) {
+            @Override
+            public boolean onPressed() {
+                pTurbo = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                pTurbo = false;
+                return false;
+            }
+        });
     }
 
     public void update(float delta) {
         //position = position.add(velocity);
         //angle = angle.add(angularVelocity);
         float moveMult = 1;
-        if (pShift) {
+        if (pTurbo) {
             moveMult = 5;
         }
-        if (pW) {
+        if (pForward) {
             position = position.add(angle.forward().multiply(moveSpeed * moveMult * delta));
         }
-        if (pS) {
+        if (pBack) {
             position = position.subtract(angle.forward().multiply(moveSpeed * moveMult * delta));
         }
-        if (pD) {
+        if (pRight) {
             position = position.add(angle.right().multiply(moveSpeed * moveMult * delta));
         }
-        if (pA) {
+        if (pLeft) {
             position = position.subtract(angle.right().multiply(moveSpeed * moveMult * delta));
         }
-        if (pQ) {
+        if (pDown) {
             position = position.subtract(angle.up().multiply(moveSpeed * moveMult * delta));
         }
-        if (pE) {
+        if (pUp) {
             position = position.add(angle.up().multiply(moveSpeed * moveMult * delta));
         }
         if (Mouse.isGrabbed()) {

@@ -22,6 +22,9 @@ import com.techjar.ledcm.util.Model;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.input.InputBinding;
+import com.techjar.ledcm.util.input.InputBindingManager;
+import com.techjar.ledcm.util.input.InputInfo;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +51,7 @@ public class LEDCube {
     private int ledSpaceMult = 8;
     private boolean drawClick;
     private boolean postInited;
+    private Vector3 cursorTrace;
     @Getter private boolean trueColor;
     @Getter private CommThread commThread;
     @Getter private SpectrumAnalyzer spectrumAnalyzer;
@@ -66,6 +70,7 @@ public class LEDCube {
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("led.model");
         initOctree();
+        initBindings();
         /*for (int i = 0; i < 64; i++) {
             double j = i;
             LogHelper.info(Math.round(MathHelper.cie1931(j/63)*63));
@@ -82,90 +87,52 @@ public class LEDCube {
         LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
     }
 
+    private void computeLEDHighlight() {
+        for (int i = 0; i < highlight.length; i++) {
+            highlight[i] = false;
+        }
+        if (cursorTrace != null) {
+            Dimension3D dim = ledManager.getDimensions();
+            for (int x = (int)cursorTrace.getX(); x <= Math.min((int)cursorTrace.getX() + (int)paintSize.getX(), dim.x - 1); x++) {
+                for (int y = (int)cursorTrace.getY(); y <= Math.min((int)cursorTrace.getY() + (int)paintSize.getY(), dim.y - 1); y++) {
+                    for (int z = (int)cursorTrace.getZ(); z <= Math.min((int)cursorTrace.getZ() + (int)paintSize.getZ(), dim.z - 1); z++) {
+                        if (isLEDWithinIsolation(x, y, z)) {
+                            highlight[Util.encodeCubeVector(x, y, z)] = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void paintLEDHighlight() {
+        Dimension3D dim = ledManager.getDimensions();
+        for (int x = 0; x < dim.x; x++) {
+            for (int y = 0; y < dim.y; y++) {
+                for (int z = 0; z < dim.z; z++) {
+                    if (highlight[Util.encodeCubeVector(x, y, z)]) {
+                        ledManager.setLEDColor(x, y, z, paintColor);
+                    }
+                }
+            }
+        }
+    }
+
+    public void preProcess() {
+        cursorTrace = traceCursorToLED();
+        computeLEDHighlight();
+    }
+
     public boolean processKeyboardEvent() {
         if (Keyboard.getEventKeyState()) {
             //if (Keyboard.getEventKey() == Keyboard.KEY_F11) setFullscreen(!fullscreen);
-            if (Keyboard.getEventKey() == Keyboard.KEY_Y && commThread.getCurrentSequence() == null) {
-                loadAnimations();
-                return false;
-            } else if (Keyboard.getEventKey() == Keyboard.KEY_R && commThread.getCurrentAnimation() != null) {
-                Animation anim = commThread.getCurrentAnimation();
-                try {
-                    animations.put(anim.getName(), anim.getClass().newInstance());
-                    commThread.setCurrentAnimation(animations.get(anim.getName()));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-                return false;
-            } else if (Keyboard.getEventKey() == Keyboard.KEY_F) {
-                LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
-                LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
-                return false;
-            } else if (Keyboard.getEventKey() == Keyboard.KEY_H) {
-                trueColor = !trueColor;
-                float increment = trueColor ? 1F / ledManager.getResolution() : 1F / 255F;
-                LEDCubeManager.getInstance().getScreenMainControl().redColorSlider.setIncrement(increment);
-                LEDCubeManager.getInstance().getScreenMainControl().greenColorSlider.setIncrement(increment);
-                LEDCubeManager.getInstance().getScreenMainControl().blueColorSlider.setIncrement(increment);
-                return false;
-            } else if (Keyboard.getEventKey() == Keyboard.KEY_C) {
-                LEDUtil.clear(ledManager);
-                return false;
-            } else if (Keyboard.getEventKey() == Keyboard.KEY_X) {
-                commThread.setFrozen(!commThread.isFrozen());
-                return false;
-            }
         }
         return true;
     }
 
     public boolean processMouseEvent() {
-        for (int i = 0; i < highlight.length; i++) {
-            highlight[i] = false;
-        }
-        if (Mouse.getEventButtonState() && Mouse.getEventButton() == 0) drawClick = true;
-        else if (!Mouse.getEventButtonState() && Mouse.getEventButton() == 0) drawClick = false;
-        if (!Mouse.isGrabbed()) {
-            Vector3 led = traceCursorToLED();
-            if (led != null) {
-                Dimension3D dim = ledManager.getDimensions();
-                for (int x = (int)led.getX(); x <= Math.min((int)led.getX() + (int)paintSize.getX(), dim.x - 1); x++) {
-                    for (int y = (int)led.getY(); y <= Math.min((int)led.getY() + (int)paintSize.getY(), dim.y - 1); y++) {
-                        for (int z = (int)led.getZ(); z <= Math.min((int)led.getZ() + (int)paintSize.getZ(), dim.z - 1); z++) {
-                            if (isLEDWithinIsolation(x, y, z)) {
-                                highlight[Util.encodeCubeVector(x, y, z)] = true;
-                                if (drawClick) {
-                                    ledManager.setLEDColor(x, y, z, paintColor);
-                                }
-                            }
-                        }
-                    }
-                }
-                if (!drawClick && Mouse.getEventButtonState() && Mouse.getEventButton() == 1) {
-                    LEDArray ledArray = ledManager.getLEDArray();
-                    Color targetColor = ledArray.getLEDColor((int)led.getX(), (int)led.getY(), (int)led.getZ());
-                    if (!targetColor.equals(paintColor)) {
-                        boolean[] processed = new boolean[ledManager.getLEDCount()];
-                        LinkedList<Vector3> stack = new LinkedList<>();
-                        stack.push(led);
-                        while (!stack.isEmpty()) {
-                            Vector3 current = stack.pop();
-                            Color color = ledArray.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
-                            if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
-                                ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
-                                processed[Util.encodeCubeVector(current)] = true;
-                                for (int i = 0; i < 6; i++) {
-                                    Vector3 offset = Direction.values()[i].getVector();
-                                    Vector3 node = current.add(offset);
-                                    if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[Util.encodeCubeVector(node)]) {
-                                        stack.push(node);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (!Mouse.isGrabbed() && drawClick) {
+            paintLEDHighlight();
         }
         return !drawClick;
     }
@@ -228,6 +195,154 @@ public class LEDCube {
         LEDCubeManager.getInstance().getScreenMainControl().redColorSlider.setValue(color.getRed() / 255F);
         LEDCubeManager.getInstance().getScreenMainControl().greenColorSlider.setValue(color.getGreen() / 255F);
         LEDCubeManager.getInstance().getScreenMainControl().blueColorSlider.setValue(color.getBlue() / 255F);
+    }
+
+    private void initBindings() {
+        InputBindingManager.addBinding(new InputBinding("reloadanimation", "Reload Current", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_R)) {
+            @Override
+            public boolean onPressed() {
+                if (commThread.getCurrentSequence() == null) {
+                    Animation anim = commThread.getCurrentAnimation();
+                    try {
+                        animations.put(anim.getName(), anim.getClass().newInstance());
+                        commThread.setCurrentAnimation(animations.get(anim.getName()));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    return false;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("reloadallanimations", "Reload All", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Y)) {
+            @Override
+            public boolean onPressed() {
+                if (commThread.getCurrentSequence() == null) {
+                    loadAnimations();
+                    return false;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("resetcamera", "Reset Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F)) {
+            @Override
+            public boolean onPressed() {
+                LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
+                LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("togglecolor", "Toggle Color", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_H)) {
+            @Override
+            public boolean onPressed() {
+                trueColor = !trueColor;
+                float increment = trueColor ? 1F / ledManager.getResolution() : 1F / 255F;
+                LEDCubeManager.getInstance().getScreenMainControl().redColorSlider.setIncrement(increment);
+                LEDCubeManager.getInstance().getScreenMainControl().greenColorSlider.setIncrement(increment);
+                LEDCubeManager.getInstance().getScreenMainControl().blueColorSlider.setIncrement(increment);
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("clearleds", "Clear LEDs", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_C)) {
+            @Override
+            public boolean onPressed() {
+                LEDUtil.clear(ledManager);
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("freezeanimation", "Freeze", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_X)) {
+            @Override
+            public boolean onPressed() {
+                commThread.setFrozen(!commThread.isFrozen());
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("paintleds", "Paint LEDs", true, new InputInfo(InputInfo.Type.MOUSE, 0)) {
+            @Override
+            public boolean onPressed() {
+                if (!Mouse.isGrabbed()) {
+                    drawClick = true;
+                    paintLEDHighlight();
+                    return false;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onReleased() {
+                drawClick = false;
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("floodfill", "Flood Fill", true, new InputInfo(InputInfo.Type.MOUSE, 1)) {
+            @Override
+            public boolean onPressed() {
+                if (!Mouse.isGrabbed()) {
+                    if (cursorTrace != null) {
+                        Dimension3D dim = ledManager.getDimensions();
+                        LEDArray ledArray = ledManager.getLEDArray();
+                        Color targetColor = ledArray.getLEDColor((int)cursorTrace.getX(), (int)cursorTrace.getY(), (int)cursorTrace.getZ());
+                        if (!targetColor.equals(paintColor)) {
+                            boolean[] processed = new boolean[ledManager.getLEDCount()];
+                            LinkedList<Vector3> stack = new LinkedList<>();
+                            stack.push(cursorTrace);
+                            while (!stack.isEmpty()) {
+                                Vector3 current = stack.pop();
+                                Color color = ledArray.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
+                                if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
+                                    ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
+                                    processed[Util.encodeCubeVector(current)] = true;
+                                    for (int i = 0; i < 6; i++) {
+                                        Vector3 offset = Direction.values()[i].getVector();
+                                        Vector3 node = current.add(offset);
+                                        if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[Util.encodeCubeVector(node)]) {
+                                            stack.push(node);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
     }
 
     private void initOctree() {

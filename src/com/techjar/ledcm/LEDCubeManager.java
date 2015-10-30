@@ -48,6 +48,9 @@ import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.input.InputBinding;
+import com.techjar.ledcm.util.input.InputBindingManager;
+import com.techjar.ledcm.util.input.InputInfo;
 import com.techjar.ledcm.util.logging.LogHelper;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
@@ -251,6 +254,7 @@ public class LEDCubeManager {
         Runtime.getRuntime().addShutdownHook(new ShutdownThread());
         initDisplayModes();
         initConfig();
+        initBindings();
 
         File musicDir = new File("resampled");
         if (!musicDir.exists()) musicDir.mkdirs();
@@ -304,6 +308,7 @@ public class LEDCubeManager {
         deltaTime = System.nanoTime();
 
         screenList.add(screenMainControl = new ScreenMainControl());
+        InputBindingManager.setupSettings();
         ledCube.loadAnimations();
 
         run();
@@ -452,6 +457,7 @@ public class LEDCubeManager {
 
 
         soundManager.update();
+        this.preProcess();
         this.processKeyboard();
         this.processMouse();
         this.processController();
@@ -613,8 +619,62 @@ public class LEDCubeManager {
         /*if (config.getInteger("version") < Constants.VERSION) {
             config.setProperty("version", Constants.VERSION);
         }*/
-
+        
+        InputBindingManager.loadAllConfig();
         if (config.hasChanged()) config.save();
+    }
+
+    private void initBindings() {
+        InputBindingManager.addBinding(new InputBinding("movecamera", "Move Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
+            @Override
+            public boolean onPressed() {
+                Mouse.setGrabbed(!Mouse.isGrabbed());
+                if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("screenshot", "Screenshot", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F2)) {
+            @Override
+            public boolean onPressed() {
+                screenshot = true;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("reloadshaders", "Reload Shaders", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F5)) {
+            @Override
+            public boolean onPressed() {
+                ShaderProgram.cleanup();
+                initShaders();
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("wireframe", "Wireframe", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F6)) {
+            @Override
+            public boolean onPressed() {
+                wireframe = !wireframe;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
     }
 
     private void init() {
@@ -662,30 +722,25 @@ public class LEDCubeManager {
         glViewport(0, 0, width, height);
     }
 
+    private void preProcess() {
+        ledCube.preProcess();
+    }
+
     private void processKeyboard() {
         toploop: while (Keyboard.next()) {
             for (Screen screen : screenList)
                 if (screen.isVisible() && screen.isEnabled() && !screen.processKeyboardEvent()) continue toploop;
             //if (world != null && !world.processKeyboardEvent()) continue;
-            if (Keyboard.getEventKeyState()) { // TODO: Implement key binding system
-                if (Keyboard.getEventKey() == Keyboard.KEY_ESCAPE) {
-                    Mouse.setGrabbed(!Mouse.isGrabbed());
-                    if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
-                    continue;
-                } else if (Keyboard.getEventKey() == Keyboard.KEY_F2) {
-                    screenshot = true;
-                    continue;
-                } else if (Keyboard.getEventKey() == Keyboard.KEY_F5) {
-                    ShaderProgram.cleanup();
-                    initShaders();
-                    continue;
-                } else if (Keyboard.getEventKey() == Keyboard.KEY_F6) {
-                    wireframe = !wireframe;
-                    continue;
+            for (InputBinding binding : InputBindingManager.getBindings()) {
+                if (binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.KEYBOARD && binding.getBind().getButton() == Keyboard.getEventKey()) {
+                    if (Keyboard.getEventKeyState()) {
+                        if (!binding.onPressed()) continue toploop;
+                    } else {
+                        if (!binding.onReleased()) continue toploop;
+                    }
                 }
             }
             if (!ledCube.processKeyboardEvent()) continue;
-            if (!camera.processKeyboardEvent()) continue;
             /*float moveSpeed = 0.01F;
             if (Keyboard.getEventKey() == Keyboard.KEY_W) {
                 if (Keyboard.getEventKeyState()) camera.setVelocity(camera.getVelocity().add(camera.getAngle().forward().multiply(moveSpeed)));
@@ -702,13 +757,22 @@ public class LEDCubeManager {
         toploop: while (Mouse.next()) {
             for (Screen screen : screenList)
                 if (screen.isVisible() && screen.isEnabled() && !screen.processMouseEvent()) continue toploop;
+            for (InputBinding binding : InputBindingManager.getBindings()) {
+                if (binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.MOUSE && binding.getBind().getButton() == Mouse.getEventButton()) {
+                    if (Mouse.getEventButtonState()) {
+                        if (!binding.onPressed()) continue toploop;
+                    } else {
+                        if (!binding.onReleased()) continue toploop;
+                    }
+                }
+            }
             //if (world != null && !world.processMouseEvent()) continue;
             //if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState() && !asteroids.containsKey(getMousePos())) asteroids.put(getMousePos(), AsteroidGenerator.generate());
             if (!ledCube.processMouseEvent()) continue;
         }
     }
 
-    private void processController() {
+    private void processController() { // TODO
         toploop: while (Controllers.next()) {
             Controller con = Controllers.getEventSource();
             if (con.getName().equals(config.getString("controls.controller"))) {

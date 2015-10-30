@@ -228,7 +228,7 @@ public abstract class Animation {
                 }
                 GUILabel label = new GUILabel(screen.font, new Color(255, 255, 255), option.name);
                 int width = screen.font.getWidth(option.name);
-                label.setPosition(5 + (labelWidth - width), position + (gui instanceof GUIContainer ? 0 : ((gui.getHeight() - 30) / 2F)));
+                label.setPosition(5 + (labelWidth - width), position + (gui instanceof GUIContainer ? 0 : Math.round((gui.getHeight() - 30) / 2F)));
                 label.setDimension(width, 30);
                 if (gui instanceof GUICheckBox) ((GUICheckBox)gui).setLabel(label);
                 box.addComponent(label);

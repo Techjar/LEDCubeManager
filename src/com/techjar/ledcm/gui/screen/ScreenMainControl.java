@@ -41,8 +41,10 @@ public class ScreenMainControl extends Screen {
     public final GUIWindow sequenceWindow;
     public final GUIWindow animOptionsWindow;
     public final GUIWindow settingsWindow;
+    public final GUIWindow controlsWindow;
     public final GUIScrollBox animOptionsScrollBox;
     public final GUIScrollBox settingsScrollBox;
+    public final GUIScrollBox controlsScrollBox;
     public final GUIButton animOptionsBtn;
     public final GUIButton settingsBtn;
     public final GUIButton audioInputBtn;
@@ -82,6 +84,7 @@ public class ScreenMainControl extends Screen {
     public final GUIButton sequencePlayBtn;
     public final GUIButton sequenceStopBtn;
     public final GUIButton settingsApplyBtn;
+    public final GUIButton controlsBtn;
     
     public ScreenMainControl() {
         super();
@@ -567,7 +570,7 @@ public class ScreenMainControl extends Screen {
         settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
         settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
         settingsApplyBtn.setDimension(200, 40);
-        settingsApplyBtn.setPosition(0, -30);
+        settingsApplyBtn.setPosition(-105, -30);
         settingsApplyBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
@@ -597,6 +600,18 @@ public class ScreenMainControl extends Screen {
             }
         });
         settingsWindow.addComponent(settingsApplyBtn);
+        controlsBtn = new GUIButton(font, new Color(255, 255, 255), "Controls", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        controlsBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
+        controlsBtn.setDimension(200, 40);
+        controlsBtn.setPosition(105, -30);
+        controlsBtn.setClickHandler(new GUICallback() {
+            @Override
+            public void run() {
+                controlsWindow.setVisible(true);
+                controlsWindow.setToBePutOnTop(true);
+            }
+        });
+        settingsWindow.addComponent(controlsBtn);
         settingsBtn = new GUIButton(font, new Color(255, 255, 255), "Settings", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
         settingsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
         settingsBtn.setDimension(160, 35);
@@ -638,6 +653,26 @@ public class ScreenMainControl extends Screen {
         }
         antiAliasingComboBtn.setSelectedItem(LEDCubeManager.getInstance().isAntiAliasing() ? LEDCubeManager.getInstance().getAntiAliasingSamples() + "x" : "Off");
         settingsScrollBox.addComponent(antiAliasingComboBtn);
+
+        controlsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
+        controlsWindow.setDimension(500, 450);
+        controlsWindow.setPosition(container.getWidth() / 2 - controlsWindow.getWidth() / 2, container.getHeight() / 2 - controlsWindow.getHeight() / 2);
+        controlsWindow.setResizable(false, true);
+        controlsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
+        controlsWindow.setMinimumSize(new Dimension(50, 150));
+        controlsWindow.setVisible(false);
+        container.addComponent(controlsWindow);
+        controlsScrollBox = new GUIScrollBox(new Color(255, 0, 0));
+        controlsScrollBox.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
+        controlsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
+        controlsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
+        controlsWindow.setDimensionChangeHandler(new GUICallback() {
+            @Override
+            public void run() {
+                controlsScrollBox.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
+            }
+        });
+        controlsWindow.addComponent(controlsScrollBox);
 
         audioInputBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
         audioInputBtn = new GUIButton(font, new Color(255, 255, 255), "Audio Input", audioInputBtnBg);
