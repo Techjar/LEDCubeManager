@@ -607,8 +607,8 @@ public class ScreenMainControl extends Screen {
         controlsBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                controlsWindow.setVisible(true);
-                controlsWindow.setToBePutOnTop(true);
+                controlsWindow.setVisible(!controlsWindow.isVisible());
+                if (controlsWindow.isVisible()) controlsWindow.setToBePutOnTop(true);
             }
         });
         settingsWindow.addComponent(controlsBtn);
