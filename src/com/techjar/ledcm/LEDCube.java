@@ -91,7 +91,7 @@ public class LEDCube {
         for (int i = 0; i < highlight.length; i++) {
             highlight[i] = false;
         }
-        if (cursorTrace != null) {
+        if (cursorTrace != null && !Mouse.isGrabbed()) {
             Dimension3D dim = ledManager.getDimensions();
             for (int x = (int)cursorTrace.getX(); x <= Math.min((int)cursorTrace.getX() + (int)paintSize.getX(), dim.x - 1); x++) {
                 for (int y = (int)cursorTrace.getY(); y <= Math.min((int)cursorTrace.getY() + (int)paintSize.getY(), dim.y - 1); y++) {
