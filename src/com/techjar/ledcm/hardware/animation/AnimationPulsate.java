@@ -24,11 +24,11 @@ public class AnimationPulsate extends Animation {
 
     @Override
     public void refresh() {
-        for (int y = 0; y < 8; y++) {
+        for (int y = 0; y < dimension.y; y++) {
             double value = Math.sin(timer.getSeconds() * 2 + ((7 - y) / 7F) * 3) * 0.5 + 0.5;
             Color color = Util.multiplyColor(LEDCubeManager.getPaintColor(), value);
-            for (int x = 0; x < 8; x++) {
-                for (int z = 0; z < 8; z++) {
+            for (int x = 0; x < dimension.x; x++) {
+                for (int z = 0; z < dimension.z; z++) {
                     ledManager.setLEDColor(x, y, z, color);
                 }
             }
