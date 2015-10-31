@@ -198,7 +198,7 @@ public class LEDCube {
     }
 
     private void initBindings() {
-        InputBindingManager.addBinding(new InputBinding("reloadanimation", "Reload Current", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_R)) {
+        InputBindingManager.addBinding(new InputBinding("reloadanimation", "Reload Current", "Animation", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_R)) {
             @Override
             public boolean onPressed() {
                 if (commThread.getCurrentSequence() == null) {
@@ -219,7 +219,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("reloadallanimations", "Reload All", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Y)) {
+        InputBindingManager.addBinding(new InputBinding("reloadallanimations", "Reload All", "Animation", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Y)) {
             @Override
             public boolean onPressed() {
                 if (commThread.getCurrentSequence() == null) {
@@ -234,7 +234,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("resetcamera", "Reset Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F)) {
+        InputBindingManager.addBinding(new InputBinding("resetcamera", "Reset Position", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F)) {
             @Override
             public boolean onPressed() {
                 LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
@@ -247,7 +247,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("togglecolor", "Toggle Color", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_H)) {
+        InputBindingManager.addBinding(new InputBinding("togglecolor", "Toggle Color", "Cube", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_H)) {
             @Override
             public boolean onPressed() {
                 trueColor = !trueColor;
@@ -263,7 +263,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("clearleds", "Clear LEDs", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_C)) {
+        InputBindingManager.addBinding(new InputBinding("clearleds", "Clear LEDs", "Cube", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_C)) {
             @Override
             public boolean onPressed() {
                 LEDUtil.clear(ledManager);
@@ -275,7 +275,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("freezeanimation", "Freeze", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_X)) {
+        InputBindingManager.addBinding(new InputBinding("freezeanimation", "Freeze", "Animation", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_X)) {
             @Override
             public boolean onPressed() {
                 commThread.setFrozen(!commThread.isFrozen());
@@ -287,7 +287,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("paintleds", "Paint LEDs", true, new InputInfo(InputInfo.Type.MOUSE, 0)) {
+        InputBindingManager.addBinding(new InputBinding("paintleds", "Paint LEDs", "Cube", true, new InputInfo(InputInfo.Type.MOUSE, 0)) {
             @Override
             public boolean onPressed() {
                 if (!Mouse.isGrabbed()) {
@@ -304,7 +304,7 @@ public class LEDCube {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("floodfill", "Flood Fill", true, new InputInfo(InputInfo.Type.MOUSE, 1)) {
+        InputBindingManager.addBinding(new InputBinding("floodfill", "Flood Fill", "Cube", true, new InputInfo(InputInfo.Type.MOUSE, 1)) {
             @Override
             public boolean onPressed() {
                 if (!Mouse.isGrabbed()) {

@@ -625,20 +625,7 @@ public class LEDCubeManager {
     }
 
     private void initBindings() {
-        InputBindingManager.addBinding(new InputBinding("movecamera", "Move Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
-            @Override
-            public boolean onPressed() {
-                Mouse.setGrabbed(!Mouse.isGrabbed());
-                if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
-                return false;
-            }
-
-            @Override
-            public boolean onReleased() {
-                return true;
-            }
-        });
-        InputBindingManager.addBinding(new InputBinding("screenshot", "Screenshot", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F2)) {
+        InputBindingManager.addBinding(new InputBinding("screenshot", "Screenshot", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F2)) {
             @Override
             public boolean onPressed() {
                 screenshot = true;
@@ -650,7 +637,7 @@ public class LEDCubeManager {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("reloadshaders", "Reload Shaders", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F5)) {
+        InputBindingManager.addBinding(new InputBinding("reloadshaders", "Reload Shaders", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F5)) {
             @Override
             public boolean onPressed() {
                 ShaderProgram.cleanup();
@@ -663,10 +650,23 @@ public class LEDCubeManager {
                 return true;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("wireframe", "Wireframe", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F6)) {
+        InputBindingManager.addBinding(new InputBinding("wireframe", "Wireframe", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F6)) {
             @Override
             public boolean onPressed() {
                 wireframe = !wireframe;
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("movecamera", "Toggle Movement", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
+            @Override
+            public boolean onPressed() {
+                Mouse.setGrabbed(!Mouse.isGrabbed());
+                if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
                 return false;
             }
 

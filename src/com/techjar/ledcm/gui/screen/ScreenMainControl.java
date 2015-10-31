@@ -13,6 +13,7 @@ import com.techjar.ledcm.gui.GUILabel;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUIScrollBox;
 import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUITabbed;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.GUIWindow;
 import com.techjar.ledcm.hardware.LEDManager;
@@ -36,6 +37,7 @@ import org.newdawn.slick.UnicodeFont;
  */
 public class ScreenMainControl extends Screen {
     public final UnicodeFont font;
+    public final UnicodeFont fontTabbed;
     public final GUISlider progressSlider;
     public final GUIWindow layersWindow;
     public final GUIWindow sequenceWindow;
@@ -44,7 +46,7 @@ public class ScreenMainControl extends Screen {
     public final GUIWindow controlsWindow;
     public final GUIScrollBox animOptionsScrollBox;
     public final GUIScrollBox settingsScrollBox;
-    public final GUIScrollBox controlsScrollBox;
+    public final GUITabbed controlsTabbed;
     public final GUIButton animOptionsBtn;
     public final GUIButton settingsBtn;
     public final GUIButton audioInputBtn;
@@ -92,6 +94,7 @@ public class ScreenMainControl extends Screen {
         final Dimension3D ledDim = ledManager.getDimensions();
 
         font = LEDCubeManager.getFontManager().getFont("chemrea", 30, false, false).getUnicodeFont();
+        fontTabbed = LEDCubeManager.getFontManager().getFont("chemrea", 22, false, false).getUnicodeFont();
         playBtn = new GUIButton(font, new Color(255, 255, 255), "Play", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
         playBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
         playBtn.setDimension(100, 40);
@@ -662,17 +665,15 @@ public class ScreenMainControl extends Screen {
         controlsWindow.setMinimumSize(new Dimension(50, 150));
         controlsWindow.setVisible(false);
         container.addComponent(controlsWindow);
-        controlsScrollBox = new GUIScrollBox(new Color(255, 0, 0));
-        controlsScrollBox.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
-        controlsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
-        controlsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
+        controlsTabbed = new GUITabbed(fontTabbed, new Color(255, 255, 255), new GUIBackground(new Color(50, 50, 50), new Color(255, 0, 0), 2));
+        controlsTabbed.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
         controlsWindow.setDimensionChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                controlsScrollBox.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
+                controlsTabbed.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
             }
         });
-        controlsWindow.addComponent(controlsScrollBox);
+        controlsWindow.addComponent(controlsTabbed);
 
         audioInputBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
         audioInputBtn = new GUIButton(font, new Color(255, 255, 255), "Audio Input", audioInputBtnBg);

@@ -10,12 +10,14 @@ import lombok.Getter;
 public abstract class InputBinding {
     @Getter private final String id;
     @Getter private final String name;
+    @Getter private final String category;
     @Getter private final boolean unbindable;
     private InputInfo bind;
 
-    public InputBinding(String id, String name, boolean unbindable, InputInfo defaultBind) {
+    public InputBinding(String id, String name, String category, boolean unbindable, InputInfo defaultBind) {
         this.id = id;
         this.name = name;
+        this.category = category;
         this.unbindable = unbindable;
         this.bind = defaultBind;
     }
