@@ -13,6 +13,7 @@ import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
 import com.techjar.ledcm.hardware.tcp.packet.PacketSetColorPicker;
+import com.techjar.ledcm.util.Timer;
 import java.io.IOException;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +29,9 @@ public class CommThread extends Thread {
     private final PortHandler portHandler;
     private long updateTime;
     private long ticks;
+    private int fpsCounter;
+    private volatile int fpsDisplay;
+    private Timer frameTimer = new Timer();
     @Getter @Setter private int refreshRate = 60;
     @Getter private Animation currentAnimation;
     @Getter private AnimationSequence currentSequence;
@@ -77,6 +81,12 @@ public class CommThread extends Thread {
             if (diff >= interval) {
                 updateTime = System.nanoTime();
                 if (!frozen) {
+                    if (frameTimer.getMilliseconds() >= 1000) {
+                        fpsDisplay = fpsCounter;
+                        fpsCounter = 0;
+                        frameTimer.restart();
+                    }
+                    fpsCounter++;
                     ticks++;
                     if (currentSequence != null) currentSequence.update();
                     if (currentAnimation != null) {
@@ -113,6 +123,9 @@ public class CommThread extends Thread {
                             closePort();
                         }
                     }
+                } else {
+                    fpsCounter = 0;
+                    fpsDisplay = 0;
                 }
             }
             else if (interval - diff > 1000000) {
@@ -170,6 +183,10 @@ public class CommThread extends Thread {
 
     public int getNumTCPClients() {
         return tcpServer.getNumClients();
+    }
+
+    public int getFPS() {
+        return fpsDisplay;
     }
 
     private class ShutdownThread extends Thread {
