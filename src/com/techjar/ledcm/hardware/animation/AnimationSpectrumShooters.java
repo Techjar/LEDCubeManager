@@ -2,6 +2,7 @@
 package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.util.Direction;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Vector2;
 import ddf.minim.analysis.BeatDetect;
@@ -13,10 +14,23 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
-    private float[] amplitudes = new float[64];
-    private int bandIncrement = 4;
+    private float[] amplitudes;
+    private final int size;
+    private final int bandIncrement;
+    private final int bandRepeat;
+    // Used to make the sensitivity inversely proportional to the index.
+    // Should be slightly higher than the highest possible index.
+    private final float indexDivisor;
     private boolean rainbow = true;
     private float sensitivity = 20.0F;
+    private Direction direction = Direction.SOUTH;
+
+    public AnimationSpectrumShooters() {
+        size = dimension.x * dimension.y;
+        bandIncrement = Math.max(Math.round(256F / size), 1);
+        bandRepeat = Math.max(Math.round(size / 512F), 1);
+        indexDivisor = size + 6;
+    }
 
     @Override
     public String getName() {
@@ -25,21 +39,21 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
 
     @Override
     public synchronized void refresh() {
-        for (int x = 0; x < 8; x++) {
-            for (int y = 0; y < 8; y++) {
-                for (int z = 6; z >= 0; z--) {
+        for (int x = 0; x < dimension.x; x++) {
+            for (int y = 0; y < dimension.y; y++) {
+                for (int z = dimension.z - 2; z >= 0; z--) {
                     ledManager.setLEDColor(x, y, z + 1, ledManager.getLEDColor(x, y, z));
                     ledManager.setLEDColor(x, y, z, new Color());
                 }
             }
         }
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < size; i++) {
             float amplitude = amplitudes[i] - 2;
-            if (amplitude > sensitivity * (1 - (i / 70F))) {
-                int x = i & 7;
-                int y = (i >> 3) & 7;
+            if (amplitude > sensitivity * (1 - (i / indexDivisor))) {
+                int x = i % dimension.x;
+                int y = i / dimension.y;
                 Color color = new Color();
-                if (rainbow) color.fromHSB(i / 63F, 1, 1);
+                if (rainbow) color.fromHSB(i / (float)size, 1, 1);
                 else color = LEDCubeManager.getPaintColor();
                 ledManager.setLEDColor(x, y, 0, color);
             }
@@ -48,7 +62,7 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
 
     @Override
     public void reset() {
-        amplitudes = new float[64];
+        amplitudes = new float[size];
     }
 
     @Override
@@ -68,7 +82,7 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
 
     @Override
     public synchronized void processFFT(FFT fft) {
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < size; i++) {
             float amplitude = 0;
             for (int j = 0; j < bandIncrement; j++) {
                 float band = fft.getBand(i * bandIncrement + j);

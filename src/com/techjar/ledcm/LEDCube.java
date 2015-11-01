@@ -11,6 +11,7 @@ import com.techjar.ledcm.hardware.SerialPortHandler;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
 import com.techjar.ledcm.hardware.TLC5940LEDManager;
 import com.techjar.ledcm.hardware.TestHugeLEDManager;
+import com.techjar.ledcm.hardware.TestMediumLEDManager;
 import com.techjar.ledcm.hardware.TestReallyHugeLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.util.Angle;
@@ -65,6 +66,7 @@ public class LEDCube {
     public LEDCube() {
         ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
+        //ledManager = new TestMediumLEDManager(true);
         //ledManager = new TestHugeLEDManager(true);
         //ledManager = new TestReallyHugeLEDManager(true);
         highlight = new boolean[ledManager.getLEDCount()];
