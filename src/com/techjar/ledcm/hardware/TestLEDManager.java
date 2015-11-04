@@ -11,15 +11,24 @@ import org.lwjgl.util.ReadableColor;
  *
  * @author Techjar
  */
-public class TestMediumLEDManager implements LEDManager {
-    private final byte[] red = new byte[4096];
-    private final byte[] green = new byte[4096];
-    private final byte[] blue = new byte[4096];
+public class TestLEDManager implements LEDManager {
+    private final byte[] red;
+    private final byte[] green;
+    private final byte[] blue;
+    private final int xSize;
+    private final int ySize;
+    private final int zSize;
     private boolean gammaCorrection;
     private LEDArray ledArray;
 
-    public TestMediumLEDManager(boolean gammaCorrection) {
+    public TestLEDManager(boolean gammaCorrection, int xSize, int ySize, int zSize) {
         this.gammaCorrection = gammaCorrection;
+        this.xSize = xSize;
+        this.ySize = ySize;
+        this.zSize = zSize;
+        red = new byte[xSize * ySize * zSize];
+        green = new byte[xSize * ySize * zSize];
+        blue = new byte[xSize * ySize * zSize];
         updateLEDArray();
     }
 
@@ -35,12 +44,12 @@ public class TestMediumLEDManager implements LEDManager {
 
     @Override
     public Dimension3D getDimensions() {
-        return new Dimension3D(16, 16, 16);
+        return new Dimension3D(xSize, ySize, zSize);
     }
 
     @Override
     public int getLEDCount() {
-        return 4096;
+        return xSize * ySize * zSize;
     }
 
     @Override
@@ -71,7 +80,7 @@ public class TestMediumLEDManager implements LEDManager {
     @Override
     public byte[] getCommData() {
         synchronized (this) {
-            return new byte[98304];
+            return new byte[100];
         }
     }
 
@@ -92,11 +101,11 @@ public class TestMediumLEDManager implements LEDManager {
 
     @Override
     public Color getLEDColor(int x, int y, int z) {
-        if (x < 0 || x > 15) throw new IllegalArgumentException("Invalid X coordinate: " + x);
-        if (y < 0 || y > 15) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
-        if (z < 0 || z > 15) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
+        if (x < 0 || x >= xSize) throw new IllegalArgumentException("Invalid X coordinate: " + x);
+        if (y < 0 || y >= ySize) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
+        if (z < 0 || z >= zSize) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 8) | (x << 4) | z;
+        int index = x + xSize * (y + ySize * z);
         return new Color(red[index], green[index], blue[index]);
     }
 
@@ -107,11 +116,11 @@ public class TestMediumLEDManager implements LEDManager {
 
     @Override
     public void setLEDColor(int x, int y, int z, ReadableColor color) {
-        if (x < 0 || x > 15) throw new IllegalArgumentException("Invalid X coordinate: " + x);
-        if (y < 0 || y > 15) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
-        if (z < 0 || z > 15) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
+        if (x < 0 || x >= xSize) throw new IllegalArgumentException("Invalid X coordinate: " + x);
+        if (y < 0 || y >= ySize) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
+        if (z < 0 || z >= zSize) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 8) | (x << 4) | z;
+        int index = x + xSize * (y + ySize * z);
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();
@@ -119,16 +128,16 @@ public class TestMediumLEDManager implements LEDManager {
 
     @Override
     public int encodeVector(Vector3 vector) {
-        return encodeVector((int)vector.getY(), (int)vector.getX(), (int)vector.getZ());
+        return encodeVector((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
     }
 
     @Override
     public int encodeVector(int x, int y, int z) {
-        return (y << 8) | (x << 4) | z;
+        return x + xSize * (y + ySize * z);
     }
 
     @Override
     public Vector3 decodeVector(int value) {
-        return new Vector3((value >> 4) & 15, (value >> 8) & 15, value & 15);
+        return new Vector3(value % xSize, (value / xSize) % ySize, value / (xSize * ySize));
     }
 }

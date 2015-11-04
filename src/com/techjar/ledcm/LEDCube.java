@@ -10,9 +10,7 @@ import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.hardware.SerialPortHandler;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
 import com.techjar.ledcm.hardware.TLC5940LEDManager;
-import com.techjar.ledcm.hardware.TestHugeLEDManager;
-import com.techjar.ledcm.hardware.TestMediumLEDManager;
-import com.techjar.ledcm.hardware.TestReallyHugeLEDManager;
+import com.techjar.ledcm.hardware.TestLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.AxisAlignedBB;
@@ -39,6 +37,9 @@ import org.lwjgl.input.Controller;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 
 /**
  *
@@ -53,6 +54,11 @@ public class LEDCube {
     private boolean drawClick;
     private boolean postInited;
     private Vector3 cursorTrace;
+    private Matrix4f transform = new Matrix4f();
+    @Getter private Vector3f centerPoint;
+    @Getter private boolean reflectX;
+    @Getter private boolean reflectY;
+    @Getter private boolean reflectZ;
     @Getter private boolean trueColor;
     @Getter private CommThread commThread;
     @Getter private SpectrumAnalyzer spectrumAnalyzer;
@@ -61,14 +67,15 @@ public class LEDCube {
     @Getter private Vector3 paintSize = new Vector3(0, 0, 0);
     @Getter @Setter private int layerIsolation = 0;
     @Getter @Setter private int selectedLayer = 0;
+    @Getter @Setter private boolean previewTransform = true;
     @Getter private Model model;
 
     public LEDCube() {
-        ledManager = new ArduinoLEDManager(4, false);
+        //ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
-        //ledManager = new TestMediumLEDManager(true);
-        //ledManager = new TestHugeLEDManager(true);
-        //ledManager = new TestReallyHugeLEDManager(true);
+        ledManager = new TestLEDManager(true, 16, 16, 16);
+        Dimension3D dim = ledManager.getDimensions();
+        centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("led.model");
         initOctree();
@@ -152,7 +159,7 @@ public class LEDCube {
         float mult = ledSpaceMult;
 
         Dimension3D dim = ledManager.getDimensions();
-        LEDArray ledArray = ledManager.getLEDArray();
+        LEDArray ledArray = previewTransform ? ledManager.getLEDArray().getTransformed() : ledManager.getLEDArray();
         for (int y = 0; y < dim.y; y++) {
             for (int z = 0; z < dim.z; z++) {
                 for (int x = 0; x < dim.x; x++) {
@@ -448,6 +455,28 @@ public class LEDCube {
             case 3: return z == selectedLayer;
         }
         return true;
+    }
+
+    public void rotateTransform(float radians, Vector3 axis) {
+        transform.translate(centerPoint);
+        transform.rotate(radians, Util.convertVector(axis));
+        transform.translate(centerPoint.negate(null));
+    }
+
+    public void setReflection(boolean x, boolean y, boolean z) {
+        reflectX = x;
+        reflectY = y;
+        reflectZ = z;
+    }
+
+    public Vector3 applyTransform(Vector3 vector) {
+        Dimension3D dim = ledManager.getDimensions();
+        vector = vector.copy();
+        if (reflectX) vector.setX((dim.x - 1) - vector.getX());
+        if (reflectY) vector.setY((dim.y - 1) - vector.getY());
+        if (reflectZ) vector.setZ((dim.z - 1) - vector.getZ());
+        Vector4f vec = Matrix4f.transform(transform, new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1), null);
+        return new Vector3(Math.round(vec.x), Math.round(vec.y), Math.round(vec.z));
     }
 
     public void loadAnimations() {

@@ -23,7 +23,6 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     private final float indexDivisor;
     private boolean rainbow = true;
     private float sensitivity = 20.0F;
-    private Direction direction = Direction.SOUTH;
 
     public AnimationSpectrumShooters() {
         size = dimension.x * dimension.y;

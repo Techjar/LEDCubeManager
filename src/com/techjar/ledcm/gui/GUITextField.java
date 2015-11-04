@@ -55,7 +55,7 @@ public class GUITextField extends GUIText {
     public boolean processKeyboardEvent() {
         super.processKeyboardEvent();
         if (focused) {
-            if (Keyboard.getEventKey() == Keyboard.KEY_LCONTROL) {
+            if (Keyboard.getEventKey() == Keyboard.KEY_LCONTROL || Keyboard.getEventKey() == Keyboard.KEY_RCONTROL) {
                 ctrlPressed = Keyboard.getEventKeyState();
             }
             else if (Keyboard.getEventKeyState()) {

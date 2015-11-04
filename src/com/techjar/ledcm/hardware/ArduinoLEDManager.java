@@ -91,14 +91,17 @@ public class ArduinoLEDManager implements LEDManager {
     @Override
     public byte[] getCommData() {
         synchronized (this) {
+            byte[] redT = ledArray.getTransformed().getRed();
+            byte[] greenT = ledArray.getTransformed().getGreen();
+            byte[] blueT = ledArray.getTransformed().getBlue();
             byte[] array = new byte[192 * outBits];
             int[] red2 = new int[512];
             int[] green2 = new int[512];
             int[] blue2 = new int[512];
             for (int i = 0; i < 512; i++) {
-                red2[i] = Math.round((red[i] & 0xFF) / factor);
-                green2[i] = Math.round((green[i] & 0xFF) / factor);
-                blue2[i] = Math.round((blue[i] & 0xFF) / factor);
+                red2[i] = Math.round((redT[i] & 0xFF) / factor);
+                green2[i] = Math.round((greenT[i] & 0xFF) / factor);
+                blue2[i] = Math.round((blueT[i] & 0xFF) / factor);
             }
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
@@ -172,7 +175,7 @@ public class ArduinoLEDManager implements LEDManager {
 
     @Override
     public int encodeVector(Vector3 vector) {
-        return encodeVector((int)vector.getY(), (int)vector.getX(), (int)vector.getZ());
+        return encodeVector((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
     }
 
     @Override
