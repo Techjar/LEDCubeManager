@@ -34,14 +34,21 @@ public class InputBindingManager {
     }
 
     public static void addBinding(InputBinding binding) {
+        if (bindings.contains(binding)) return;
+        for (InputBinding bind : bindings) {
+            if (bind.getId().toLowerCase().equals(binding.getId().toLowerCase())) {
+                throw new IllegalArgumentException("Binding with ID \"" + binding.getId() + "\" already exists!");
+            }
+        }
+        bindings.add(binding);
         if (configLoaded) loadConfig(binding);
         if (settingsLoaded) setupSettings();
-        bindings.add(binding);
     }
 
     public static void removeBinding(InputBinding binding) {
-        if (settingsLoaded) setupSettings();
+        if (!bindings.contains(binding)) return;
         bindings.remove(binding);
+        if (settingsLoaded) setupSettings();
     }
 
     public static void loadAllConfig() {
