@@ -71,9 +71,9 @@ public class LEDCube {
     @Getter private Model model;
 
     public LEDCube() {
-        //ledManager = new ArduinoLEDManager(4, false);
+        ledManager = new ArduinoLEDManager(4, false);
         //ledManager = new TLC5940LEDManager(true);
-        ledManager = new TestLEDManager(true, 16, 16, 16);
+        //ledManager = new TestLEDManager(true, 16, 16, 16);
         Dimension3D dim = ledManager.getDimensions();
         centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
         highlight = new boolean[ledManager.getLEDCount()];
