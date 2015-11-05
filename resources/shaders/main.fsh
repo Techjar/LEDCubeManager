@@ -42,10 +42,10 @@ void main(void) {
     mat4 view_inverse = inverse(view_matrix);
     vec3 normalDirection = vertex.normal;
     vec3 viewDirection = normalize(vec3(view_inverse * vec4(0, 0, 0, 1) - vec4(vertex.position, 0)));
-    vec3 lightDirection;
-    float attenuation;
-    vec3 totalDiffuse;
-    vec3 totalSpecular;
+    vec3 lightDirection = vec3(0, 0, 0);
+    float attenuation = 0;
+    vec3 totalDiffuse = vec3(0, 0, 0);
+    vec3 totalSpecular = vec3(0, 0, 0);
 
     for (int i = 0; i < num_lights; i++) {
         Light light = lights[i];
