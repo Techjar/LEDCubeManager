@@ -79,7 +79,7 @@ public class GUITextField extends GUIText {
                                         return false;
                                     }
                                 }
-                                if ((text.toString() + str).matches(validationRegex)) {
+                                if ((text.substring(0, cursorPosition) + str + text.substring(cursorPosition)).matches(validationRegex)) {
                                     text.insert(cursorPosition, str);
                                     for (int i = 0; i < str.length(); i++) {
                                         moveCursor(true);
@@ -181,7 +181,7 @@ public class GUITextField extends GUIText {
     }
 
     protected void handleKeyOrCharacter(int key, char ch) {
-        if (text.length() < maxLength && Util.isPrintableCharacter(ch) && (text.toString() + ch).matches(validationRegex)) {
+        if (text.length() < maxLength && Util.isPrintableCharacter(ch) && (text.substring(0, cursorPosition) + ch + text.substring(cursorPosition)).matches(validationRegex)) {
             text.insert(cursorPosition, ch);
             moveCursor(true);
             if (changeHandler != null) {
@@ -190,7 +190,7 @@ public class GUITextField extends GUIText {
             }
             repeatState = true;
         } else if (key == Keyboard.KEY_BACK && text.length() > 0) {
-            if (cursorPosition > 0) {
+            if (cursorPosition > 0 && (text.substring(0, cursorPosition - 1) + text.substring(cursorPosition)).matches(validationRegex)) {
                 text.deleteCharAt(cursorPosition - 1);
                 moveCursor(false);
                 if (cursorPosition == textPosition && textPosition > 0) textPosition--;

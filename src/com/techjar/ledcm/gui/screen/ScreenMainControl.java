@@ -14,6 +14,7 @@ import com.techjar.ledcm.gui.GUILabel;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUIScrollBox;
 import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITabbed;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.GUIWindow;
