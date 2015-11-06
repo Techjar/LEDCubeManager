@@ -29,6 +29,7 @@ public class GUISpinner extends GUI {
     protected boolean focused;
     protected boolean upHovered;
     protected boolean downHovered;
+    protected GUICallback changeHandler;
 
     protected int buttonWidth = 30;
     protected float minValue = 0;
@@ -50,6 +51,10 @@ public class GUISpinner extends GUI {
             public void run() {
                 try {
                     value = MathHelper.clamp(Float.parseFloat(formatDecimal(Float.parseFloat(textField.getText()))), minValue, maxValue);
+                    if (changeHandler != null) {
+                        changeHandler.setComponent(GUISpinner.this);
+                        changeHandler.run();
+                    }
                 } catch (NumberFormatException ex) {
                 }
             }
@@ -150,6 +155,10 @@ public class GUISpinner extends GUI {
         textField.setChangeHandler(null);
         textField.setText(formatDecimal(value));
         textField.setChangeHandler(cb);
+        if (changeHandler != null) {
+            changeHandler.setComponent(this);
+            changeHandler.run();
+        }
     }
 
     protected String formatDecimal(float value) {
@@ -167,6 +176,14 @@ public class GUISpinner extends GUI {
     public void setValue(float value) {
         this.value = MathHelper.clamp(Float.parseFloat(formatDecimal(value)), minValue, maxValue);
         setTextField(this.value);
+    }
+
+    public GUICallback getChangeHandler() {
+        return changeHandler;
+    }
+
+    public void setChangeHandler(GUICallback changeHandler) {
+        this.changeHandler = changeHandler;
     }
 
     public int getButtonWidth() {
