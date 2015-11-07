@@ -39,7 +39,7 @@ public class GUIRadioButton extends GUI {
     public boolean processMouseEvent() {
         if (Mouse.getEventButtonState()) {
             if (Mouse.getEventButton() == 0) {
-                if (checkMouseIntersect(getComponentBox()) || (label != null && checkMouseIntersect(label.getComponentBox()))) {
+                if (checkMouseIntersect(getComponentBox()) || (label != null && label.checkMouseIntersect(label.getComponentBox()))) {
                     if (!selected) {
                         LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
                         setSelected(true);
@@ -57,7 +57,7 @@ public class GUIRadioButton extends GUI {
         //circle2.setLocation(getPosition().getX() + (dimension.getWidth() / 2), getPosition().getY() + (dimension.getHeight() / 2));
         //circle2.setLocation(getPosition().getX() + (dimension.getWidth() / 2), getPosition().getY() + (dimension.getHeight() / 2));
         if (!Mouse.isButtonDown(0)) {
-            if (checkMouseIntersect(getComponentBox()) || (label != null && checkMouseIntersect(label.getComponentBox()))) {
+            if (checkMouseIntersect(getComponentBox()) || (label != null && label.checkMouseIntersect(label.getComponentBox()))) {
                 if (!hovered) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);
                 hovered = true;
             }

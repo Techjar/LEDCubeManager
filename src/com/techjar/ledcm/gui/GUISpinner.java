@@ -154,7 +154,6 @@ public class GUISpinner extends GUI {
         String maxStr = Integer.toString((int)Math.max(Math.abs(minValue), Math.abs(maxValue)));
         if (decimalPlaces > 0) textField.setValidationRegex("^" + (minValue < 0 ? "-?" : "") + "[0-9]{0," + maxStr.length() + "}(\\.[0-9]{0," + decimalPlaces + "})?$");
         else textField.setValidationRegex("^" + (minValue < 0 ? "-?" : "") + "[0-9]{0," + maxStr.length() + "}$");
-        System.out.println(textField.getValidationRegex());
     }
 
     protected void updateValue(float value) {
