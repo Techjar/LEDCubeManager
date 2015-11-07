@@ -10,6 +10,7 @@ import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -65,6 +66,17 @@ public class GUISpinner extends GUI {
     @Override
     public boolean processKeyboardEvent() {
         boolean ret = true;
+        if (focused) {
+            if (Keyboard.getEventKeyState()) {
+                if (Keyboard.getEventKey() == Keyboard.KEY_UP) {
+                    updateValue(value + increment);
+                    ret = false;
+                } else if (Keyboard.getEventKey() == Keyboard.KEY_DOWN) {
+                    updateValue(value - increment);
+                    ret = false;
+                }
+            }
+        }
         if (!textField.processKeyboardEvent()) ret = false;
         return ret;
     }
@@ -77,12 +89,12 @@ public class GUISpinner extends GUI {
             Rectangle btnDown = new Rectangle(getPosition().getX() + (dimension.getWidth() - buttonWidth), getPosition().getY() + (dimension.getHeight() / 2) + (dimension.getHeight() % 2 == 0 ? 1 : 2), buttonWidth, (dimension.getHeight() / 2) - 1);
             if (checkMouseIntersect(btnUp)) {
                 LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
-                value += increment;
-                updateValue();
+                updateValue(value + increment);
+                ret = false;
             } else if (checkMouseIntersect(btnDown)) {
                 LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
-                value -= increment;
-                updateValue();
+                updateValue(value - increment);
+                ret = false;
             }
         }
         if (!textField.processMouseEvent()) ret = false;
@@ -145,7 +157,7 @@ public class GUISpinner extends GUI {
         System.out.println(textField.getValidationRegex());
     }
 
-    protected void updateValue() {
+    protected void updateValue(float value) {
         this.value = MathHelper.clamp(Float.parseFloat(formatDecimal(value)), minValue, maxValue);
         setTextField(this.value);
     }
@@ -174,8 +186,7 @@ public class GUISpinner extends GUI {
     }
 
     public void setValue(float value) {
-        this.value = MathHelper.clamp(Float.parseFloat(formatDecimal(value)), minValue, maxValue);
-        setTextField(this.value);
+        updateValue(value);
     }
 
     public GUICallback getChangeHandler() {
@@ -201,7 +212,7 @@ public class GUISpinner extends GUI {
     public void setMinValue(float minValue) {
         this.minValue = minValue;
         updateRegex();
-        updateValue();
+        updateValue(value);
     }
 
     public float getMaxValue() {
@@ -211,7 +222,7 @@ public class GUISpinner extends GUI {
     public void setMaxValue(float maxValue) {
         this.maxValue = maxValue;
         updateRegex();
-        updateValue();
+        updateValue(value);
     }
 
     public int getDecimalPlaces() {
@@ -221,7 +232,7 @@ public class GUISpinner extends GUI {
     public void setDecimalPlaces(int decimalPlaces) {
         this.decimalPlaces = decimalPlaces;
         updateRegex();
-        updateValue();
+        updateValue(value);
     }
 
     public float getIncrement() {
