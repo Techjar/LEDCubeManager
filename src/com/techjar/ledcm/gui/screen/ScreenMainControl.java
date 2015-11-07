@@ -264,18 +264,23 @@ public class ScreenMainControl extends Screen {
         blueColorSlider.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getPaintColor().setBlue(Math.round(255 * blueColorSlider.getValue()));
+                if (LEDCubeManager.getLEDCube().getLEDManager().isMonochrome()) {
+                    Color color = LEDCubeManager.getLEDCube().getLEDManager().getMonochromeColor();
+                    LEDCubeManager.getPaintColor().setRed(Math.round(color.getRed() * blueColorSlider.getValue()));
+                    LEDCubeManager.getPaintColor().setGreen(Math.round(color.getGreen() * blueColorSlider.getValue()));
+                    LEDCubeManager.getPaintColor().setBlue(Math.round(color.getBlue() * blueColorSlider.getValue()));
+                } else {
+                    LEDCubeManager.getPaintColor().setBlue(Math.round(255 * blueColorSlider.getValue()));
+                }
             }
         });
         container.addComponent(blueColorSlider);
         if (LEDCubeManager.getLEDCube().getLEDManager().isMonochrome()) {
             Color color = LEDCubeManager.getLEDCube().getLEDManager().getMonochromeColor();
-            redColorSlider.setValue(color.getRed() / 255F);
-            redColorSlider.setEnabled(false);
-            greenColorSlider.setValue(color.getGreen() / 255F);
-            greenColorSlider.setEnabled(false);
-            blueColorSlider.setValue(color.getBlue() / 255F);
-            blueColorSlider.setEnabled(false);
+            LEDCubeManager.getPaintColor().setColor(color);
+            redColorSlider.setVisible(false);
+            greenColorSlider.setVisible(false);
+            blueColorSlider.setColor(color);
         }
         xScaleSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
         xScaleSlider.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
