@@ -164,7 +164,7 @@ public class LEDCube {
             for (int z = 0; z < dim.z; z++) {
                 for (int x = 0; x < dim.x; x++) {
                     if (isLEDWithinIsolation(x, y, z)) {
-                        Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
+                        Vector3 pos = new Vector3(x * mult, y * mult, z * mult);
                         Color color;
                         if (trueColor) {
                             Color ledColor = ledArray.getLEDColorReal(x, y, z);
@@ -181,7 +181,7 @@ public class LEDCube {
                 for (int z = 0; z < dim.z; z++) {
                     if (highlight[Util.encodeCubeVector(x, y, z)]) {
                         if (isLEDWithinIsolation(x, y, z)) {
-                            Vector3 pos = new Vector3(z * mult, y * mult, x * mult);
+                            Vector3 pos = new Vector3(x * mult, y * mult, z * mult);
                             faceCount += model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), new Vector3(1.2F, 1.2F, 1.2F));
                         }
                     }
@@ -355,14 +355,16 @@ public class LEDCube {
     }
 
     private void initOctree() {
-        Dimension3D dim =  ledManager.getDimensions();
-        if (/*dim.x != dim.y || dim.x != dim.z || dim.y != dim.z ||*/ !Util.isPowerOfTwo(dim.x) || !Util.isPowerOfTwo(dim.y) || !Util.isPowerOfTwo(dim.z)) return; // Non-cubes and non-powers-of-two need special handling here
-        int minDim = Math.min(dim.x, Math.min(dim.y, dim.z));
+        Dimension3D dim = ledManager.getDimensions();
+        int minDim = Util.getNextPowerOfTwo(Math.min(dim.x, Math.min(dim.y, dim.z)));
         float octreeSize = ledSpaceMult * minDim;
         ArrayList<LEDCubeOctreeNode> list = new ArrayList<>();
-        for (int x = 0; x < dim.x; x += minDim) {
-            for (int y = 0; y < dim.y; y += minDim) {
-                for (int z = 0; z < dim.z; z += minDim) {
+        int multX = (int)Math.ceil(dim.x / (float)minDim) * minDim;
+        int multY = (int)Math.ceil(dim.y / (float)minDim) * minDim;
+        int multZ = (int)Math.ceil(dim.z / (float)minDim) * minDim;
+        for (int x = 0; x < multX; x += minDim) {
+            for (int y = 0; y < multY; y += minDim) {
+                for (int z = 0; z < multZ; z += minDim) {
                     Vector3 offset = new Vector3(octreeSize * (x / minDim), octreeSize * (y / minDim), octreeSize * (z / minDim));
                     LEDCubeOctreeNode octree = new LEDCubeOctreeNode(new AxisAlignedBB(new Vector3(-ledSpaceMult / 2, -ledSpaceMult / 2, -ledSpaceMult / 2).add(offset), new Vector3(octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2), octreeSize + (ledSpaceMult / 2)).add(offset)));
                     recursiveFillOctree(octree, octreeSize / 2, minDim, new Vector3(x, y, z));
@@ -383,27 +385,29 @@ public class LEDCube {
             float yOffset = y * size;
             float zOffset = z * size;
             if (count > 1) {
+                Dimension3D dim = ledManager.getDimensions();
+                Vector3 nextLedPos = ledPos.add(new Vector3((count / 2) * x, (count / 2) * y, (count / 2) * z));
+                if (nextLedPos.getX() >= dim.x || nextLedPos.getY() >= dim.y || nextLedPos.getZ() >= dim.z) continue;
                 LEDCubeOctreeNode newNode = new LEDCubeOctreeNode(new AxisAlignedBB(nodeAABB.getMinPoint().add(new Vector3(xOffset, yOffset, zOffset)), nodeAABB.getMinPoint().add(new Vector3(xOffset + size, yOffset + size, zOffset + size))));
                 node.setNode(i, newNode);
-                recursiveFillOctree(newNode, size / 2, count / 2, ledPos.add(new Vector3((count / 2) * x, (count / 2) * y, (count / 2) * z)));
+                recursiveFillOctree(newNode, size / 2, count / 2, nextLedPos);
             } else {
                 AxisAlignedBB modelAABB = model.getAABB();
-                node.setNode(i, new LEDCubeOctreeNode(new AxisAlignedBB(modelAABB.getMinPoint().add(ledPos.multiply(ledSpaceMult)), modelAABB.getMaxPoint().add(ledPos.multiply(ledSpaceMult))), new Vector3(ledPos.getZ(), ledPos.getY(), ledPos.getX())));
+                node.setNode(i, new LEDCubeOctreeNode(new AxisAlignedBB(modelAABB.getMinPoint().add(ledPos.multiply(ledSpaceMult)), modelAABB.getMaxPoint().add(ledPos.multiply(ledSpaceMult))), ledPos));
             }
         }
     }
 
     private Vector3 recursiveIntersectOctree(LEDCubeOctreeNode node, Vector3 point) {
-        if (node.getNode(0) != null) {
-            for (int i = 0; i < 8; i++) {
-                LEDCubeOctreeNode nextNode = node.getNode(i);
-                if (nextNode.getAABB().containsPoint(point)) {
-                    Vector3 ret = recursiveIntersectOctree(nextNode, point);
-                    if (ret != null) return ret;
-                }
-            }
-        } else {
+        if (node.getLEDPosition() != null) {
             return node.getLEDPosition();
+        }
+        for (int i = 0; i < 8; i++) {
+            LEDCubeOctreeNode nextNode = node.getNode(i);
+            if (nextNode != null && nextNode.getAABB().containsPoint(point)) {
+                Vector3 ret = recursiveIntersectOctree(nextNode, point);
+                if (ret != null) return ret;
+            }
         }
         return null;
     }
@@ -415,16 +419,15 @@ public class LEDCube {
 
         float mult = ledSpaceMult;
         Dimension3D dim = ledManager.getDimensions();
-        Model model = LEDCubeManager.getModelManager().getModel("led.model");
         for (float step = 1; step < 5000; step += 2) {
             Vector3 rayPos = position.add(direction.multiply(step));
             if (octrees == null) {
                 for (int y = 0; y < dim.y; y++) {
                     for (int z = 0; z < dim.z; z++) {
                         for (int x = 0; x < dim.x; x++) {
-                            float xx = z * mult;
+                            float xx = x * mult;
                             float yy = y * mult;
-                            float zz = x * mult;
+                            float zz = z * mult;
                             Vector3 pos = new Vector3(xx, yy, zz);
                             if (model.getAABB().containsPoint(pos, rayPos) && isLEDWithinIsolation(x, y, z)) {
                                 return new Vector3(x, y, z);

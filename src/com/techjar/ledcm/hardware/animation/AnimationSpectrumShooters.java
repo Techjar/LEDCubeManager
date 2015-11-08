@@ -25,7 +25,7 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     private float sensitivity = 20.0F;
 
     public AnimationSpectrumShooters() {
-        size = dimension.x * dimension.y;
+        size = dimension.z * dimension.y;
         bandIncrement = Math.max(Math.round(256F / size), 1);
         bandRepeat = Math.max(Math.round(size / 512F), 1);
         indexDivisor = size + 6;
@@ -38,10 +38,10 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
 
     @Override
     public synchronized void refresh() {
-        for (int x = 0; x < dimension.x; x++) {
+        for (int z = 0; z < dimension.z; z++) {
             for (int y = 0; y < dimension.y; y++) {
-                for (int z = dimension.z - 2; z >= 0; z--) {
-                    ledManager.setLEDColor(x, y, z + 1, ledManager.getLEDColor(x, y, z));
+                for (int x = dimension.x - 2; x >= 0; x--) {
+                    ledManager.setLEDColor(x + 1, y, z, ledManager.getLEDColor(x, y, z));
                     ledManager.setLEDColor(x, y, z, new Color());
                 }
             }
@@ -49,12 +49,12 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
         for (int i = 0; i < size; i++) {
             float amplitude = amplitudes[i] - 2;
             if (amplitude > sensitivity * (1 - (i / indexDivisor))) {
-                int x = i % dimension.x;
+                int z = i % dimension.z;
                 int y = i / dimension.y;
                 Color color = new Color();
                 if (rainbow) color.fromHSB(i / (float)size, 1, 1);
                 else color = LEDCubeManager.getPaintColor();
-                ledManager.setLEDColor(x, y, 0, color);
+                ledManager.setLEDColor(0, y, z, color);
             }
         }
     }
