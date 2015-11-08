@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import lombok.SneakyThrows;
+import org.lwjgl.util.Color;
 
 /**
  *
@@ -46,6 +47,10 @@ public final class NetworkUtil {
             stream.writeByte(9);
             stream.writeInt(((byte[])obj).length);
             stream.write((byte[])obj);
+        } else if (obj instanceof Color) {
+            Color color = (Color)obj;
+            stream.writeByte(10);
+            stream.writeInt((color.getRed() << 24) | (color.getGreen() << 16) | (color.getBlue() << 8) | color.getAlpha());
         } else {
             throw new IllegalArgumentException(obj.getClass().getName() + " is not marshallable!");
         }
@@ -76,6 +81,9 @@ public final class NetworkUtil {
             byte[] bytes = new byte[stream.readInt()];
             stream.readFully(bytes);
             return bytes;
+        } else if (valueType == 10) {
+            int value = stream.readInt();
+            return new Color((value >>> 24) & 255, (value >>> 16) & 255, (value >>> 8) & 255, value & 255);
         } else {
             throw new IllegalArgumentException("Unknown value type: " + valueType);
         }

@@ -43,7 +43,7 @@ public class AnimationBlink extends Animation {
     // Left here for reference purposes, will be deleted later
     /*@Override
     public AnimationOption[] getOptions() {
-        AnimationOption[] array = new AnimationOption[4];
+        AnimationOption[] array = new AnimationOption[6];
         Object[] objs = new Object[1000 * 2 + 1];
         objs[0] = new Random().nextInt((objs.length - 1) / 2);
         for (int i = 0; i < (objs.length - 1) / 2; i++) {
@@ -55,6 +55,8 @@ public class AnimationBlink extends Animation {
         array[2] = new AnimationOption("test3", "Test 3", AnimationOption.OptionType.CHECKBOX, new Object[]{false});
         //array[3] = new AnimationOption("testd", "Test Deluxe", AnimationOption.OptionType.COMBOBOX, objs);
         array[3] = new AnimationOption("poop", "Watwat", AnimationOption.OptionType.TEXT, new Object[]{""});
+        array[4] = new AnimationOption("butts", "SPINNN", AnimationOption.OptionType.SPINNER, new Object[]{0, 0, 100, 5, 0});
+        array[5] = new AnimationOption("lolol", "wooCOLOR", AnimationOption.OptionType.COLORPICKER, new Object[]{new Color()});
         return array;
     }*/
 }

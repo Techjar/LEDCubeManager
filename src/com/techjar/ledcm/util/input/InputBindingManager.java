@@ -72,17 +72,18 @@ public class InputBindingManager {
         for (String category : categories) {
             GUIScrollBox box = new GUIScrollBox(new Color(255, 0, 0));
             box.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
-            box.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
             boxes.add(box);
             tabbed.addTab(category, box);
+            box.setScrollYMode(GUIScrollBox.ScrollMode.ENABLED);
             int boxWidth = (int)box.getContainerBox().getWidth();
+            box.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
             float position = 10;
             int labelWidth = 0;
             for (InputBinding binding : bindings) {
                 int width = screen.font.getWidth(binding.getName());
                 if (width > labelWidth) labelWidth = width;
             }
-            int componentWidth = boxWidth - labelWidth - 35;
+            int componentWidth = boxWidth - labelWidth - 20;
             for (InputBinding binding : bindings) {
                 if (!binding.getCategory().equals(category)) continue;
                 GUIInputOption gui = new GUIInputOption(binding, screen.font, new Color(255, 255, 255), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));

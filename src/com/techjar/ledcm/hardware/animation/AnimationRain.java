@@ -20,8 +20,8 @@ public class AnimationRain extends Animation {
     private boolean[] states;
     private float[] floorStates;
     private Random random = new Random();
-    private Color topColor = new Color(0, 255, 0);
-    private Color bottomColor = new Color(255, 0, 0);
+    private Color topColor = new Color(0, 0, 255);
+    private Color bottomColor = new Color(255, 0, 255);
     private Color lightningColor = new Color(225, 255, 255);
 
     public AnimationRain() {

@@ -5,12 +5,15 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.GUI;
 import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUICheckBox;
+import com.techjar.ledcm.gui.GUIColorPicker;
 import com.techjar.ledcm.gui.GUIComboBox;
 import com.techjar.ledcm.gui.GUIComboButton;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
+import com.techjar.ledcm.util.Util;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -75,6 +78,10 @@ public class PacketSetAnimationOption extends Packet {
                 }
             } else if (component instanceof GUICheckBox) {
                 ((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
+            } else if (component instanceof GUISpinner) {
+                ((GUISpinner)component).setValue(Float.parseFloat(value));
+            } else if (component instanceof GUIColorPicker) {
+                ((GUIColorPicker)component).setValue(Util.stringToColor(value));
             } else {
                 LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(optionId, value);
             }

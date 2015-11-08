@@ -4,10 +4,12 @@ package com.techjar.ledcm;
 import com.techjar.ledcm.gui.GUI;
 import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUICheckBox;
+import com.techjar.ledcm.gui.GUIColorPicker;
 import com.techjar.ledcm.gui.GUIComboBox;
 import com.techjar.ledcm.gui.GUIComboButton;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.animation.Animation;
@@ -18,6 +20,7 @@ import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationOptionList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketSetColorPicker;
+import com.techjar.ledcm.util.Util;
 import java.io.IOException;
 import java.util.List;
 import lombok.Getter;
@@ -65,6 +68,10 @@ public class ControlUtil {
                 }
             } else if (component instanceof GUICheckBox) {
                 return Boolean.toString(((GUICheckBox)component).isChecked());
+            } else if (component instanceof GUISpinner) {
+                return Float.toString(((GUISpinner)component).getValue());
+            } else if (component instanceof GUIColorPicker) {
+                return Util.colorToString(((GUIColorPicker)component).getValue(), false);
             }
         }
         return "";

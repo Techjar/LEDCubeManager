@@ -8,6 +8,7 @@ import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIButton;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.GUICheckBox;
+import com.techjar.ledcm.gui.GUIColorPicker;
 import com.techjar.ledcm.gui.GUIComboBox;
 import com.techjar.ledcm.gui.GUIComboButton;
 import com.techjar.ledcm.gui.GUILabel;
