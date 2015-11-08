@@ -92,8 +92,7 @@ public class LEDCube {
         spectrumAnalyzer = new SpectrumAnalyzer();
         commThread = new CommThread(new SerialPortHandler(LEDCubeManager.getSerialPortName()));
         commThread.start();
-        LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
-        LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
+        resetCameraPosition();
     }
 
     private void computeLEDHighlight() {
@@ -206,6 +205,18 @@ public class LEDCube {
         LEDCubeManager.getInstance().getScreenMainControl().blueColorSlider.setValue(color.getBlue() / 255F);
     }
 
+    public void resetCameraPosition() {
+        LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
+        LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
+        // Some crazy code I experimented with...
+        /*Dimension3D dim = ledManager.getDimensions();
+        int distDim = dim.x > dim.z && dim.x > dim.y * 2 ? dim.x / 2 : (dim.z > dim.y * 2 ? dim.z / 2 : dim.y);
+        int heightDim = Math.max(dim.y, dim.z);
+        Angle angle = new Angle(-31, -90, 0);
+        LEDCubeManager.getCamera().setPosition(Util.convertVector(centerPoint).multiply(ledSpaceMult).subtract(new Vector3(0, ledSpaceMult * (heightDim / 8), 0)).add(angle.forward().negate().multiply(130 * (distDim / 8))));
+        LEDCubeManager.getCamera().setAngle(angle);*/
+    }
+
     private void initBindings() {
         InputBindingManager.addBinding(new InputBinding("reloadanimation", "Reload Current", "Animation", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_R)) {
             @Override
@@ -246,8 +257,7 @@ public class LEDCube {
         InputBindingManager.addBinding(new InputBinding("resetcamera", "Reset Position", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F)) {
             @Override
             public boolean onPressed() {
-                LEDCubeManager.getCamera().setPosition(new Vector3(-80, 85, 28));
-                LEDCubeManager.getCamera().setAngle(new Angle(-31, -90, 0));
+                resetCameraPosition();
                 return false;
             }
 
