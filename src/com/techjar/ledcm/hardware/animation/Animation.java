@@ -81,7 +81,7 @@ public abstract class Animation {
         for (final AnimationOption option : options) {
             if (option.getType() != AnimationOption.OptionType.BUTTON) {
                 String property = "animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + option.getId();
-                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0].toString());
+                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0] instanceof Color ? Util.colorToString((Color)option.getParams()[0], false) : option.getParams()[0].toString());
                 optionValues.put(option.getId(), LEDCubeManager.getConfig().getString(property));
             }
         }

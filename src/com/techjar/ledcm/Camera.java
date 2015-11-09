@@ -44,7 +44,7 @@ public class Camera {
                 return false;
             }
         });
-        InputBindingManager.addBinding(new InputBinding("camfback", "Back", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_S)) {
+        InputBindingManager.addBinding(new InputBinding("camback", "Back", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_S)) {
             @Override
             public boolean onPressed() {
                 pBack = true;
