@@ -225,6 +225,7 @@ public class LEDCube {
                     Animation anim = commThread.getCurrentAnimation();
                     try {
                         animations.put(anim.getName(), anim.getClass().newInstance());
+                        animations.get(anim.getName()).postLoadInitOptions();
                         commThread.setCurrentAnimation(animations.get(anim.getName()));
                     } catch (Exception ex) {
                         ex.printStackTrace();
