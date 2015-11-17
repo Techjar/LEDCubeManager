@@ -36,7 +36,7 @@ public class AnimationSnake extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 3 == 0) {
             Color color = LEDCubeManager.getPaintColor();
             if (segments.isEmpty()) {
@@ -79,7 +79,7 @@ public class AnimationSnake extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         segments.clear();
         dead = false;
         direction = null;

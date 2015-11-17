@@ -51,7 +51,7 @@ public class AnimationSnakeBattle extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 3 == 0) {
             for (int i = 0; i < NUM_SNAKES; i++) {
                 LinkedList<Vector3> segments = segmentArray[i];
@@ -97,7 +97,7 @@ public class AnimationSnakeBattle extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         for (int i = 0; i < NUM_SNAKES; i++) {
             segmentArray[i].clear();
         }

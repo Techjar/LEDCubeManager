@@ -24,7 +24,7 @@ public class AnimationDrain extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 6 == 0) {
             if (state && spreadX < dimension.x / 2) spreadX++;
             if (state && spreadZ < dimension.z / 2) spreadZ++;
@@ -65,7 +65,7 @@ public class AnimationDrain extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         spreadX = 0;
         spreadZ = 0;
         state = false;

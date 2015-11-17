@@ -23,7 +23,7 @@ public class AnimationPulsate extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         for (int y = 0; y < dimension.y; y++) {
             double value = Math.sin(timer.getSeconds() * 2 + ((7 - y) / 7F) * 3) * 0.5 + 0.5;
             Color color = Util.multiplyColor(LEDCubeManager.getPaintColor(), value);
@@ -36,7 +36,7 @@ public class AnimationPulsate extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         timer.restart();
     }
 }

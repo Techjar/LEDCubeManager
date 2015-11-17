@@ -248,6 +248,15 @@ public final class Util {
         return LEDCubeManager.getLEDManager().decodeVector(number);
     }
 
+    public static boolean isInsideCube(int x, int y, int z) {
+        Dimension3D dim = LEDCubeManager.getLEDCube().getLEDManager().getDimensions();
+        return x >= 0 && x < dim.x && y >= 0 && y < dim.y && z >= 0 && z < dim.z;
+    }
+
+    public static boolean isInsideCube(Vector3 vector) {
+        return isInsideCube((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
+    }
+
     /*public static int getRequiredBits(long value) {
         int i = 0;
         for (; i < 64; i++) {

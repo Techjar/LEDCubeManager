@@ -23,6 +23,9 @@ public class AnimationRain extends Animation {
     private Color topColor = new Color(0, 0, 255);
     private Color bottomColor = new Color(255, 0, 255);
     private Color lightningColor = new Color(225, 255, 255);
+    private int dropFreq = 20;
+    private int lightningFreq = 2500;
+    private boolean lightningEnable = true;
 
     public AnimationRain() {
         super();
@@ -49,7 +52,7 @@ public class AnimationRain extends Animation {
                                 else ledManager.setLEDColor(x, y, z, drops[index].get(y) ? color : new Color());
                             }
                         }
-                    } else if (random.nextInt(2500) == 0) {
+                    } else if (lightningEnable && random.nextInt(lightningFreq) == 0) {
                         lightning[index] = random.nextInt(30) + 1;
                     }
                     boolean lightningCheck = checkLightning(lightning[index]);
@@ -63,7 +66,7 @@ public class AnimationRain extends Animation {
                         int stateIndex = index + y * dimension.x * dimension.z;
                         Color color = MathHelper.lerp(bottomColor, topColor, y / (dimension.y - 1F));
                         if (y == dimension.y - 1) {
-                            if (random.nextInt(20) == 0) drops[index].set(dimension.y - 1);
+                            if (random.nextInt(dropFreq) == 0) drops[index].set(dimension.y - 1);
                         } else if (y == 0) {
                             floor[index] = Math.max(floor[index] - (random.nextFloat() * 0.1F), 0);
                             if (drops[index].get(y)) {
@@ -98,6 +101,42 @@ public class AnimationRain extends Animation {
         lightning = new int[dimension.x * dimension.z];
         states = new boolean[dimension.x * dimension.y * dimension.z];
         floorStates = new float[dimension.x * dimension.z];
+    }
+
+    @Override
+    public AnimationOption[] getOptions() {
+        return new AnimationOption[]{
+            new AnimationOption("topcolor", "Top", AnimationOption.OptionType.COLORPICKER, new Object[]{topColor}),
+            new AnimationOption("bottomcolor", "Bottom", AnimationOption.OptionType.COLORPICKER, new Object[]{bottomColor}),
+            new AnimationOption("lightningcolor", "Lightning", AnimationOption.OptionType.COLORPICKER, new Object[]{lightningColor}),
+            new AnimationOption("dropfreq", "Drop Freq", AnimationOption.OptionType.SLIDER, new Object[]{(98 - (dropFreq - 2)) / 98F, 1F / 98F, false}),
+            new AnimationOption("lightningfreq", "L. Freq", AnimationOption.OptionType.SLIDER, new Object[]{(29950 - (lightningFreq - 50)) / 29950F}),
+            new AnimationOption("lightningenable", "L. Enable", AnimationOption.OptionType.CHECKBOX, new Object[]{lightningEnable}),
+        };
+    }
+
+    @Override
+    public synchronized void optionChanged(String name, String value) {
+        switch (name) {
+            case "topcolor":
+                topColor = Util.stringToColor(value);
+                break;
+            case "bottomcolor":
+                bottomColor = Util.stringToColor(value);
+                break;
+            case "lightningcolor":
+                lightningColor = Util.stringToColor(value);
+                break;
+            case "dropfreq":
+                dropFreq = 2 + (98 - Math.round(98 * Float.parseFloat(value)));
+                break;
+            case "lightningfreq":
+                lightningFreq = 50 + (29950 - Math.round(29950 * Float.parseFloat(value)));
+                break;
+            case "lightningenable":
+                lightningEnable = Boolean.parseBoolean(value);
+                break;
+        }
     }
 
     private boolean checkBit(long number, int bit) {

@@ -16,11 +16,11 @@ public class AnimationFolder extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         // TODO
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
     }
 }

@@ -28,7 +28,7 @@ public class AnimationProgressiveFill extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (filledCount < states.length) {
             int count = (int)(timer.getMilliseconds() / 1000);
             for (int i = 0; i < count + 1; i++) {
@@ -50,7 +50,7 @@ public class AnimationProgressiveFill extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         timer.restart();
         states = new boolean[ledManager.getLEDCount()];
         filledCount = 0;

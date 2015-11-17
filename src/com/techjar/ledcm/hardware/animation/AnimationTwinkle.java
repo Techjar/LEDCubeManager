@@ -29,7 +29,7 @@ public class AnimationTwinkle extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         for (int i = 0; i < 2; i++) {
             int x = random.nextInt(dimension.x);
             int y = random.nextInt(dimension.y);
@@ -45,7 +45,7 @@ public class AnimationTwinkle extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         LEDUtil.clear(ledManager);
     }
 }

@@ -88,14 +88,16 @@ public class CommThread extends Thread {
                     }
                     fpsCounter++;
                     ticks++;
-                    if (currentSequence != null) currentSequence.update();
-                    if (currentAnimation != null) {
-                        try {
-                            currentAnimation.refresh();
-                            currentAnimation.incTicks();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            currentAnimation = null;
+                    synchronized (lock) {
+                        if (currentSequence != null) currentSequence.update();
+                        if (currentAnimation != null) {
+                            try {
+                                currentAnimation.refresh();
+                                currentAnimation.incTicks();
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                currentAnimation = null;
+                            }
                         }
                     }
                     ledManager.updateLEDArray();
@@ -141,7 +143,7 @@ public class CommThread extends Thread {
                 currentAnimation.reset();
                 currentAnimation.loadOptions();
                 tcpServer.sendPacket(ControlUtil.getAnimationOptionsPacket());
-            }
+            } 
         }
     }
 

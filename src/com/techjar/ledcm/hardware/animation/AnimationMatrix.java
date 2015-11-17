@@ -32,7 +32,7 @@ public class AnimationMatrix extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 3 == 0) {
             for (int x = 0; x < dimension.x; x++) {
                 for (int z = 0; z < dimension.z; z++) {
@@ -62,7 +62,7 @@ public class AnimationMatrix extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         for (int i = 0; i < lines.length; i++) {
             lines[i] = new BitSet();
         }

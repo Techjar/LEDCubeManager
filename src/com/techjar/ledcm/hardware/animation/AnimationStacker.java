@@ -28,7 +28,7 @@ public class AnimationStacker extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 3 == 0) {
             if (layers != allLayers) {
                 if (curLayer == 0) {
@@ -52,7 +52,7 @@ public class AnimationStacker extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         layers = 0;
     }
 

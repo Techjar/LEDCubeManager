@@ -60,7 +60,7 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         amplitudes = new float[size];
     }
 
@@ -93,6 +93,6 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void processBeatDetect(BeatDetect bt) {
+    public synchronized void processBeatDetect(BeatDetect bt) {
     }
 }

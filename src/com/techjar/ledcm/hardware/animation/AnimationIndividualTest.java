@@ -26,7 +26,7 @@ public class AnimationIndividualTest extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 12 == 0) {
             for (int x = 0; x < dimension.x; x++) {
                 for (int y = 0; y < dimension.y; y++) {
@@ -44,7 +44,7 @@ public class AnimationIndividualTest extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         index = 0;
         subIndex = 0;
     }

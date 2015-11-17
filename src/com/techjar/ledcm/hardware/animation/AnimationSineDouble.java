@@ -22,7 +22,7 @@ public class AnimationSineDouble extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         for (int z = 0; z < dimension.z; z++) {
             double input = timer.getSeconds() * 5 + ((dimension.z - 1 - z) / (dimension.z - 1F)) * 3;
             double value = Math.sin(input) * 0.5 + 0.5;
@@ -38,7 +38,7 @@ public class AnimationSineDouble extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         timer.restart();
     }
 }

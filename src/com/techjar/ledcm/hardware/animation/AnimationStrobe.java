@@ -22,7 +22,7 @@ public class AnimationStrobe extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % 2 == 0) {
             state = !state;
             for (int x = 0; x < dimension.x; x++) {
@@ -36,7 +36,7 @@ public class AnimationStrobe extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         state = false;
     }
 

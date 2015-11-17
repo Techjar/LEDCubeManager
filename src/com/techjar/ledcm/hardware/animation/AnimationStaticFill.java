@@ -19,11 +19,11 @@ public class AnimationStaticFill extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         LEDUtil.fill(ledManager, LEDCubeManager.getPaintColor());
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
     }
 }
