@@ -19,6 +19,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     // Used to make the sensitivity inversely proportional to the index.
     // Should be slightly higher than the highest possible index.
     private final float indexDivisor;
+    private int colorMode = 0;
 
     public AnimationSpectrumBars() {
         size = dimension.x * dimension.z;
@@ -39,7 +40,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
             Vector2 pos = spiralPosition(i);
             for (int j = 0; j < dimension.y; j++) {
                 float increment = ((5.0F / (dimension.y / 8)) * (j + 1)) * (1 - (i / indexDivisor));
-                ledManager.setLEDColorReal((int)pos.getX() + ((dimension.x / 2) - 1), j, (int)pos.getY() + ((dimension.z / 2) - 1), amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
+                ledManager.setLEDColor((int)pos.getX() + ((dimension.x / 2) - 1), j, (int)pos.getY() + ((dimension.z / 2) - 1), amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
                 amplitude -= increment;
             }
         }
@@ -48,6 +49,22 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     @Override
     public synchronized void reset() {
         amplitudes = new float[size];
+    }
+
+    @Override
+    public AnimationOption[] getOptions() {
+        return new AnimationOption[]{
+            new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Classic", 1, "Rainbow"}),
+        };
+    }
+
+    @Override
+    public synchronized void optionChanged(String name, String value) {
+        switch (name) {
+            case "colormode":
+                colorMode = Integer.parseInt(value);
+                break;
+        }
     }
 
     @Override
@@ -83,11 +100,15 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     }
 
     private Color colorAtY(int y, float brightness) {
-        int res = ledManager.getResolution();
-        if (y > Math.round(dimension.y / 1.333F)) return new Color(Math.round(res * brightness), 0, 0);
-        if (y > dimension.y / 2) return new Color(Math.round(res * brightness), Math.round(res * brightness), 0);
-        if (y > dimension.y / 8) return new Color(0, Math.round(res * brightness), 0);
-        return new Color(0, 0, Math.round(res * brightness));
+        if (colorMode == 1) {
+            Color color = new Color();
+            color.fromHSB(y / (float)dimension.y, 1, brightness);
+            return color;
+        }
+        if (y > Math.round(dimension.y / 1.333F)) return new Color(Math.round(255 * brightness), 0, 0);
+        if (y > dimension.y / 2) return new Color(Math.round(255 * brightness), Math.round(255 * brightness), 0);
+        if (y > dimension.y / 8) return new Color(0, Math.round(255 * brightness), 0);
+        return new Color(0, 0, Math.round(255 * brightness));
     }
 
     private Vector2 spiralPosition(int index) {
