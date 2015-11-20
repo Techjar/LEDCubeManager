@@ -363,6 +363,18 @@ public class LEDCube {
                 return true;
             }
         });
+        InputBindingManager.addBinding(new InputBinding("resettransform", "Reset Rotation", "Cube", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F3)) {
+            @Override
+            public boolean onPressed() {
+                resetTransform();
+                return false;
+            }
+
+            @Override
+            public boolean onReleased() {
+                return true;
+            }
+        });
     }
 
     private void initOctree() {
@@ -475,6 +487,10 @@ public class LEDCube {
         transform.translate(centerPoint);
         transform.rotate(radians, Util.convertVector(axis));
         transform.translate(centerPoint.negate(null));
+    }
+
+    public void resetTransform() {
+        transform.setIdentity();
     }
 
     public void setReflection(boolean x, boolean y, boolean z) {
