@@ -1,10 +1,13 @@
 
 package com.techjar.ledcm.hardware.animation;
 
+import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
+import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import ddf.minim.analysis.BeatDetect;
 import ddf.minim.analysis.FFT;
+import java.util.Random;
 import org.lwjgl.util.Color;
 
 /**
@@ -12,7 +15,9 @@ import org.lwjgl.util.Color;
  * @author Techjar
  */
 public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
+    private Random random = new Random();
     private float[] amplitudes;
+    private Color[] randomColors;
     private final int size;
     private final int bandIncrement;
     private final int bandRepeat;
@@ -37,10 +42,12 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     public synchronized void refresh() {
         for (int i = 0; i < size; i++) {
             float amplitude = amplitudes[i] - 2;
+            if (colorMode == 3 && (amplitude <= 0 || randomColors[i].equals(new Color()))) randomColors[i] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
             Vector2 pos = spiralPosition(i);
+            pos = new Vector2(pos.getX() + ((dimension.x / 2) - 1), pos.getY() + ((dimension.z / 2) - 1));
             for (int j = 0; j < dimension.y; j++) {
                 float increment = ((5.0F / (dimension.y / 8)) * (j + 1)) * (1 - (i / indexDivisor));
-                ledManager.setLEDColor((int)pos.getX() + ((dimension.x / 2) - 1), j, (int)pos.getY() + ((dimension.z / 2) - 1), amplitude > 0 ? colorAtY(j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
+                ledManager.setLEDColor((int)pos.getX(), j, (int)pos.getY(), amplitude > 0 ? getColor(i, j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
                 amplitude -= increment;
             }
         }
@@ -49,12 +56,16 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     @Override
     public synchronized void reset() {
         amplitudes = new float[size];
+        randomColors = new Color[size];
+        for (int i = 0; i < size; i++) {
+            randomColors[i] = new Color();
+        }
     }
 
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Classic", 1, "Rainbow"}),
+            new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Classic", 1, "Rainbow 1", 2, "Rainbow 2", 3, "Random", 4, "Picker"}),
         };
     }
 
@@ -99,11 +110,22 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     public synchronized void processBeatDetect(BeatDetect bt) {
     }
 
-    private Color colorAtY(int y, float brightness) {
+    private Color getColor(int index, int y, float brightness) {
         if (colorMode == 1) {
             Color color = new Color();
             color.fromHSB(y / (float)dimension.y, 1, brightness);
             return color;
+        }
+        if (colorMode == 2) {
+            Color color = new Color();
+            color.fromHSB(index / (float)size, 1, brightness);
+            return color;
+        }
+        if (colorMode == 3) {
+            return Util.multiplyColor(randomColors[index], brightness);
+        }
+        if (colorMode == 4) {
+            return Util.multiplyColor(LEDCubeManager.getLEDCube().getPaintColor(), brightness);
         }
         if (y > Math.round(dimension.y / 1.333F)) return new Color(Math.round(255 * brightness), 0, 0);
         if (y > dimension.y / 2) return new Color(Math.round(255 * brightness), Math.round(255 * brightness), 0);

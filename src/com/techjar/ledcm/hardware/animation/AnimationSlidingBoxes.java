@@ -152,7 +152,7 @@ public class AnimationSlidingBoxes extends Animation {
     }
 
     private Color getBoxColor(int index) {
-        Random rand = new Random(colorSeed * index);
+        Random rand = new Random(colorSeed + index);
         if (colorMode == 2) {
             Color color = new Color();
             color.fromHSB((rand.nextFloat() + ((float)timer.getSeconds() / 20)) % 1, 1, 1);
