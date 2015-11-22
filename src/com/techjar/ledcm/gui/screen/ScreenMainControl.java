@@ -40,6 +40,7 @@ import org.newdawn.slick.UnicodeFont;
  * @author Techjar
  */
 public class ScreenMainControl extends Screen {
+    private GUICallback resizeHandler2;
     public final UnicodeFont font;
     public final UnicodeFont fontTabbed;
     public final GUISlider progressSlider;
@@ -349,7 +350,6 @@ public class ScreenMainControl extends Screen {
 
         layersWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         layersWindow.setDimension(150, 167);
-        layersWindow.setPosition(container.getWidth() - layersWindow.getWidth() - 10, container.getHeight() - layersWindow.getHeight() - 360);
         layersWindow.setResizable(false);
         layersWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
         layersWindow.setVisible(false);
@@ -490,7 +490,6 @@ public class ScreenMainControl extends Screen {
         container.addComponent(sequenceLoadBtn);
         sequenceWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         sequenceWindow.setDimension(350, 150);
-        sequenceWindow.setPosition(container.getWidth() / 2 - sequenceWindow.getWidth() / 2, container.getHeight() / 2 - sequenceWindow.getHeight() / 2);
         sequenceWindow.setResizable(false);
         sequenceWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
         sequenceWindow.setVisible(false);
@@ -535,7 +534,6 @@ public class ScreenMainControl extends Screen {
 
         animOptionsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         animOptionsWindow.setDimension(500, 300);
-        animOptionsWindow.setPosition(container.getWidth() / 2 - animOptionsWindow.getWidth() / 2, container.getHeight() / 2 - animOptionsWindow.getHeight() / 2);
         animOptionsWindow.setResizable(false, true);
         animOptionsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
         animOptionsWindow.setVisible(false);
@@ -583,7 +581,6 @@ public class ScreenMainControl extends Screen {
 
         settingsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         settingsWindow.setDimension(450, 450);
-        settingsWindow.setPosition(container.getWidth() / 2 - settingsWindow.getWidth() / 2, container.getHeight() / 2 - settingsWindow.getHeight() / 2);
         settingsWindow.setResizable(false, true);
         settingsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
         settingsWindow.setMinimumSize(new Dimension(50, 150));
@@ -689,7 +686,6 @@ public class ScreenMainControl extends Screen {
 
         controlsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         controlsWindow.setDimension(500, 450);
-        controlsWindow.setPosition(container.getWidth() / 2 - controlsWindow.getWidth() / 2, container.getHeight() / 2 - controlsWindow.getHeight() / 2);
         controlsWindow.setResizable(false, true);
         controlsWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
         controlsWindow.setMinimumSize(new Dimension(50, 150));
@@ -736,7 +732,6 @@ public class ScreenMainControl extends Screen {
 
         transformWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         transformWindow.setDimension(310, 272);
-        transformWindow.setPosition(container.getWidth() - transformWindow.getWidth() - 10, container.getHeight() - transformWindow.getHeight() - 360);
         transformWindow.setResizable(false);
         transformWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
         transformWindow.setMinimumSize(new Dimension(50, 150));
@@ -889,6 +884,8 @@ public class ScreenMainControl extends Screen {
         previewTransformLabel.setPosition(45, 210);
         previewTransform.setLabel(previewTransformLabel);
         transformWindow.addComponent(previewTransformLabel);
+
+        positionWindows();
     }
 
     @Override
@@ -903,11 +900,25 @@ public class ScreenMainControl extends Screen {
         super.render();
     }
 
+    @Override
+    protected void onResized() {
+        positionWindows();
+    }
+
     public final void populateAnimationList() {
         animComboBox.clearItems();
         for (String name : LEDCubeManager.getLEDCube().getAnimationNames()) {
             animComboBox.addItem(name);
         }
         animComboBox.setSelectedItem(1);
+    }
+
+    private final void positionWindows() {
+        layersWindow.setPosition(container.getWidth() - layersWindow.getWidth() - 10, container.getHeight() - layersWindow.getHeight() - 360);
+        sequenceWindow.setPosition(container.getWidth() / 2 - sequenceWindow.getWidth() / 2, container.getHeight() / 2 - sequenceWindow.getHeight() / 2);
+        animOptionsWindow.setPosition(container.getWidth() / 2 - animOptionsWindow.getWidth() / 2, container.getHeight() / 2 - animOptionsWindow.getHeight() / 2);
+        settingsWindow.setPosition(container.getWidth() / 2 - settingsWindow.getWidth() / 2, container.getHeight() / 2 - settingsWindow.getHeight() / 2);
+        controlsWindow.setPosition(container.getWidth() / 2 - controlsWindow.getWidth() / 2, container.getHeight() / 2 - controlsWindow.getHeight() / 2);
+        transformWindow.setPosition(container.getWidth() - transformWindow.getWidth() - 10, container.getHeight() - transformWindow.getHeight() - 360);
     }
 }
