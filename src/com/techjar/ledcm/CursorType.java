@@ -18,16 +18,16 @@ import org.lwjgl.input.Cursor;
  * @author Techjar
  */
 public enum CursorType {
-    DEFAULT("cursor/default.png", 0, 31),
-    MOVE("cursor/move.png", 12, 20),
-    N_RESIZE("cursor/resize_ns.png", 12, 20),
-    S_RESIZE("cursor/resize_ns.png", 12, 20),
-    E_RESIZE("cursor/resize_ew.png", 12, 20),
-    W_RESIZE("cursor/resize_ew.png", 12, 20),
-    NE_RESIZE("cursor/resize_nesw.png", 12, 20),
-    NW_RESIZE("cursor/resize_nwse.png", 12, 20),
-    SE_RESIZE("cursor/resize_nwse.png", 12, 20),
-    SW_RESIZE("cursor/resize_nesw.png", 12, 20);
+    DEFAULT("cursor/default.png", 0, 0),
+    MOVE("cursor/move.png", 12, 12),
+    N_RESIZE("cursor/resize_ns.png", 12, 12),
+    S_RESIZE("cursor/resize_ns.png", 12, 12),
+    E_RESIZE("cursor/resize_ew.png", 12, 12),
+    W_RESIZE("cursor/resize_ew.png", 12, 12),
+    NE_RESIZE("cursor/resize_nesw.png", 12, 12),
+    NW_RESIZE("cursor/resize_nwse.png", 12, 12),
+    SE_RESIZE("cursor/resize_nwse.png", 12, 12),
+    SW_RESIZE("cursor/resize_nesw.png", 12, 12);
 
     private static boolean loaded = false;
     private final String image;
@@ -59,7 +59,7 @@ public enum CursorType {
                 }
             }
             buf.rewind();
-            ct.cursor = new Cursor(image.getWidth(), image.getHeight(), ct.xHotspot, ct.yHotspot, 1, buf, null);
+            ct.cursor = new Cursor(image.getWidth(), image.getHeight(), ct.xHotspot, 31 - ct.yHotspot, 1, buf, null);
         }
         loaded = true;
     }

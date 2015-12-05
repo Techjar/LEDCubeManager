@@ -113,6 +113,8 @@ public class ScreenMainControl extends Screen {
     public final GUILabel rotateZLabel;
     public final GUICheckBox previewTransform;
     public final GUILabel previewTransformLabel;
+    public final GUILabel fullscreenLabel;
+    public final GUICheckBox fullscreenCheckbox;
     
     public ScreenMainControl() {
         super();
@@ -612,6 +614,7 @@ public class ScreenMainControl extends Screen {
                         LEDCubeManager.getInstance().setDisplayMode(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
                     }
                 }
+                LEDCubeManager.getInstance().setFullscreen(fullscreenCheckbox.isChecked());
                 item = audioInputComboBox.getSelectedItem();
                 if (item != null) {
                     LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixer(item.toString());
@@ -665,10 +668,21 @@ public class ScreenMainControl extends Screen {
         }
         resolutionComboBox.setSelectedItem(LEDCubeManager.getWidth() + "x" + LEDCubeManager.getHeight());
         settingsScrollBox.addComponent(resolutionComboBox);
+        fullscreenLabel = new GUILabel(font, new Color(255, 255, 255), "Fullscreen");
+        fullscreenLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
+        fullscreenLabel.setDimension(font.getWidth(fullscreenLabel.getText()), 30);
+        fullscreenLabel.setPosition(-165 + (fullscreenLabel.getWidth() / 2), 55);
+        settingsScrollBox.addComponent(fullscreenLabel);
+        fullscreenCheckbox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+        fullscreenCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
+        fullscreenCheckbox.setDimension(30, 30);
+        fullscreenCheckbox.setPosition(-185, 55);
+        fullscreenCheckbox.setChecked(LEDCubeManager.getInstance().isFullscreen());
+        settingsScrollBox.addComponent(fullscreenCheckbox);
         audioInputComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
         audioInputComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
         audioInputComboBox.setDimension(400, 35);
-        audioInputComboBox.setPosition(0, 55);
+        audioInputComboBox.setPosition(0, 95);
         audioInputComboBox.setVisibleItems(5);
         audioInputComboBox.addAllItems(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getMixers().keySet());
         audioInputComboBox.setSelectedItem(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getCurrentMixerName());
@@ -676,7 +690,7 @@ public class ScreenMainControl extends Screen {
         antiAliasingComboBtn = new GUIComboButton(font, new Color(255, 255, 255), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
         antiAliasingComboBtn.setParentAlignment(GUIAlignment.TOP_CENTER);
         antiAliasingComboBtn.setDimension(400, 35);
-        antiAliasingComboBtn.setPosition(0, 100);
+        antiAliasingComboBtn.setPosition(0, 140);
         antiAliasingComboBtn.addItem("Off");
         for (int i = 2; i <= LEDCubeManager.getInstance().antiAliasingMaxSamples; i *= 2) {
             antiAliasingComboBtn.addItem(i + "x");

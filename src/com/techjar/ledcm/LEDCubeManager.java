@@ -132,6 +132,7 @@ public class LEDCubeManager {
     @Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
     private DisplayMode newDisplayMode;
     private DisplayMode configDisplayMode;
+    private ByteBuffer[] icons;
     private boolean fullscreen;
     private boolean newFullscreen;
     @Getter private static ConfigManager config;
@@ -263,11 +264,14 @@ public class LEDCubeManager {
         makeFrame();
         setupSystemTray();
         
+        loadIcons();
+        Display.setIcon(icons);
         Display.create();
         Keyboard.create();
         Mouse.create();
         CursorType.loadCursors();
         setCursorType(CursorType.DEFAULT);
+        Display.setTitle(Constants.APP_TITLE);
 
         Controllers.create();
         String defaultController = "";
@@ -371,21 +375,45 @@ public class LEDCubeManager {
         });
 
         frame.add(canvas, BorderLayout.CENTER);
-        resizeFrame(false);
+        resizeFrame(fullscreen);
     }
 
     private void resizeFrame(boolean fullscreen) throws LWJGLException {
         Display.setParent(null);
         frame.dispose();
-        frame.setUndecorated(fullscreen);
-        if (fullscreen) GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(frame);
-        else GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
-        canvas.setPreferredSize(new java.awt.Dimension(displayMode.getWidth(), displayMode.getHeight()));
-        frame.pack();
-        java.awt.Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        frame.setLocation((dim.width - frame.getSize().width) / 2, (dim.height - frame.getSize().height) / 2);
-        frame.setVisible(true);
-        Display.setParent(canvas);
+        if (fullscreen) {
+            Display.setDisplayMode(displayMode);
+            Display.setFullscreen(true);
+        } else {
+            Display.setFullscreen(false);
+            if (fullscreen) GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(frame);
+            else GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
+            canvas.setPreferredSize(new java.awt.Dimension(displayMode.getWidth(), displayMode.getHeight()));
+            frame.pack();
+            java.awt.Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+            frame.setLocation((dim.width - frame.getSize().width) / 2, (dim.height - frame.getSize().height) / 2);
+            frame.setVisible(true);
+            Display.setParent(canvas);
+            Display.setDisplayMode(displayMode);
+        }
+    }
+
+    private void loadIcons() throws IOException {
+        icons = new ByteBuffer[4];
+        for (int i = 0; i < 4; i++) {
+            BufferedImage image = ImageIO.read(new File("resources/textures/icon" + (int)Math.pow(2, 4 + i) + ".png"));
+            icons[i] = ByteBuffer.allocate(image.getWidth() * image.getHeight() * 4);
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int color = image.getRGB(x, y);
+                    icons[i].put((byte)((color >> 16) & 255));
+                    icons[i].put((byte)((color >> 8) & 255));
+                    icons[i].put((byte)(color & 255));
+                    icons[i].put((byte)((color >>> 24) & 255));
+                }
+            }
+            icons[i].rewind();
+        }
     }
 
     public void shutdown() {
@@ -434,18 +462,19 @@ public class LEDCubeManager {
     }
 
     private void runGameLoop() throws LWJGLException, InterruptedException {
-        if (fullscreen && !frame.isFocused()) setFullscreen(false);
+        //if (fullscreen && !frame.isFocused()) setFullscreen(false);
         if (newDisplayMode != null || newFullscreen != fullscreen) {
+            fullscreen = newFullscreen;
             if (newDisplayMode != null) {
                 displayMode = newDisplayMode;
                 configDisplayMode = newDisplayMode;
                 config.setProperty("display.width", configDisplayMode.getWidth());
                 config.setProperty("display.height", configDisplayMode.getHeight());
+                config.setProperty("display.fullscreen", fullscreen);
                 config.setProperty("display.antialiasing", antiAliasing);
                 config.setProperty("display.antialiasingsamples", antiAliasingSamples);
                 config.save();
             }
-            fullscreen = newFullscreen;
             newDisplayMode = null;
             useDisplayMode();
         }
@@ -464,7 +493,7 @@ public class LEDCubeManager {
         this.processMouse();
         this.processController();
         this.update();
-        if ((frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
+        if (Display.isActive() || (frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
         else Thread.sleep(20);
         Display.update();
     }
@@ -542,7 +571,7 @@ public class LEDCubeManager {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() >= 2) {
-                    frame.setVisible(true);
+                    if (!fullscreen) frame.setVisible(true);
                     e.consume();
                 }
             }
@@ -585,11 +614,11 @@ public class LEDCubeManager {
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
         config.defaultProperty("display.height", displayMode.getHeight());
+        config.defaultProperty("display.fullscreen", false);
         config.defaultProperty("display.fieldofview", 45F);
         config.defaultProperty("display.viewdistance", 1000F);
         config.defaultProperty("display.antialiasing", true);
         config.defaultProperty("display.antialiasingsamples", 4);
-        //config.defaultProperty("display.fullscreen", false);
         config.defaultProperty("sound.effectvolume", 1.0F);
         config.defaultProperty("sound.musicvolume", 1.0F);
         config.defaultProperty("sound.inputdevice", "");
@@ -604,7 +633,8 @@ public class LEDCubeManager {
         antiAliasingSamples = config.getInteger("display.antialiasingsamples");
         fieldOfView = config.getFloat("display.fieldofview");
         viewDistance = config.getFloat("display.viewdistance");
-        //fullscreen = config.getBoolean("display.fullscreen");
+        fullscreen = config.getBoolean("display.fullscreen");
+        newFullscreen = fullscreen;
 
         if (!antiAliasingSupported) {
             antiAliasing = false;
@@ -1051,12 +1081,12 @@ public class LEDCubeManager {
         try {
             regrab = Mouse.isGrabbed();
             Mouse.setGrabbed(false);
-            DisplayMode desktopMode = Display.getDesktopDisplayMode();
+            /*DisplayMode desktopMode = Display.getDesktopDisplayMode();
             if (fullscreen) {
-                if (!desktopMode.equals(displayMode)) displayMode = desktopMode;
-            } else displayMode = configDisplayMode;
+                displayMode = desktopMode;
+            } else displayMode = configDisplayMode;*/
+            displayMode = configDisplayMode;
             resizeFrame(fullscreen);
-            Display.setDisplayMode(displayMode);
             resizeGL(displayMode.getWidth(), displayMode.getHeight());
             setupAntiAliasing();
             for (GUICallback callback : resizeHandlers) {
