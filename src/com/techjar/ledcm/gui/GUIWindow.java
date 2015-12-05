@@ -1,10 +1,10 @@
 package com.techjar.ledcm.gui;
 
+import com.techjar.ledcm.CursorType;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.RenderHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
-import java.awt.Cursor;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -29,7 +29,8 @@ public class GUIWindow extends GUIContainer {
     protected boolean onTop;
     
     protected Vector2 mouseLast;
-    protected Cursor currentCursor;
+    protected CursorType currentCursor;
+    protected boolean hovered;
     protected boolean dragging;
     protected boolean startResize;
     protected boolean mouseLockX, mouseLockY;
@@ -163,37 +164,43 @@ public class GUIWindow extends GUIContainer {
                 Rectangle[] boxes = getBoxes();
                 if (canResizeY && checkMouseIntersect(boxes[0])) {
                     if (checkMouseIntersect(boxes[1])) {
-                        currentCursor = Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR);
+                        currentCursor = CursorType.NW_RESIZE;
                     }
                     else if (checkMouseIntersect(boxes[3])) {
-                        currentCursor = Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR);
+                        currentCursor = CursorType.NE_RESIZE;
                     }
                     else {
-                        currentCursor = Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR);
+                        currentCursor = CursorType.N_RESIZE;
                     }
                 }
                 else if (canResizeY && checkMouseIntersect(boxes[2])) {
                     if (canResizeX && checkMouseIntersect(boxes[1])) {
-                        currentCursor = Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR);
+                        currentCursor = CursorType.SW_RESIZE;
                     }
                     else if (canResizeX && checkMouseIntersect(boxes[3])) {
-                        currentCursor = Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR);
+                        currentCursor = CursorType.SE_RESIZE;
                     }
                     else {
-                        currentCursor = Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR);
+                        currentCursor = CursorType.S_RESIZE;
                     }
                 }
                 else if (canResizeX && checkMouseIntersect(boxes[1])) {
-                    currentCursor = Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR);
+                    currentCursor = CursorType.W_RESIZE;
                 }
                 else if (canResizeX && checkMouseIntersect(boxes[3])) {
-                    currentCursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+                    currentCursor = CursorType.E_RESIZE;
                 }
                 else {
-                    currentCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+                    currentCursor = CursorType.DEFAULT;
                 }
             }
-            if (checkMouseIntersect(getComponentBox())) LEDCubeManager.getFrame().setCursor(currentCursor);
+            if (checkMouseIntersect(getComponentBox())) {
+                LEDCubeManager.setCursorType(currentCursor);
+                hovered = true;
+            } else if (hovered) {
+                LEDCubeManager.setCursorType(currentCursor);
+                hovered = false;
+            }
         }
         if (dragging) {
             setPosition(position.add(Util.getMousePos().subtract(mouseLast)));

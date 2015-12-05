@@ -35,6 +35,7 @@
         <copy todir="dist/resources/">
 			<fileset dir="resources/">
 				<include name="**/**" />
+				<exclude name="**/*.psd" />
 			</fileset>
 		</copy>
         

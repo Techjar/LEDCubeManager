@@ -266,6 +266,8 @@ public class LEDCubeManager {
         Display.create();
         Keyboard.create();
         Mouse.create();
+        CursorType.loadCursors();
+        setCursorType(CursorType.DEFAULT);
 
         Controllers.create();
         String defaultController = "";
@@ -1024,6 +1026,11 @@ public class LEDCubeManager {
 
     public static void setPaintColor(Color color) {
         ledCube.setPaintColor(color);
+    }
+
+    @SneakyThrows(LWJGLException.class)
+    public static void setCursorType(CursorType ct) {
+        Mouse.setNativeCursor(ct.getCursor());
     }
 
     public Controller getController(String name) {
