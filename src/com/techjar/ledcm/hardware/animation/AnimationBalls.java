@@ -109,6 +109,7 @@ public class AnimationBalls extends Animation {
 
     private Color getBallColor(int index) {
         Random rand = new Random(colorSeed + index);
+        rand.nextInt(); // Throw away crappy first result
         if (colorMode == 0) return LEDCubeManager.getLEDCube().getPaintColor();
         if (colorMode == 2) {
             Color color = new Color();
