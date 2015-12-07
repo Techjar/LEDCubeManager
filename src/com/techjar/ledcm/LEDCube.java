@@ -208,8 +208,8 @@ public class LEDCube {
     }
 
     public void resetCameraPosition() {
-        LEDCubeManager.getCamera().setPosition(new Vector3(-500, 184, -30));
-        LEDCubeManager.getCamera().setAngle(new Angle(-21, -123, 0));
+        LEDCubeManager.getCamera().setPosition(new Vector3(-30, 184, 500));
+        LEDCubeManager.getCamera().setAngle(new Angle(-21, -33, 0));
         // Some crazy code I experimented with...
         /*Dimension3D dim = ledManager.getDimensions();
         int distDim = dim.x > dim.z && dim.x > dim.y * 2 ? dim.x / 2 : (dim.z > dim.y * 2 ? dim.z / 2 : dim.y);

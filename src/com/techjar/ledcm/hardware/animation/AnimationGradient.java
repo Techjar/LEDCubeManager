@@ -5,6 +5,7 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Timer;
+import com.techjar.ledcm.util.Util;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
@@ -50,8 +51,8 @@ public class AnimationGradient extends Animation {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("color1", "Start Color", AnimationOption.OptionType.BUTTON, new Object[]{"Set From Picker"}),
-            new AnimationOption("color2", "End Color", AnimationOption.OptionType.BUTTON, new Object[]{"Set From Picker"}),
+            new AnimationOption("color1", "Start Color", AnimationOption.OptionType.COLORPICKER, new Object[]{color1}),
+            new AnimationOption("color2", "End Color", AnimationOption.OptionType.COLORPICKER, new Object[]{color2}),
             new AnimationOption("pulsate", "Pulsate", AnimationOption.OptionType.CHECKBOX, new Object[]{pulsate}),
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 149F}),
             new AnimationOption("scale", "Scale", AnimationOption.OptionType.SLIDER, new Object[]{(29 - (scale - 1)) / 29F}),
@@ -62,10 +63,10 @@ public class AnimationGradient extends Animation {
     public void optionChanged(String name, String value) {
         switch (name) {
             case "color1":
-                color1 = new Color(LEDCubeManager.getPaintColor());
+                color1 = Util.stringToColor(value);
                 break;
             case "color2":
-                color2 = new Color(LEDCubeManager.getPaintColor());
+                color2 = Util.stringToColor(value);
                 break;
             case "pulsate":
                 pulsate = Boolean.parseBoolean(value);
