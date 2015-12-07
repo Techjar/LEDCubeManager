@@ -64,6 +64,16 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
+    public boolean isMonochrome() {
+        return false;
+    }
+
+    @Override
+    public Color getMonochromeColor() {
+        return null;
+    }
+
+    @Override
     public boolean getGammaCorrection() {
         return gammaCorrection;
     }
@@ -74,16 +84,24 @@ public class ArduinoLEDManager implements LEDManager {
     }
 
     @Override
+    public int getBaudRate() {
+        return 2000000;
+    }
+
+    @Override
     public byte[] getCommData() {
         synchronized (this) {
+            byte[] redT = ledArray.getTransformed().getRed();
+            byte[] greenT = ledArray.getTransformed().getGreen();
+            byte[] blueT = ledArray.getTransformed().getBlue();
             byte[] array = new byte[192 * outBits];
             int[] red2 = new int[512];
             int[] green2 = new int[512];
             int[] blue2 = new int[512];
             for (int i = 0; i < 512; i++) {
-                red2[i] = Math.round((red[i] & 0xFF) / factor);
-                green2[i] = Math.round((green[i] & 0xFF) / factor);
-                blue2[i] = Math.round((blue[i] & 0xFF) / factor);
+                red2[i] = Math.round((redT[i] & 0xFF) / factor);
+                green2[i] = Math.round((greenT[i] & 0xFF) / factor);
+                blue2[i] = Math.round((blueT[i] & 0xFF) / factor);
             }
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
@@ -134,7 +152,7 @@ public class ArduinoLEDManager implements LEDManager {
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 6) | (x << 3) | z;
+        int index = (y << 6) | (z << 3) | x;
         return new Color(red[index], green[index], blue[index]);
     }
 
@@ -149,7 +167,7 @@ public class ArduinoLEDManager implements LEDManager {
         if (y < 0 || y > 7) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z > 7) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
-        int index = (y << 6) | (x << 3) | z;
+        int index = (y << 6) | (z << 3) | x;
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();
         blue[index] = color.getBlueByte();
@@ -157,16 +175,16 @@ public class ArduinoLEDManager implements LEDManager {
 
     @Override
     public int encodeVector(Vector3 vector) {
-        return encodeVector((int)vector.getY(), (int)vector.getX(), (int)vector.getZ());
+        return encodeVector((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
     }
 
     @Override
     public int encodeVector(int x, int y, int z) {
-        return (y << 6) | (x << 3) | z;
+        return (y << 6) | (z << 3) | x;
     }
 
     @Override
     public Vector3 decodeVector(int value) {
-        return new Vector3((value >> 3) & 7, (value >> 6) & 7, value & 7);
+        return new Vector3(value & 7, (value >> 6) & 7, (value >> 3) & 7);
     }
 }

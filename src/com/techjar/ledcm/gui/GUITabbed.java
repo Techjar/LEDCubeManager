@@ -5,10 +5,12 @@ import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.RenderHelper;
 import com.techjar.ledcm.util.Vector2;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.Dimension;
 import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.geom.Rectangle;
 
@@ -85,18 +87,37 @@ public class GUITabbed extends GUI {
         Rectangle[] boxes = getTabBoxes();
         for (int i = 0; i < boxes.length; i++) {
             Rectangle box = boxes[i];
-            RenderHelper.drawSquare(box.getX(), box.getY(), box.getWidth(), box.getHeight(), i == selectedTab ? Util.subtractColors(guiBg.getBackgroundColor(), new Color(50, 50, 50)) : (i == hoveredTab ? Util.addColors(guiBg.getBackgroundColor(), new Color(50, 50, 50)) : guiBg.getBackgroundColor()));
+            RenderHelper.drawSquare(box.getX(), box.getY(), box.getWidth(), box.getHeight(), i == selectedTab ? guiBg.getBorderColor() : (i == hoveredTab ? Util.addColors(guiBg.getBackgroundColor(), new Color(50, 50, 50)) : guiBg.getBackgroundColor()));
             RenderHelper.drawBorder(box.getX(), box.getY(), box.getWidth(), box.getHeight(), guiBg.getBorderSize(), guiBg.getBorderColor(), true, false, true, true);
-            RenderHelper.beginScissor(new Rectangle(box.getX() + 2, box.getY() + 2, box.getWidth() - 4, box.getHeight() - 4));
-            font.drawString(box.getX() + 2, box.getY() + 2, tabs.get(i).getName(), Util.convertColor(color));
+            RenderHelper.beginScissor(new Rectangle(box.getX() + guiBg.getBorderSize(), box.getY() + guiBg.getBorderSize(), box.getWidth() - (guiBg.getBorderSize() * 2), box.getHeight() - (guiBg.getBorderSize() * 2)));
+            font.drawString(box.getX() + guiBg.getBorderSize() + 2, box.getY() + guiBg.getBorderSize(), tabs.get(i).getName(), Util.convertColor(color));
             RenderHelper.endScissor();
         }
+        RenderHelper.drawSquare(getPosition().getX(), getPosition().getY() + (getTabHeight() - 2), getWidth(), 2, guiBg.getBorderColor());
         RenderHelper.endScissor();
     }
 
     @Override
     public Vector2 getContainerPosition() {
-        return getPosition().add(new Vector2(0, 20));
+        return getPosition().add(new Vector2(0, getTabHeight()));
+    }
+
+    @Override
+    public void setDimension(Dimension dimension) {
+        super.setDimension(dimension);
+        for (TabInfo tab : tabs) {
+            tab.getContainer().setDimension(dimension.getWidth(), dimension.getHeight() - getTabHeight());
+        }
+    }
+
+    public int getTabHeight() {
+        return 26;
+    }
+
+    public int getTabsWidth() {
+        Rectangle[] boxes = getTabBoxes();
+        Rectangle box = boxes[boxes.length - 1];
+        return (int)((box.getX() - getPosition().getX()) + box.getWidth());
     }
 
     public GUICallback getChangeHandler() {
@@ -112,8 +133,8 @@ public class GUITabbed extends GUI {
         int offset = 0;
         for (int i = 0; i < tabs.size(); i++) {
             TabInfo tab = tabs.get(i);
-            int width = font.getWidth(tab.getName()) + 4;
-            boxes[i] = new Rectangle(getPosition().getX() + offset, getPosition().getY(), width, 20);
+            int width = font.getWidth(tab.getName()) + ((guiBg.getBorderSize() + 2) * 2);
+            boxes[i] = new Rectangle(getPosition().getX() + offset, getPosition().getY(), width, getTabHeight() - 2);
             offset += width;
         }
         return boxes;
@@ -183,26 +204,33 @@ public class GUITabbed extends GUI {
         return tabs.get(index);
     }
 
+    public List<TabInfo> getAllTabs() {
+        return Collections.unmodifiableList(tabs);
+    }
+
     public void clear() {
+        for (TabInfo tab : tabs) {
+            tab.getContainer().setParent(null);
+        }
         tabs.clear();
     }
 
     public void addTab(int index, String name, GUIContainer container) {
         if (index <= selectedTab) selectedTab++;
         container.setParent(this);
-        container.setDimension(dimension.getWidth(), dimension.getHeight() - 20);
+        container.setDimension(dimension.getWidth(), dimension.getHeight() - getTabHeight());
         tabs.add(index, new TabInfo(name, container));
     }
 
     public boolean addTab(String name, GUIContainer container) {
         container.setParent(this);
-        container.setDimension(dimension.getWidth(), dimension.getHeight() - 20);
+        container.setDimension(dimension.getWidth(), dimension.getHeight() - getTabHeight());
         return tabs.add(new TabInfo(name, container));
     }
 
     public static class TabInfo {
-        private String name;
-        private GUIContainer container;
+        private final String name;
+        private final GUIContainer container;
 
         public TabInfo(String name, GUIContainer container) {
             this.name = name;

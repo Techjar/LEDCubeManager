@@ -37,6 +37,7 @@ import lombok.SneakyThrows;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
@@ -245,6 +246,15 @@ public final class Util {
 
     public static Vector3 decodeCubeVector(int number) {
         return LEDCubeManager.getLEDManager().decodeVector(number);
+    }
+
+    public static boolean isInsideCube(int x, int y, int z) {
+        Dimension3D dim = LEDCubeManager.getLEDCube().getLEDManager().getDimensions();
+        return x >= 0 && x < dim.x && y >= 0 && y < dim.y && z >= 0 && z < dim.z;
+    }
+
+    public static boolean isInsideCube(Vector3 vector) {
+        return isInsideCube((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
     }
 
     /*public static int getRequiredBits(long value) {
@@ -538,6 +548,18 @@ public final class Util {
 
     public static String bytesToMBString(long bytes) {
         return bytesToMB(bytes) + " MB";
+    }
+
+    public static String colorToString(Color color, boolean alpha) {
+        return color.getRed() + "," + color.getGreen() + "," + color.getBlue() + (alpha ? "," + color.getAlpha() : "");
+    }
+
+    public static Color stringToColor(String str) {
+        String[] split = str.split(",");
+        if (split.length < 3) throw new IllegalArgumentException("Too few color components or wrong delimiter");
+        Color color = new Color(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+        if (split.length >= 4) color.setAlpha(Integer.parseInt(split[3]));
+        return color;
     }
 
     public static int getNextPowerOfTwo(int number) {

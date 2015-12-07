@@ -8,6 +8,7 @@ import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUIButton;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.GUICheckBox;
+import com.techjar.ledcm.gui.GUIColorPicker;
 import com.techjar.ledcm.gui.GUIComboBox;
 import com.techjar.ledcm.gui.GUIComboButton;
 import com.techjar.ledcm.gui.GUIContainer;
@@ -15,10 +16,12 @@ import com.techjar.ledcm.gui.GUILabel;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUIScrollBox;
 import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.LEDManager;
 import com.techjar.ledcm.util.Dimension3D;
+import com.techjar.ledcm.util.Util;
 import java.util.HashMap;
 import java.util.Map;
 import org.lwjgl.util.Color;
@@ -63,11 +66,11 @@ public abstract class Animation {
     }
 
     public final void setOption(String name, String value) {
+        optionChanged(name, value);
         if (optionValues.containsKey(name)) {
             optionValues.put(name, value);
             LEDCubeManager.getConfig().setProperty("animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + name, value);
         }
-        optionChanged(name, value);
     }
 
     /**
@@ -78,7 +81,7 @@ public abstract class Animation {
         for (final AnimationOption option : options) {
             if (option.getType() != AnimationOption.OptionType.BUTTON) {
                 String property = "animoptions." + getClass().getSimpleName().substring(9).toLowerCase() + "." + option.getId();
-                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0].toString());
+                LEDCubeManager.getConfig().defaultProperty(property, option.getParams()[0] instanceof Color ? Util.colorToString((Color)option.getParams()[0], false) : option.getParams()[0].toString());
                 optionValues.put(option.getId(), LEDCubeManager.getConfig().getString(property));
             }
         }
@@ -225,10 +228,38 @@ public abstract class Animation {
                             }
                         });
                         break;
+                    case SPINNER:
+                        final GUISpinner spinner = new GUISpinner(screen.font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+                        gui = spinner;
+                        spinner.setHeight(35);
+                        spinner.setMinValue(Float.parseFloat(option.params[1].toString()));
+                        spinner.setMaxValue(Float.parseFloat(option.params[2].toString()));
+                        spinner.setIncrement(Float.parseFloat(option.params[3].toString()));
+                        spinner.setDecimalPlaces(Integer.parseInt(option.params[4].toString()));
+                        spinner.setValue(Float.parseFloat(option.params[0].toString()));
+                        spinner.setChangeHandler(new GUICallback() {
+                            @Override
+                            public void run() {
+                                setOption(option.id, Float.toString(spinner.getValue()));
+                            }
+                        });
+                        break;
+                    case COLORPICKER:
+                        final GUIColorPicker colorPicker = new GUIColorPicker(new Color(50, 50, 50));
+                        gui = colorPicker;
+                        colorPicker.setHeight(30);
+                        colorPicker.setValue((Color)option.params[0]);
+                        colorPicker.setChangeHandler(new GUICallback() {
+                            @Override
+                            public void run() {
+                                setOption(option.id, Util.colorToString(colorPicker.getValue(), false));
+                            }
+                        });
+                        break;
                 }
                 GUILabel label = new GUILabel(screen.font, new Color(255, 255, 255), option.name);
                 int width = screen.font.getWidth(option.name);
-                label.setPosition(5 + (labelWidth - width), position + (gui instanceof GUIContainer ? 0 : ((gui.getHeight() - 30) / 2F)));
+                label.setPosition(5 + (labelWidth - width), position + (gui instanceof GUIContainer ? 0 : Math.round((gui.getHeight() - 30) / 2F)));
                 label.setDimension(width, 30);
                 if (gui instanceof GUICheckBox) ((GUICheckBox)gui).setLabel(label);
                 box.addComponent(label);

@@ -5,21 +5,16 @@ import com.techjar.ledcm.ControlUtil;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.animation.Animation;
-import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
 import com.techjar.ledcm.hardware.tcp.TCPClient;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationList;
-import com.techjar.ledcm.hardware.tcp.packet.PacketAnimationOptionList;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
 import com.techjar.ledcm.hardware.tcp.packet.PacketCubeFrame;
 import com.techjar.ledcm.hardware.tcp.packet.PacketSetColorPicker;
-import com.techjar.ledcm.util.Constants;
-import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Timer;
 import java.io.IOException;
-import jssc.SerialPort;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -31,22 +26,26 @@ import lombok.SneakyThrows;
 public class CommThread extends Thread {
     private final Object lock = new Object();
     private final LEDManager ledManager;
+    private final PortHandler portHandler;
     private long updateTime;
     private long ticks;
+    private int fpsCounter;
+    private volatile int fpsDisplay;
+    private Timer frameTimer = new Timer();
     @Getter @Setter private int refreshRate = 60;
     @Getter private Animation currentAnimation;
     @Getter private AnimationSequence currentSequence;
-    private SerialPort port;
     @Getter private TCPServer tcpServer;
+    @Getter @Setter private boolean frozen;
     /*int numRecv;
     Timer timer = new Timer();
     int lastRecv = -1;*/
 
-    public CommThread() throws IOException {
+    public CommThread(PortHandler portHandler) throws IOException {
         this.setName("Animation / Communication");
-        ledManager = LEDCubeManager.getLEDManager();
+        this.portHandler = portHandler;
+        ledManager = LEDCubeManager.getLEDCube().getLEDManager();
         updateTime = System.nanoTime();
-        port = new SerialPort(LEDCubeManager.getSerialPortName());
         tcpServer = new TCPServer(LEDCubeManager.getServerPort());
         tcpServer.setConnectHandler(new TCPServer.ConnectHandler() {
             @Override
@@ -81,41 +80,54 @@ public class CommThread extends Thread {
             long diff = System.nanoTime() - updateTime;
             if (diff >= interval) {
                 updateTime = System.nanoTime();
-                ticks++;
-                if (currentSequence != null) currentSequence.update();
-                if (currentAnimation != null) {
-                    try {
-                        currentAnimation.refresh();
-                        currentAnimation.incTicks();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        currentAnimation = null;
+                if (!frozen) {
+                    if (frameTimer.getMilliseconds() >= 1000) {
+                        fpsDisplay = fpsCounter;
+                        fpsCounter = 0;
+                        frameTimer.restart();
                     }
-                }
-                ledManager.updateLEDArray();
-                byte[] data = ledManager.getCommData();
-                tcpServer.sendPacket(new PacketCubeFrame(data));
-                synchronized (lock) {
-                    try {
-                        if (port.isOpened()) {
-                            /*if (ticks % 30 == 0)*/ port.writeBytes(data);
-                            /*byte[] bytes = port.readBytes();
-                            if (bytes != null) {
-                                numRecv += bytes.length;
-                            }*/
-                            //while (port.readBytes(1, 3000)[0] != 1){}
-                            /*byte[] bytes = port.readBytes(data.length, 1000);
-                            if (bytes != null) {
-                                System.out.println("CHECK DATA");
-                                for (int i = 0; i < data.length; i++) {
-                                    if (bytes[i] != data[i]) System.out.println("ERROR @ " + i + " = " + (bytes[i] & 0xFF));
-                                }
-                            }*/
+                    fpsCounter++;
+                    ticks++;
+                    synchronized (lock) {
+                        if (currentSequence != null) currentSequence.update();
+                        if (currentAnimation != null) {
+                            try {
+                                currentAnimation.refresh();
+                                currentAnimation.incTicks();
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                currentAnimation = null;
+                            }
                         }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        closePort();
                     }
+                    ledManager.updateLEDArray();
+                    byte[] data = ledManager.getCommData();
+                    tcpServer.sendPacket(new PacketCubeFrame(data));
+                    synchronized (lock) {
+                        try {
+                            if (portHandler.isOpened()) {
+                                /*if (ticks % 30 == 0)*/ portHandler.writeBytes(data);
+                                /*byte[] bytes = port.readBytes();
+                                if (bytes != null) {
+                                    numRecv += bytes.length;
+                                }*/
+                                //while (port.readBytes(1, 3000)[0] != 1){}
+                                /*byte[] bytes = port.readBytes(data.length, 1000);
+                                if (bytes != null) {
+                                    System.out.println("CHECK DATA");
+                                    for (int i = 0; i < data.length; i++) {
+                                        if (bytes[i] != data[i]) System.out.println("ERROR @ " + i + " = " + (bytes[i] & 0xFF));
+                                    }
+                                }*/
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            closePort();
+                        }
+                    }
+                } else {
+                    fpsCounter = 0;
+                    fpsDisplay = 0;
                 }
             }
             else if (interval - diff > 1000000) {
@@ -131,7 +143,7 @@ public class CommThread extends Thread {
                 currentAnimation.reset();
                 currentAnimation.loadOptions();
                 tcpServer.sendPacket(ControlUtil.getAnimationOptionsPacket());
-            }
+            } 
         }
     }
 
@@ -145,11 +157,9 @@ public class CommThread extends Thread {
 
     public void openPort() {
         synchronized (lock) {
-            if (!port.isOpened()) {
+            if (!portHandler.isOpened()) {
                 try {
-                    port.openPort();
-                    port.setParams(2000000, 8, 1, 0);
-
+                    portHandler.open(ledManager.getBaudRate());
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -159,9 +169,9 @@ public class CommThread extends Thread {
 
     public void closePort() {
         synchronized (lock) {
-            if (port.isOpened()) {
+            if (portHandler.isOpened()) {
                 try {
-                    port.closePort();
+                    portHandler.close();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -170,11 +180,15 @@ public class CommThread extends Thread {
     }
 
     public boolean isPortOpen() {
-        return port.isOpened();
+        return portHandler.isOpened();
     }
 
     public int getNumTCPClients() {
         return tcpServer.getNumClients();
+    }
+
+    public int getFPS() {
+        return fpsDisplay;
     }
 
     private class ShutdownThread extends Thread {

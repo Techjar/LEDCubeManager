@@ -1,4 +1,4 @@
-package com.techjar.ledcm.util;
+package com.techjar.ledcm.util.input;
 
 import com.techjar.ledcm.LEDCubeManager;
 import lombok.Value;
@@ -12,8 +12,8 @@ import org.lwjgl.input.Mouse;
  */
 @Value
 public class InputInfo {
-    private Type type;
-    private int button;
+    private final Type type;
+    private final int button;
 
     public String getDisplayString() {
         switch (type) {
@@ -22,7 +22,7 @@ public class InputInfo {
                 return Keyboard.getKeyName(button);
             case MOUSE:
                 if (Mouse.getButtonName(button) == null) return "";
-                return Mouse.getButtonName(button);
+                return "MOUSE" + button;
             /*case CONTROLLER:
                 Controller con = LEDCubeManager.getInstance().getController(LEDCubeManager.getConfig().getString("controls.controller"));
                 if (con == null || con.getButtonName(button) == null) return "";

@@ -34,6 +34,16 @@ public interface LEDManager {
     public int getLEDCount();
 
     /**
+     * Returns whether this LEDManager is monochrome.
+     */
+    public boolean isMonochrome();
+
+    /**
+     * Returns the monochrome color.
+     */
+    public Color getMonochromeColor();
+
+    /**
      * Get gamma correction
      */
     public boolean getGammaCorrection();
@@ -42,6 +52,11 @@ public interface LEDManager {
      * Set gamma correction
      */
     public void setGammaCorrection(boolean gammaCorrection);
+
+    /**
+     * Returns desired serial port baud rate for this LEDManager
+     */
+    public int getBaudRate();
 
     /**
      * Returns byte array to be sent across the controller connection.

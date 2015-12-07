@@ -52,6 +52,16 @@ public class StripLEDManager implements LEDManager {
     }
 
     @Override
+    public boolean isMonochrome() {
+        return false;
+    }
+
+    @Override
+    public Color getMonochromeColor() {
+        return null;
+    }
+
+    @Override
     public boolean getGammaCorrection() {
         return gammaCorrection;
     }
@@ -59,6 +69,11 @@ public class StripLEDManager implements LEDManager {
     @Override
     public void setGammaCorrection(boolean gammaCorrection) {
         this.gammaCorrection = gammaCorrection;
+    }
+
+    @Override
+    public int getBaudRate() {
+        return 2000000;
     }
 
     @Override

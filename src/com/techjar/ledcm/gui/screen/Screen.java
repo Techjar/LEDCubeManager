@@ -24,6 +24,7 @@ public abstract class Screen {
             @Override
             public void run() {
                 container.setDimension(LEDCubeManager.getWidth(), LEDCubeManager.getHeight());
+                onResized();
             }
         });
     }
@@ -75,5 +76,8 @@ public abstract class Screen {
     public void remove() {
         LEDCubeManager.getInstance().removeResizeHandler(resizeHandler);
         removeRequested = true;
+    }
+
+    protected void onResized() {
     }
 }

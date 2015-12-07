@@ -25,7 +25,7 @@ public class AnimationPulsateHue extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         for (int x = 0; x < dimension.x; x++) {
             double value = (timer.getSeconds() * (speed / 50) + ((dimension.x - x) / (float)dimension.x) * (scale / 10)) % 1;
             //double value = ((timer.getSeconds() / (dimension.y - 1) + ((dimension.y - 1 - y) / (dimension.y - 1F)) / 5)) % 1;
@@ -36,7 +36,7 @@ public class AnimationPulsateHue extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         timer.restart();
     }
 

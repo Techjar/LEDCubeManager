@@ -1,5 +1,7 @@
 package com.techjar.ledcm;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +19,11 @@ import org.newdawn.slick.font.effects.Effect;
  */
 public class FontManager {
     protected final File fontPath;
-    protected Map<FontInfo, UnicodeFont> fonts;
+    protected BiMap<FontInfo, UnicodeFont> fonts;
     
     public FontManager() {
         fontPath = new File("resources/fonts/");
-        fonts = new HashMap<>();
+        fonts = HashBiMap.create();
     }
     
     public FontInstance getFont(String font, int size, boolean bold, boolean italic, List<Effect> effects) {
@@ -44,6 +46,10 @@ public class FontManager {
         unicodeFont.loadGlyphs();
         fonts.put(info, unicodeFont);
         return unicodeFont;
+    }
+
+    public FontInfo getFontInfo(UnicodeFont font) {
+        return fonts.inverse().get(font);
     }
     
     public void unloadFont(FontInfo info) {
