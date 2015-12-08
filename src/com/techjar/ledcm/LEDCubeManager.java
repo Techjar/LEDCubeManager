@@ -45,6 +45,7 @@ import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
+import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
@@ -185,6 +186,8 @@ public class LEDCubeManager {
     private int shadowMapSize = 1024;
     private int depthFBO;
     private int depthTexture;
+    private final Timer frameServeTimer = new Timer();
+    private final Timer rateCapTimer = new Timer();
 
     // Screens
     @Getter private ScreenMainControl screenMainControl;
@@ -452,7 +455,12 @@ public class LEDCubeManager {
     public void run() throws LWJGLException {
         while (!Display.isCloseRequested() && !closeRequested) {
             try {
-                runGameLoop();
+                if (rateCapTimer.getMilliseconds() >= 1000D / 300D) {
+                    rateCapTimer.restart();
+                    runGameLoop();
+                } else if (1000D / 300D - rateCapTimer.getMilliseconds() > 1) {
+                    Thread.sleep(1);
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
                 closeRequested = true;
@@ -900,7 +908,9 @@ public class LEDCubeManager {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
             glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
-        if (screenshot || frameServer.numClients > 0) {
+        boolean frameServe = frameServer.numClients > 0 && frameServeTimer.getMilliseconds() >= 1000D / 60D;
+        if (screenshot || frameServe) {
+            frameServeTimer.restart();
             ByteBuffer buffer = BufferUtils.createByteBuffer(displayMode.getWidth() * displayMode.getHeight() * 3);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glReadPixels(0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
@@ -925,7 +935,7 @@ public class LEDCubeManager {
                 ImageIO.write(image, "png", file);
             }
             
-            if (frameServer.numClients > 0) {
+            if (frameServe) {
                 frameServer.queueFrame(image);
             }
         }
