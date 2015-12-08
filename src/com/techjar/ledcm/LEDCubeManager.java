@@ -880,7 +880,6 @@ public class LEDCubeManager {
             addInfoText("Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1030);
             //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
             //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
-            addInfoText("Rendered faces: " + faceCount, 1040);
             //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
         }
 
@@ -977,6 +976,7 @@ public class LEDCubeManager {
         lightingHandler.sendToShader();
         
         faceCount = ledCube.render();
+        addInfoText("Rendered faces: " + faceCount, 1040);
 
         InstancedRenderer.prepareItems();
         InstancedRenderer.renderAll();
@@ -992,18 +992,15 @@ public class LEDCubeManager {
         for (Screen screen : screenList)
             if (screen.isVisible()) screen.render();
 
-        long renderTime = System.nanoTime() - renderStart;
-        if (/*renderFPS || renderDebug ||*/ true) {
-            UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
-            org.newdawn.slick.Color debugColor = org.newdawn.slick.Color.yellow;
-            int y = 0;
-            if (renderFPS || debugMode) {
-                debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
-                debugFont.drawString(5, 5 + y++ * 25, "Animation FPS: " + ledCube.getCommThread().getFPS(), debugColor);
-            }
-            for (Tuple<String, Integer> tuple : debugText) {
-                debugFont.drawString(5, (y++ * 25) + 5, tuple.getA(), debugColor);
-            }
+        UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
+        org.newdawn.slick.Color infoColor = org.newdawn.slick.Color.yellow;
+        int y = 0;
+        if (renderFPS || debugMode) {
+            debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, infoColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Animation FPS: " + ledCube.getCommThread().getFPS(), infoColor);
+        }
+        for (Tuple<String, Integer> tuple : debugText) {
+            debugFont.drawString(5, (y++ * 25) + 5, tuple.getA(), infoColor);
         }
 
         glPopMatrix();
