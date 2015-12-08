@@ -11,6 +11,7 @@ import org.lwjgl.util.Color;
  */
 public class AnimationStrobe extends Animation {
     private boolean state;
+    private int speed = 2;
 
     public AnimationStrobe() {
         super();
@@ -23,7 +24,7 @@ public class AnimationStrobe extends Animation {
 
     @Override
     public synchronized void refresh() {
-        if (ticks % 2 == 0) {
+        if (ticks % speed == 0) {
             state = !state;
             for (int x = 0; x < dimension.x; x++) {
                 for (int y = 0; y < dimension.y; y++) {
@@ -40,4 +41,19 @@ public class AnimationStrobe extends Animation {
         state = false;
     }
 
+    @Override
+    public AnimationOption[] getOptions() {
+        return new AnimationOption[]{
+            new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(59 - (speed - 1)) / 59F, 1F / 59F, false}),
+        };
+    }
+
+    @Override
+    public void optionChanged(String name, String value) {
+        switch (name) {
+            case "speed":
+                speed = 1 + Math.round(59 * (1 - Float.parseFloat(value)));
+                break;
+        }
+    }
 }

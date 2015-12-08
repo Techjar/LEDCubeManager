@@ -31,7 +31,7 @@ public class AnimationProgressiveFill extends Animation {
     public synchronized void refresh() {
         if (filledCount < states.length) {
             int count = (int)(timer.getMilliseconds() / 1000);
-            for (int i = 0; i < count + 1; i++) {
+            for (int i = 0; i < count + 1;) {
                 if (random.nextInt(10000) < timer.getMilliseconds()) {
                     int x = random.nextInt(dimension.x);
                     int y = random.nextInt(dimension.y);
@@ -39,12 +39,9 @@ public class AnimationProgressiveFill extends Animation {
                     if (!states[Util.encodeCubeVector(x, y, z)]) {
                         states[Util.encodeCubeVector(x, y, z)] = true;
                         ledManager.setLEDColor(x, y, z, LEDCubeManager.getPaintColor());
+                        filledCount++; i++;
                     }
                 }
-            }
-            filledCount = 0;
-            for (int i = 0; i < states.length; i++) {
-                if (states[i]) filledCount++;
             }
         }
     }

@@ -524,11 +524,8 @@ public class LEDCube {
         addAnimation(new AnimationMatrix());
         //addAnimation(new AnimationFolder());
         addAnimation(new AnimationTwinkle());
-        addAnimation(new AnimationBlink());
         addAnimation(new AnimationStrobe());
         addAnimation(new AnimationSnake());
-        addAnimation(new AnimationSnakeBattle());
-        addAnimation(new AnimationSnakeInfinite());
         addAnimation(new AnimationScrollers());
         addAnimation(new AnimationProgressiveFill());
         addAnimation(new AnimationSine());
