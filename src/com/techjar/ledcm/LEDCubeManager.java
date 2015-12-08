@@ -111,6 +111,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Controllers;
+import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -155,6 +156,7 @@ public class LEDCubeManager {
     @Getter private static FrameServer frameServer;
     @Getter private static SystemTray systemTray;
     @Getter @Setter private static boolean convertingAudio;
+    private static Cursor currentCursor;
     private static LEDCube ledCube;
     private List<Screen> screenList = new ArrayList<>();
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
@@ -765,6 +767,8 @@ public class LEDCubeManager {
     }
 
     private void preProcess() {
+        debugText.clear();
+        currentCursor = null;
         ledCube.preProcess();
     }
 
@@ -836,7 +840,6 @@ public class LEDCubeManager {
                 packet.process();
             }
         }
-        debugText.clear();
 
         camera.update(delta);
         textureManager.update(delta);
@@ -859,6 +862,13 @@ public class LEDCubeManager {
             }
         }
         screensToAdd.clear();
+
+        try {
+            if (currentCursor == null) Mouse.setNativeCursor(CursorType.DEFAULT.getCursor());
+            else Mouse.setNativeCursor(currentCursor);
+        } catch (LWJGLException ex) {
+            ex.printStackTrace();
+        }
 
         if (debugMode) {
             Runtime runtime = Runtime.getRuntime();
@@ -1067,9 +1077,12 @@ public class LEDCubeManager {
         ledCube.setPaintColor(color);
     }
 
-    @SneakyThrows(LWJGLException.class)
+    /**
+     * Cursor will reset to default every frame, so you must set it every frame to keep it persistent.
+     * This is to avoid the cursor being left in odd states when it shouldn't be.
+     */
     public static void setCursorType(CursorType ct) {
-        Mouse.setNativeCursor(ct.getCursor());
+        currentCursor = ct.getCursor();
     }
 
     public Controller getController(String name) {
