@@ -46,6 +46,7 @@ import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Timer;
+import com.techjar.ledcm.util.Tuple;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
@@ -160,6 +161,7 @@ public class LEDCubeManager {
     private List<GUICallback> resizeHandlers = new ArrayList<>();
     private Map<String, Integer> validControllers = new HashMap<>();
     private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
+    private static List<Tuple<String, Integer>> debugText = new ArrayList<>();
     private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
     private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
     private int fpsCounter;
@@ -834,6 +836,7 @@ public class LEDCubeManager {
                 packet.process();
             }
         }
+        debugText.clear();
 
         camera.update(delta);
         textureManager.update(delta);
@@ -856,6 +859,20 @@ public class LEDCubeManager {
             }
         }
         screensToAdd.clear();
+
+        if (debugMode) {
+            Runtime runtime = Runtime.getRuntime();
+            if (convertingAudio) addInfoText("Converting audio...", 1000);
+            addInfoText("Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), 1010);
+            Vector3 vector = camera.getAngle().forward();
+            addInfoText("Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1020);
+            vector = camera.getPosition();
+            addInfoText("Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1030);
+            //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
+            //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
+            addInfoText("Rendered faces: " + faceCount, 1040);
+            //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
+        }
 
         if (regrab) {
             Mouse.setGrabbed(true);
@@ -974,26 +991,8 @@ public class LEDCubeManager {
                 debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
                 debugFont.drawString(5, 5 + y++ * 25, "Animation FPS: " + ledCube.getCommThread().getFPS(), debugColor);
             }
-            debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (ledCube.getCommThread().isPortOpen() ? "open" : "closed"), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + ledCube.getCommThread().getNumTCPClients(), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Current music: " + ledCube.getSpectrumAnalyzer().getCurrentTrack(), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Music time: " + ledCube.getSpectrumAnalyzer().getPositionMillis(), debugColor);
-            if (ledCube.getCommThread().isFrozen()) debugFont.drawString(5, 5 + y++ * 25, "Animation Frozen", debugColor);
-            if (ledCube.getLEDManager().getResolution() < 255) debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (ledCube.isTrueColor() ? "true" : "full"), debugColor);
-            if (convertingAudio) debugFont.drawString(5, 5 + y++ * 25, "Converting audio...", debugColor);
-            if (debugMode) {
-                Runtime runtime = Runtime.getRuntime();
-                debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), debugColor);
-                Vector3 vector = camera.getAngle().forward();
-                debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
-                vector = camera.getPosition();
-                debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
-                debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
+            for (Tuple<String, Integer> tuple : debugText) {
+                debugFont.drawString(5, (y++ * 25) + 5, tuple.getA(), debugColor);
             }
         }
 
@@ -1191,6 +1190,26 @@ public class LEDCubeManager {
         for (Screen screen : screenList)
             screen.remove();
         screenList.clear();
+    }
+
+    /**
+     * Adds the text at the top left of the screen. Lower priority number is higher on the list.
+     * FPS always appears at the top and cannot be overridden through this method.
+     *
+     * The list is cleared every frame, so you should call this on every update().
+     */
+    public static void addInfoText(String text, int priority) {
+        if (debugText.size() < 1) {
+            debugText.add(new Tuple<>(text, priority));
+        } else {
+            for (int i = 0; i <= debugText.size(); i++) {
+                Tuple<String, Integer> tuple = i == debugText.size() ? null : debugText.get(i);
+                if (tuple == null || priority <= tuple.getB()) {
+                    debugText.add(i, new Tuple<>(text, priority));
+                    break;
+                }
+            }
+        }
     }
 
     public static int getWidth() {

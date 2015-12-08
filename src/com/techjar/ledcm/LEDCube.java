@@ -150,7 +150,13 @@ public class LEDCube {
     }
 
     public void update(float delta) {
-        // we don't do anything here... yet...
+        LEDCubeManager.addInfoText("Serial port: " + (commThread.isPortOpen() ? "open" : "closed"), 100);
+        LEDCubeManager.addInfoText("TCP clients: " + commThread.getNumTCPClients(), 110);
+        LEDCubeManager.addInfoText("Current music: " + spectrumAnalyzer.getCurrentTrack(), 120);
+        LEDCubeManager.addInfoText("Music time: " + spectrumAnalyzer.getPositionMillis(), 130);
+        if (commThread.isFrozen()) LEDCubeManager.addInfoText("Animation Frozen", 140);
+        if (ledManager.getResolution() < 255) LEDCubeManager.addInfoText("Color mode: " + (trueColor ? "true" : "full"), 150);
+        LEDCubeManager.addInfoText("Hovered LED: " + (cursorTrace == null ? "none" : (int)cursorTrace.getX() + ", " + (int)cursorTrace.getY() + ", " + (int)cursorTrace.getZ()), 900);
     }
 
     public int render() {
