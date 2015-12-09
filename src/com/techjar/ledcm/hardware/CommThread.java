@@ -128,6 +128,7 @@ public class CommThread extends Thread {
                 } else {
                     fpsCounter = 0;
                     fpsDisplay = 0;
+                    ledManager.updateLEDArray();
                 }
             }
             else if (interval - diff > 1000000) {
