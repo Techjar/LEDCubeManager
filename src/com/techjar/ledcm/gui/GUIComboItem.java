@@ -2,7 +2,7 @@ package com.techjar.ledcm.gui;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.newdawn.slick.UnicodeFont;

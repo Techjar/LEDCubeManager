@@ -1,5 +1,6 @@
-package com.techjar.ledcm;
+package com.techjar.ledcm.render;
 
+import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 import static org.lwjgl.opengl.GL11.*;
 

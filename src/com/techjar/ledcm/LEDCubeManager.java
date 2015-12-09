@@ -1,4 +1,8 @@
 package com.techjar.ledcm;
+import com.techjar.ledcm.render.LightingHandler;
+import com.techjar.ledcm.render.Camera;
+import com.techjar.ledcm.render.Frustum;
+import com.techjar.ledcm.render.InstancedRenderer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -15,6 +19,7 @@ import static org.lwjgl.util.glu.GLU.*;
 import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.hackoeur.jglm.Matrices;
+import com.hackoeur.jglm.Vec3;
 import com.obj.WavefrontObject;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.screen.Screen;
@@ -29,6 +34,8 @@ import com.techjar.ledcm.hardware.TestLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
+import com.techjar.ledcm.render.pipeline.RenderPipeline;
+import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;
@@ -162,6 +169,7 @@ public class LEDCubeManager {
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
     private List<GUICallback> resizeHandlers = new ArrayList<>();
     private Map<String, Integer> validControllers = new HashMap<>();
+    private List<Tuple<RenderPipeline, Integer>> pipelines = new ArrayList<>();
     private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
     private static List<Tuple<String, Integer>> debugText = new ArrayList<>();
     private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
@@ -182,8 +190,8 @@ public class LEDCubeManager {
     public final int antiAliasingMaxSamples;
     @Getter private boolean antiAliasing = true;
     @Getter private int antiAliasingSamples = 4;
-    private float fieldOfView;
-    private float viewDistance;
+    @Getter @Setter private float fieldOfView;
+    @Getter @Setter private float viewDistance;
     private int multisampleFBO;
     private int multisampleTexture;
     private int multisampleDepthTexture;
@@ -198,11 +206,10 @@ public class LEDCubeManager {
 
     // Really import OpenGL matrix stuff
     private Mat4 projectionMatrix;
-    private Matrix4f viewMatrix;
-    public Matrix4f modelMatrix;
+    private Matrix4f viewMatrix = new Matrix4f();
+    public Matrix4f modelMatrix = new Matrix4f();
 
     @Getter private LightingHandler lightingHandler;
-    private ShaderProgram spMain;
     private ShaderProgram spDepthDraw; // TODO
 
     public LEDCubeManager(String[] args) throws LWJGLException {
@@ -294,6 +301,8 @@ public class LEDCubeManager {
         if (validControllers.size() < 1) config.setProperty("controls.controller", "");
         else if (!validControllers.containsKey(config.getString("controls.controller"))) config.setProperty("controls.controller", defaultController);
         if (config.hasChanged()) config.save();
+
+        addRenderPipeline(new RenderPipelineStandard(), 0);
 
         textureManager = new TextureManager();
         modelManager = new ModelManager(textureManager);
@@ -758,7 +767,9 @@ public class LEDCubeManager {
     }
     
     private void initShaders() {
-        spMain = new ShaderProgram().loadShader("main").link();
+        for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+            tuple.getA().loadShaders();
+        }
     }
 
     public void resizeGL(int width, int height) {
@@ -903,7 +914,6 @@ public class LEDCubeManager {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         // Setup projection matrix
-        projectionMatrix = Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, viewDistance);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
@@ -970,24 +980,27 @@ public class LEDCubeManager {
     public void render3D() {
         glPushMatrix();
         
-        spMain.use();
-        setupView(camera.getPosition(), camera.getAngle());
-        sendMatrixToProgram();
-        lightingHandler.sendToShader();
-        
         faceCount = ledCube.render();
         addInfoText("Rendered faces: " + faceCount, 1040);
 
-        InstancedRenderer.prepareItems();
-        InstancedRenderer.renderAll();
+        for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+            for (int i = 0; i < tuple.getA().get3DPasses(); i++) {
+                tuple.getA().render3D(i);
+            }
+        }
         InstancedRenderer.resetItems();
-        ShaderProgram.useNone();
         
         glPopMatrix();
     }
 
     public void render2D() {
         glPushMatrix();
+
+        for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+            for (int i = 0; i < tuple.getA().get2DPasses(); i++) {
+                tuple.getA().render2D(i);
+            }
+        }
 
         for (Screen screen : screenList)
             if (screen.isVisible()) screen.render();
@@ -1016,17 +1029,19 @@ public class LEDCubeManager {
         }
     }
 
-    private void setupView(Vector3 position, Quaternion rotation) {
-        viewMatrix = new Matrix4f();
-        modelMatrix = new Matrix4f();
-        Matrix4f.mul(viewMatrix, rotation.getMatrix(), viewMatrix);
+    public void setupView(Mat4 projection, Vector3 position, Quaternion rotation) {
+        projectionMatrix = projection;
+        viewMatrix.setIdentity();
+        modelMatrix.setIdentity();
+        Matrix4f.mul(viewMatrix, (Matrix4f)rotation.getMatrix().negate(), viewMatrix);
         viewMatrix.translate(Util.convertVector(position.negate()));
         frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
     }
 
-    private void setupView(Vector3 position, Angle angle) {
-        viewMatrix = new Matrix4f();
-        modelMatrix = new Matrix4f();
+    public void setupView(Mat4 projection, Vector3 position, Angle angle) {
+        projectionMatrix = projection;
+        viewMatrix.setIdentity();
+        modelMatrix.setIdentity();
         viewMatrix.rotate((float)Math.toRadians(angle.getRoll()), new Vector3f(0, 0, -1));
         viewMatrix.rotate((float)Math.toRadians(angle.getPitch()), new Vector3f(-1, 0, 0));
         viewMatrix.rotate((float)Math.toRadians(angle.getYaw()), new Vector3f(0, -1, 0));
@@ -1034,7 +1049,7 @@ public class LEDCubeManager {
         frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
     }
 
-    private void sendMatrixToProgram() {
+    public void sendMatrixToProgram() {
         ShaderProgram program = ShaderProgram.getCurrent();
         if (program == null) return;
         int projectionMatrixLoc = program.getUniformLocation("projection_matrix");
@@ -1200,6 +1215,23 @@ public class LEDCubeManager {
         for (Screen screen : screenList)
             screen.remove();
         screenList.clear();
+    }
+
+    /**
+     * Lower priority number is rendered earlier.
+     */
+    public void addRenderPipeline(RenderPipeline pipeline, int priority) {
+        if (pipelines.size() < 1) {
+            pipelines.add(new Tuple<>(pipeline, priority));
+        } else {
+            for (int i = 0; i <= pipelines.size(); i++) {
+                Tuple<RenderPipeline, Integer> tuple = i == pipelines.size() ? null : pipelines.get(i);
+                if (tuple == null || priority <= tuple.getB()) {
+                    pipelines.add(i, new Tuple<>(pipeline, priority));
+                    break;
+                }
+            }
+        }
     }
 
     /**

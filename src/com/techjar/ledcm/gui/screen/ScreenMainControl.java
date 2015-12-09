@@ -2,7 +2,7 @@
 package com.techjar.ledcm.gui.screen;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.gui.GUIAlignment;
 import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIButton;

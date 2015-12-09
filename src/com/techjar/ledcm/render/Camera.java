@@ -1,6 +1,7 @@
 
-package com.techjar.ledcm;
+package com.techjar.ledcm.render;
 
+import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;

@@ -3,7 +3,7 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
