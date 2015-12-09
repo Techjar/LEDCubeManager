@@ -164,6 +164,7 @@ public class LEDCubeManager {
     @Getter private static SystemTray systemTray;
     @Getter @Setter private static boolean convertingAudio;
     private static Cursor currentCursor;
+    private static Cursor lastCursor;
     private static LEDCube ledCube;
     private List<Screen> screenList = new ArrayList<>();
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
@@ -778,8 +779,9 @@ public class LEDCubeManager {
     }
 
     private void preProcess() {
-        debugText.clear();
+        lastCursor = currentCursor;
         currentCursor = null;
+        debugText.clear();
         ledCube.preProcess();
     }
 
@@ -875,8 +877,8 @@ public class LEDCubeManager {
         screensToAdd.clear();
 
         try {
-            if (currentCursor == null) Mouse.setNativeCursor(CursorType.DEFAULT.getCursor());
-            else Mouse.setNativeCursor(currentCursor);
+            if (currentCursor != null) Mouse.setNativeCursor(currentCursor);
+            else if (lastCursor != null) Mouse.setNativeCursor(CursorType.DEFAULT.getCursor());
         } catch (LWJGLException ex) {
             ex.printStackTrace();
         }
