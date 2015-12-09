@@ -1096,7 +1096,7 @@ public class LEDCubeManager {
      * This is to avoid the cursor being left in odd states when it shouldn't be.
      */
     public static void setCursorType(CursorType ct) {
-        currentCursor = ct.getCursor();
+        currentCursor = ct == null ? null : ct.getCursor();
     }
 
     public Controller getController(String name) {
