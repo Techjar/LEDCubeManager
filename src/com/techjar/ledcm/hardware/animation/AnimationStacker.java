@@ -18,7 +18,7 @@ public class AnimationStacker extends Animation {
 
     public AnimationStacker() {
         super();
-        topLayer = (long)Math.pow(2, dimension.y - 1);
+        topLayer = 1L << (dimension.y - 1);
         allLayers = (long)Math.pow(2, dimension.y) - 1;
     }
 
@@ -33,11 +33,11 @@ public class AnimationStacker extends Animation {
             if (layers != allLayers) {
                 if (curLayer == 0) {
                     curLayer = topLayer;
-                } else if ((layers | (curLayer >> 1)) == layers) {
+                } else if ((layers | (curLayer >>> 1)) == layers) {
                     layers |= curLayer;
                     curLayer = 0;
                 } else {
-                    curLayer >>= 1;
+                    curLayer >>>= 1;
                 }
             }
             for (int y = 0; y < dimension.y; y++) {

@@ -546,6 +546,8 @@ public class LEDCube {
         addAnimation(new AnimationFaucetFillRainbow());
         addAnimation(new AnimationSlidingBoxes());
         addAnimation(new AnimationBalls());
+        addAnimation(new AnimationColorSpectrum());
+        addAnimation(new AnimationSlidingPanels());
         for (Animation anim : animations.values()) {
             anim.postLoadInitOptions();
         }

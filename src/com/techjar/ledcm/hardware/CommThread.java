@@ -37,9 +37,6 @@ public class CommThread extends Thread {
     @Getter private AnimationSequence currentSequence;
     @Getter private TCPServer tcpServer;
     @Getter @Setter private boolean frozen;
-    /*int numRecv;
-    Timer timer = new Timer();
-    int lastRecv = -1;*/
 
     public CommThread(PortHandler portHandler) throws IOException {
         this.setName("Animation / Communication");
@@ -71,11 +68,6 @@ public class CommThread extends Thread {
     @SneakyThrows(InterruptedException.class)
     public void run() {
         while (true) {
-            /*if (timer.getSeconds() >= 1) {
-                timer.restart();
-                System.out.println("Recv rate: " + numRecv);
-                numRecv = 0;
-            }*/
             long interval = 1000000000 / refreshRate;
             long diff = System.nanoTime() - updateTime;
             if (diff >= interval) {
@@ -106,19 +98,7 @@ public class CommThread extends Thread {
                     synchronized (lock) {
                         try {
                             if (portHandler.isOpened()) {
-                                /*if (ticks % 30 == 0)*/ portHandler.writeBytes(data);
-                                /*byte[] bytes = port.readBytes();
-                                if (bytes != null) {
-                                    numRecv += bytes.length;
-                                }*/
-                                //while (port.readBytes(1, 3000)[0] != 1){}
-                                /*byte[] bytes = port.readBytes(data.length, 1000);
-                                if (bytes != null) {
-                                    System.out.println("CHECK DATA");
-                                    for (int i = 0; i < data.length; i++) {
-                                        if (bytes[i] != data[i]) System.out.println("ERROR @ " + i + " = " + (bytes[i] & 0xFF));
-                                    }
-                                }*/
+                                portHandler.writeBytes(data);
                             }
                         } catch (Exception ex) {
                             ex.printStackTrace();
