@@ -348,22 +348,27 @@ public final class Util {
         return new IPInfo(InetAddress.getByName(ip), port, ipv6);
     }
 
-    public static String getFileMD5(File file) throws IOException, NoSuchAlgorithmException {
-        @Cleanup FileInputStream fis = new FileInputStream(file);
-        byte[] bytes = new byte[(int)file.length()];
-        fis.read(bytes);
+    public static String getChecksum(String method, byte[] bytes) throws IOException, NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(bytes);
         byte[] digest = md.digest();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < digest.length; i++) {
-            sb.append(Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1));
+            sb.append(String.format("%02x", digest[i] & 0xFF));
         }
         return sb.toString();
     }
 
-    public static String getFileMD5(String file) throws IOException, NoSuchAlgorithmException {
-        return getFileMD5(new File(file));
+    public static String getChecksum(String method, String str) throws IOException, NoSuchAlgorithmException {
+        return getChecksum(method, str.getBytes("UTF-8"));
+    }
+
+    public static String getFileChecksum(String method, File file) throws IOException, NoSuchAlgorithmException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int)file.length()];
+            fis.read(bytes);
+            return getChecksum(method, bytes);
+        }
     }
 
     @SneakyThrows(FileNotFoundException.class)

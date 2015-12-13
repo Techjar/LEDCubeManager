@@ -11,6 +11,7 @@ import com.techjar.ledcm.util.BufferHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.PrintStreamRelayer;
 import com.techjar.ledcm.util.Timer;
+import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.logging.LogHelper;
 import ddf.minim.AudioListener;
 import ddf.minim.AudioPlayer;
@@ -290,7 +291,7 @@ public class SpectrumAnalyzer {
 
     public void loadFile(File file) {
         try {
-            File file2 = new File("resampled/" + file.getName().substring(0, file.getName().lastIndexOf('.')) + ".wav");
+            File file2 = new File("resampled/" + Util.getChecksum("SHA1", file.getCanonicalPath()) + ".wav");
             String path = file2.getAbsolutePath();
             if (!file2.exists()) {
                 ProcessBuilder pb = new ProcessBuilder();
