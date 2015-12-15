@@ -35,7 +35,7 @@ public class AnimationOption {
     }
 
     public static enum OptionType {
-        TEXT, // 1 param: default value
+        TEXT, // 1+ params: default value, validation regex, max length
         SLIDER, // 1-3 params: default value, increment, show notches
         COMBOBOX, // 3+ params: default value, items (id & name interleaved)
         COMBOBUTTON, // 2+ params: default value, items (id & name interleaved)
