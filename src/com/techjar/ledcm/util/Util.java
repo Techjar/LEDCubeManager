@@ -41,6 +41,7 @@ import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.geom.Ellipse;
 import org.newdawn.slick.geom.Polygon;
@@ -234,6 +235,11 @@ public final class Util {
 
     public static org.lwjgl.util.Color multiplyColor(org.lwjgl.util.Color color1, double mult) {
         return new org.lwjgl.util.Color(MathHelper.clamp((int)Math.round(color1.getRed() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getGreen() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getBlue() * mult), 0, 255));
+    }
+
+    public static Vector3 transformVector(Vector3 vector, Matrix4f matrix, boolean round) {
+        Vector4f vec = Matrix4f.transform(matrix, new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1), null);
+        return round ? new Vector3(Math.round(vec.x), Math.round(vec.y), Math.round(vec.z)) : new Vector3(vec.x, vec.y, vec.z);
     }
 
     public static int encodeCubeVector(Vector3 vector) {
