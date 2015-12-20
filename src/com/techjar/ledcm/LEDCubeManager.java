@@ -139,6 +139,7 @@ public class LEDCubeManager {
     //public static final int SCREEN_WIDTH = 1024;
     //public static final int SCREEN_HEIGHT = 768;
     @Getter private static LEDCubeManager instance;
+    @Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledcubemanager");
     @Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
     private DisplayMode newDisplayMode;
     private DisplayMode configDisplayMode;
@@ -219,9 +220,6 @@ public class LEDCubeManager {
     public LEDCubeManager(String[] args) throws LWJGLException {
         instance = this;
         System.setProperty("sun.java2d.noddraw", "true");
-        LogHelper.init(new File(Constants.DATA_DIRECTORY, "logs"));
-        LongSleeperThread.startSleeper();
-
         ArgumentParser.parse(args, new ArgumentParser.Argument(true, "Specify logging detail level", "--loglevel") {
             @Override
             public void runAction(String parameter) {
@@ -271,7 +269,21 @@ public class LEDCubeManager {
                 ledManagerArgs = new String[split.length - 1];
                 System.arraycopy(split, 1, ledManagerArgs, 0, split.length - 1);
             }
+        }, new ArgumentParser.Argument(true, "Specify a custom directory for config/logs/etc.\nArgs: <directory path>", "--datadir") {
+            @Override
+            public void runAction(String parameter) {
+                dataDirectory = new File(parameter);
+                if (!dataDirectory.exists()) {
+                    if (!dataDirectory.mkdirs()) {
+                        System.out.println("Failed to create directory: " + dataDirectory);
+                        System.exit(0);
+                    }
+                }
+            }
         });
+
+        LogHelper.init(new File(dataDirectory, "logs"));
+        LongSleeperThread.startSleeper();
 
         Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
         pb.makeCurrent();
@@ -649,7 +661,7 @@ public class LEDCubeManager {
 
     private void initConfig() {
         if (displayMode == null) displayMode = new DisplayMode(1024, 768);
-        config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"), false);
+        config = new ConfigManager(new File(dataDirectory, "options.yml"), false);
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
         config.defaultProperty("display.height", displayMode.getHeight());
@@ -981,7 +993,7 @@ public class LEDCubeManager {
             if (screenshot) {
                 screenshot = false;
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-                File screenshotDir = new File(Constants.DATA_DIRECTORY, "screenshots");
+                File screenshotDir = new File(dataDirectory, "screenshots");
                 screenshotDir.mkdirs();
                 File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
                 for (int i = 2; file.exists(); i++) {
