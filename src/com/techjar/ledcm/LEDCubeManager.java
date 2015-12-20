@@ -262,7 +262,7 @@ public class LEDCubeManager {
             public void runAction(String parameter) {
                 portHandlerName = parameter;
             }
-        }, new ArgumentParser.Argument(true, "Specify LEDManager class\nArgs: <class name> <comma-separated constructor parameters>", "--ledmanager") {
+        }, new ArgumentParser.Argument(true, "Specify LEDManager class\nArgs: <class name and constructor parameters (comma-separated)>", "--ledmanager") {
             @Override
             public void runAction(String parameter) {
                 String[] split = parameter.split("(?<!,),");
