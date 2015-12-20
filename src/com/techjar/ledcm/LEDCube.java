@@ -76,7 +76,6 @@ public class LEDCube {
     @SneakyThrows(Exception.class)
     public LEDCube() {
         if (LEDCubeManager.getLedManagerName() != null) {
-            for (String s : LEDCubeManager.getLedManagerArgs()) System.out.println(s);
             ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + LEDCubeManager.getLedManagerName()).getConstructor(String[].class).newInstance((Object)LEDCubeManager.getLedManagerArgs());
         } else {
             ledManager = new ArduinoLEDManager(4, true);
