@@ -1,6 +1,5 @@
 package com.techjar.ledcm.util;
 
-import com.techjar.ledcm.util.logging.LogHelper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class ArgumentParser {
                     }
                 }
             }
-            if (!found) LogHelper.warning("Unknown argument: %s", args[i]);
+            if (!found) System.out.println("Unknown argument: " + args[i]);
         }
     }
 
