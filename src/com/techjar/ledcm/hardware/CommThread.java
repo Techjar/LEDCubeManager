@@ -1,6 +1,8 @@
 
 package com.techjar.ledcm.hardware;
 
+import com.techjar.ledcm.hardware.manager.LEDManager;
+import com.techjar.ledcm.hardware.handler.PortHandler;
 import com.techjar.ledcm.ControlUtil;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;

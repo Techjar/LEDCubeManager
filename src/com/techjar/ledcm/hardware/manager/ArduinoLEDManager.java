@@ -1,6 +1,7 @@
 
-package com.techjar.ledcm.hardware;
+package com.techjar.ledcm.hardware.manager;
 
+import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Vector3;
@@ -11,26 +12,50 @@ import org.lwjgl.util.ReadableColor;
  *
  * @author Techjar
  */
-public class TLC5940LEDManager implements LEDManager {
+public class ArduinoLEDManager implements LEDManager {
+    private final int bits;
+    private final int outBits;
+    private final int resolution;
+    private final int outResolution;
+    private final float factor;
     private final byte[] red = new byte[512];
     private final byte[] green = new byte[512];
     private final byte[] blue = new byte[512];
     private boolean gammaCorrection;
     private LEDArray ledArray;
 
-    public TLC5940LEDManager(boolean gammaCorrection) {
+    public ArduinoLEDManager(int bits, boolean gammaCorrection, int outBits) {
+        if (bits < 1 || bits > 8) throw new IllegalArgumentException("Invalid bits: " + bits);
+        if (outBits < bits || outBits < 1 || outBits > 31) throw new IllegalArgumentException("Invalid outBits: " + outBits);
         this.gammaCorrection = gammaCorrection;
+        this.bits = bits;
+        this.outBits = outBits;
+        this.resolution = (int)Math.pow(2, bits) - 1;
+        this.outResolution = (int)Math.pow(2, outBits) - 1;
+        this.factor = 255F / resolution;
         updateLEDArray();
+    }
+
+    public ArduinoLEDManager(int bits, boolean gammaCorrection) {
+        this(bits, gammaCorrection, bits);
+    }
+
+    public ArduinoLEDManager(int bits) {
+        this(bits, false, bits);
+    }
+
+    public ArduinoLEDManager(String[] args) {
+        this(Integer.parseInt(args[0]), args.length > 1 ? Boolean.parseBoolean(args[1]) : false, args.length > 2 ? Integer.parseInt(args[2]) : Integer.parseInt(args[0]));
     }
 
     @Override
     public int getResolution() {
-        return 255;
+        return resolution;
     }
 
     @Override
     public float getFactor() {
-        return 1;
+        return factor;
     }
 
     @Override
@@ -40,7 +65,7 @@ public class TLC5940LEDManager implements LEDManager {
 
     @Override
     public int getLEDCount() {
-        return 512;
+        return 8 * 8 * 8;
     }
 
     @Override
@@ -74,30 +99,36 @@ public class TLC5940LEDManager implements LEDManager {
             byte[] redT = ledArray.getTransformed().getRed();
             byte[] greenT = ledArray.getTransformed().getGreen();
             byte[] blueT = ledArray.getTransformed().getBlue();
-            byte[] array = new byte[2304];
+            byte[] array = new byte[192 * outBits];
             int[] red2 = new int[512];
             int[] green2 = new int[512];
             int[] blue2 = new int[512];
+            for (int i = 0; i < 512; i++) {
+                red2[i] = Math.round((redT[i] & 0xFF) / factor);
+                green2[i] = Math.round((greenT[i] & 0xFF) / factor);
+                blue2[i] = Math.round((blueT[i] & 0xFF) / factor);
+            }
             if (gammaCorrection) {
                 for (int i = 0; i < 512; i++) {
-                    red2[i] = (int)Math.round(MathHelper.cie1931((redT[i] & 0xFF) / 255D) * 4095D);
-                    green2[i] = (int)Math.round(MathHelper.cie1931((greenT[i] & 0xFF) / 255D) * 4095D);
-                    blue2[i] = (int)Math.round(MathHelper.cie1931((blueT[i] & 0xFF) / 255D) * 4095D);
+                    red2[i] = (int)Math.round(MathHelper.cie1931((double)red2[i] / resolution) * outResolution);
+                    green2[i] = (int)Math.round(MathHelper.cie1931((double)green2[i] / resolution) * outResolution);
+                    blue2[i] = (int)Math.round(MathHelper.cie1931((double)blue2[i] / resolution) * outResolution);
                 }
-            } else {
+            } else if (outBits != bits) {
                 for (int i = 0; i < 512; i++) {
-                    red2[i] = (int)Math.round(((redT[i] & 0xFF) / 255D) * 4095D);
-                    green2[i] = (int)Math.round(((greenT[i] & 0xFF) / 255D) * 4095D);
-                    blue2[i] = (int)Math.round(((blueT[i] & 0xFF) / 255D) * 4095D);
+                    red2[i] = (int)Math.round(((double)red2[i] / resolution) * outResolution);
+                    green2[i] = (int)Math.round(((double)green2[i] / resolution) * outResolution);
+                    blue2[i] = (int)Math.round(((double)blue2[i] / resolution) * outResolution);
                 }
             }
-            for (int y = 0; y < 8; y++) {
-                int index = 285 + (288 * y);
-                int[][] arrs = {red2, green2, blue2};
-                for (int[] arr : arrs) {
-                    for (int i = 62; i >= 0; i -= 2, index -= 3) {
-                        encode12BitValues(arr[(i + 1) | (y << 6)], arr[i | (y << 6)], array, index);
-                    }
+            for (int i = 0; i < outBits; i++) {
+                int mask = 1 << i;
+                int index = 192 * i;
+                for (int j = 0; j < 512; j++) {
+                    int bit = j % 8;
+                    array[index + (j / 8)] |= ((red2[j] & mask) >> i) << bit;
+                    array[index + (j / 8) + 64] |= ((green2[j] & mask) >> i) << bit;
+                    array[index + (j / 8) + 128] |= ((blue2[j] & mask) >> i) << bit;
                 }
             }
             return array;
@@ -116,7 +147,8 @@ public class TLC5940LEDManager implements LEDManager {
 
     @Override
     public Color getLEDColorReal(int x, int y, int z) {
-        return getLEDColor(x, y, z);
+        ReadableColor color = getLEDColor(x, y, z);
+        return new Color(Math.round(color.getRed() / factor), Math.round(color.getGreen() / factor), Math.round(color.getBlue() / factor));
     }
 
     @Override
@@ -131,7 +163,7 @@ public class TLC5940LEDManager implements LEDManager {
 
     @Override
     public void setLEDColorReal(int x, int y, int z, ReadableColor color) {
-        setLEDColor(x, y, z, color);
+        setLEDColor(x, y, z, new Color(Math.round(color.getRed() * factor), Math.round(color.getGreen() * factor), Math.round(color.getBlue() * factor)));
     }
 
     @Override
@@ -159,11 +191,5 @@ public class TLC5940LEDManager implements LEDManager {
     @Override
     public Vector3 decodeVector(int value) {
         return new Vector3(value & 7, (value >> 6) & 7, (value >> 3) & 7);
-    }
-
-    private void encode12BitValues(int value1, int value2, byte[] array, int index) {
-        array[index] = (byte)(value1 >> 4);
-        array[index + 1] = (byte)((value1 << 4) | ((value2 >> 8) & 0b1111));
-        array[index + 2] = (byte)value2;
     }
 }

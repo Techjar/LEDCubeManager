@@ -2,16 +2,17 @@
 package com.techjar.ledcm;
 
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
-import com.techjar.ledcm.hardware.ArduinoLEDManager;
+import com.techjar.ledcm.hardware.manager.ArduinoLEDManager;
 import com.techjar.ledcm.hardware.CommThread;
 import com.techjar.ledcm.hardware.LEDArray;
-import com.techjar.ledcm.hardware.LEDManager;
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.LEDUtil;
-import com.techjar.ledcm.hardware.SerialPortHandler;
+import com.techjar.ledcm.hardware.handler.SerialPortHandler;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
-import com.techjar.ledcm.hardware.TLC5940LEDManager;
-import com.techjar.ledcm.hardware.TestLEDManager;
+import com.techjar.ledcm.hardware.manager.TLC5940LEDManager;
+import com.techjar.ledcm.hardware.manager.TestLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
+import com.techjar.ledcm.hardware.handler.PortHandler;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.AxisAlignedBB;
 import com.techjar.ledcm.util.Dimension3D;
@@ -25,6 +26,7 @@ import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -70,10 +73,16 @@ public class LEDCube {
     @Getter @Setter private boolean previewTransform = true;
     @Getter private Model model;
 
+    @SneakyThrows(Exception.class)
     public LEDCube() {
-        ledManager = new ArduinoLEDManager(4, false);
-        //ledManager = new TLC5940LEDManager(true);
-        //ledManager = new TestLEDManager(true, 16, 16, 16);
+        if (LEDCubeManager.getLedManagerName() != null) {
+            for (String s : LEDCubeManager.getLedManagerArgs()) System.out.println(s);
+            ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + LEDCubeManager.getLedManagerName()).getConstructor(String[].class).newInstance((Object)LEDCubeManager.getLedManagerArgs());
+        } else {
+            ledManager = new ArduinoLEDManager(4, true);
+            //ledManager = new TLC5940LEDManager(true);
+            //ledManager = new TestLEDManager(true, 16, 16, 16);
+        }
         Dimension3D dim = ledManager.getDimensions();
         centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
         highlight = new boolean[ledManager.getLEDCount()];
@@ -86,11 +95,12 @@ public class LEDCube {
         }*/
     }
 
-    public void postInit() throws IOException {
+    @SneakyThrows(Exception.class)
+    public void postInit() {
         if (postInited) throw new IllegalStateException();
         postInited = true;
         spectrumAnalyzer = new SpectrumAnalyzer();
-        commThread = new CommThread(new SerialPortHandler(LEDCubeManager.getSerialPortName()));
+        commThread = new CommThread((PortHandler)Class.forName("com.techjar.ledcm.hardware.handler." + LEDCubeManager.getPortHandlerName()).newInstance());
         commThread.start();
         resetCameraPosition();
     }

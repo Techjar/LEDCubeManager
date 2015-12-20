@@ -1,6 +1,7 @@
 
 package com.techjar.ledcm.hardware;
 
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.google.common.collect.ImmutableList;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;

@@ -2,7 +2,7 @@
 package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.hardware.LEDManager;
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Timer;
 import java.io.BufferedReader;

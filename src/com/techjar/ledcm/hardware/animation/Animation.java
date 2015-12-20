@@ -19,7 +19,7 @@ import com.techjar.ledcm.gui.GUISlider;
 import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
-import com.techjar.ledcm.hardware.LEDManager;
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Util;
 import java.util.HashMap;

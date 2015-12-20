@@ -1,6 +1,7 @@
 
 package com.techjar.ledcm.hardware;
 
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Direction;
 import com.techjar.ledcm.util.Vector3;

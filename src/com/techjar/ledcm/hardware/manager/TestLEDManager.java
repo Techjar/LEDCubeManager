@@ -1,6 +1,7 @@
 
-package com.techjar.ledcm.hardware;
+package com.techjar.ledcm.hardware.manager;
 
+import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Vector3;
@@ -30,6 +31,10 @@ public class TestLEDManager implements LEDManager {
         green = new byte[xSize * ySize * zSize];
         blue = new byte[xSize * ySize * zSize];
         updateLEDArray();
+    }
+
+    public TestLEDManager(String[] args) {
+        this(Boolean.parseBoolean(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]));
     }
 
     @Override

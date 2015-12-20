@@ -19,7 +19,7 @@ import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITabbed;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.GUIWindow;
-import com.techjar.ledcm.hardware.LEDManager;
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.AnimationSequence;
 import com.techjar.ledcm.util.Constants;
