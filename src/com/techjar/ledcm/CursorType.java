@@ -49,7 +49,7 @@ public enum CursorType {
             for (int y = image.getHeight() - 1; y >= 0; y--) {
                 for (int x = 0; x < image.getWidth(); x++) {
                     int color = image.getRGB(x, y);
-                    if ((Cursor.getCapabilities() & Cursor.CURSOR_ONE_BIT_TRANSPARENCY) != 0) {
+                    if ((Cursor.getCapabilities() & Cursor.CURSOR_8_BIT_ALPHA) == 0) {
                         int alpha = (color >>> 24);
                         alpha = alpha < 128 ? 0 : 255;
                         color &= ~(255 << 24);
@@ -59,7 +59,7 @@ public enum CursorType {
                 }
             }
             buf.rewind();
-            ct.cursor = new Cursor(image.getWidth(), image.getHeight(), ct.xHotspot, 31 - ct.yHotspot, 1, buf, null);
+            ct.cursor = new Cursor(image.getWidth(), image.getHeight(), ct.xHotspot, (image.getHeight() - 1) - ct.yHotspot, 1, buf, null);
         }
         loaded = true;
     }
