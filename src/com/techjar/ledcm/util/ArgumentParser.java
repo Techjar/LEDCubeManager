@@ -20,10 +20,10 @@ public class ArgumentParser {
                     for (String name : obj.getNames()) {
                         sb.append(name).append(", ");
                     }
-                    sb.delete(sb.length() - 2, sb.length());
+                    sb.delete(sb.length() - 2, sb.length()).append(' ');
+                    sb.append(obj.getHelp());
                     System.out.println(sb.toString());
-                    System.out.println(obj.getHelp());
-                    System.out.println(" ");
+                    System.out.println("==================================================");
                 }
                 System.exit(0);
             }

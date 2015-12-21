@@ -220,47 +220,47 @@ public class LEDCubeManager {
     public LEDCubeManager(String[] args) throws LWJGLException {
         instance = this;
         System.setProperty("sun.java2d.noddraw", "true");
-        ArgumentParser.parse(args, new ArgumentParser.Argument(true, "Specify logging detail level", "--loglevel") {
+        ArgumentParser.parse(args, new ArgumentParser.Argument(true, "\nSpecify logging detail level", "--loglevel") {
             @Override
             public void runAction(String parameter) {
                 LogHelper.setLevel(Level.parse(parameter));
             }
-        }, new ArgumentParser.Argument(false, "Display frames per second", "--showfps") {
+        }, new ArgumentParser.Argument(false, "\nDisplay frames per second", "--showfps") {
             @Override
             public void runAction(String parameter) {
                 renderFPS = true;
             }
-        }, new ArgumentParser.Argument(false, "Displaydebug output", "--debug") {
+        }, new ArgumentParser.Argument(false, "\nDisplay debug output", "--debug") {
             @Override
             public void runAction(String parameter) {
                 debugMode = true;
             }
-        }, new ArgumentParser.Argument(false, "Display OpenGL errors", "--debug-gl") {
+        }, new ArgumentParser.Argument(false, "\nDisplay OpenGL errors", "--debug-gl") {
             @Override
             public void runAction(String parameter) {
                 debugGL = true;
             }
-        }, new ArgumentParser.Argument(false, "Enable wireframe rendering", "--wireframe") {
+        }, new ArgumentParser.Argument(false, "\nEnable wireframe rendering", "--wireframe") {
             @Override
             public void runAction(String parameter) {
                 wireframe = true;
             }
-        }, new ArgumentParser.Argument(true, "Specify serial port name\nArgs: <name>", "--serialport") {
+        }, new ArgumentParser.Argument(true, "<name>\nSpecify serial port name", "--serialport") {
             @Override
             public void runAction(String parameter) {
                 serialPortName = parameter;
             }
-        }, new ArgumentParser.Argument(true, "Specify internal TCP server port\nArgs: <port number>", "--serverport") {
+        }, new ArgumentParser.Argument(true, "<port number>\nSpecify internal TCP server port", "--serverport") {
             @Override
             public void runAction(String parameter) {
                 serverPort = Integer.parseInt(parameter);
             }
-        }, new ArgumentParser.Argument(true, "Specify PortHandler class\nArgs: <class name>", "--porthandler") {
+        }, new ArgumentParser.Argument(true, "<class name>\nSpecify PortHandler class", "--porthandler") {
             @Override
             public void runAction(String parameter) {
                 portHandlerName = parameter;
             }
-        }, new ArgumentParser.Argument(true, "Specify LEDManager class\nArgs: <class name and constructor parameters (comma-separated)>", "--ledmanager") {
+        }, new ArgumentParser.Argument(true, "<class name and constructor parameters (comma-separated)>\nSpecify LEDManager class", "--ledmanager") {
             @Override
             public void runAction(String parameter) {
                 String[] split = parameter.split("(?<!,),");
@@ -269,7 +269,7 @@ public class LEDCubeManager {
                 ledManagerArgs = new String[split.length - 1];
                 System.arraycopy(split, 1, ledManagerArgs, 0, split.length - 1);
             }
-        }, new ArgumentParser.Argument(true, "Specify a custom directory for config/logs/etc.\nArgs: <directory path>", "--datadir") {
+        }, new ArgumentParser.Argument(true, "<directory path>\nSpecify a custom directory for config/logs/etc.", "--datadir") {
             @Override
             public void runAction(String parameter) {
                 dataDirectory = new File(parameter);

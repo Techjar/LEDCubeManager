@@ -16,6 +16,7 @@ import lombok.Getter;
  */
 public final class LogHelper {
     private static Logger logger;
+    private static Level logLevel = Level.CONFIG;
     @Getter private static PrintStream realSystemOut;
     @Getter private static PrintStream realSystemErr;
     @Getter private static File directory;
@@ -29,7 +30,7 @@ public final class LogHelper {
         realSystemOut = System.out;
         realSystemErr = System.err;
         logger = Logger.getLogger("JFOS2");
-        logger.setLevel(Level.CONFIG);
+        logger.setLevel(logLevel);
         try {
             directory.mkdirs();
             logger.addHandler(new LogHandler(new File(directory, new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime()) + ".txt")).setSystemOut(System.out));
@@ -43,11 +44,13 @@ public final class LogHelper {
     }
 
     public static Level getLevel() {
+        if (logger == null) return logLevel;
         return logger.getLevel();
     }
 
     public static void setLevel(Level level) {
-        logger.setLevel(level);
+        if (logger == null) logLevel = level;
+        else logger.setLevel(level);
     }
 
     public static void error(Object message, Throwable error) {
