@@ -73,7 +73,7 @@ public class StripLEDManager implements LEDManager {
 
     @Override
     public int getBaudRate() {
-        return 2000000;
+        return 500000;
     }
 
     @Override
