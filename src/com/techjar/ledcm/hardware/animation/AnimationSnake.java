@@ -101,7 +101,7 @@ public class AnimationSnake extends Animation {
             new AnimationOption("snakecount", "Snake Count", AnimationOption.OptionType.SPINNER, new Object[]{snakeCount, 1, 1000, 1, 0}),
             new AnimationOption("snakelength", "Snake Length", AnimationOption.OptionType.SPINNER, new Object[]{snakeLength, 1, 1000, 1, 0}),
             new AnimationOption("infinite", "Infinite", AnimationOption.OptionType.CHECKBOX, new Object[]{infinite}),
-            new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Hue Cycle"}),
+            new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Hue Cycle", 2, "Picker"}),
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
             new AnimationOption("deathspeed", "Death Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (deathSpeed - 1)) / 19F, 1F / 19F}),
         };
@@ -141,6 +141,7 @@ public class AnimationSnake extends Animation {
             color.fromHSB((rand.nextFloat() + ((float)timer.getSeconds() / 5)) % 1, 1, 1);
             return color;
         }
+        if (colorMode == 2) return LEDCubeManager.getPaintColor();
         return new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256));
     }
 
