@@ -25,6 +25,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     // Should be slightly higher than the highest possible index.
     private final float indexDivisor;
     private int colorMode = 0;
+    private float holdUp = 7;
 
     public AnimationSpectrumBars() {
         size = dimension.x * dimension.z;
@@ -66,6 +67,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
             new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Classic", 1, "Rainbow 1", 2, "Rainbow 2", 3, "Random", 4, "Picker"}),
+            new AnimationOption("holdUp", "Hold Up", AnimationOption.OptionType.SLIDER, new Object[]{holdUp / 29F}),
         };
     }
 
@@ -74,6 +76,9 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
         switch (name) {
             case "colormode":
                 colorMode = Integer.parseInt(value);
+                break;
+            case "holdUp":
+                holdUp = 1 + (29 * Float.parseFloat(value));
                 break;
         }
     }
@@ -102,7 +107,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
                 if (band > amplitude) amplitude = band;
             }
             if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
-            else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / 7, 1F);
+            else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / holdUp, 1F);
         }
     }
 
@@ -113,7 +118,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     private Color getColor(int index, int y, float brightness) {
         if (colorMode == 1) {
             Color color = new Color();
-            color.fromHSB(y / (float)dimension.y, 1, brightness);
+            color.fromHSB((((dimension.y - 1) - y) / (dimension.y - 1F)) * (300F / 360F), 1, brightness);
             return color;
         }
         if (colorMode == 2) {
