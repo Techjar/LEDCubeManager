@@ -334,6 +334,48 @@ public final class Util {
         return new Rectangle(getMouseX(), getMouseY(), 1, 1);
     }
 
+    public static String[] parseArgumentString(String argStr) {
+        boolean quote = false;
+        List<String> params = new ArrayList<>();
+        List<String> temp = new ArrayList<>();
+        String[] split = argStr.split(" ");
+        for (int i = 0; i < split.length; i++) {
+            String str = split[i];
+            char first = str.isEmpty() ? '\u0000' : str.charAt(0);
+            char last = str.isEmpty() ? '\u0000' : str.charAt(str.length() - 1);
+            char beforeLast = str.length() < 2 ? '\u0000' : str.charAt(str.length() - 2);
+            if (first == '"' && last == '"' && beforeLast != '\\') {
+                if (quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                params.add(str.replaceFirst("^\"(.*)\"$", "$1"));
+            } else if (first == '"') {
+                if (quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                quote = true;
+                temp.add(str.replaceFirst("^\"", ""));
+            } else if (last == '"' && beforeLast != '\\') {
+                if (!quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                quote = false;
+                temp.add(str.replaceFirst("\"$", ""));
+                StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < temp.size(); j++) {
+                    sb.append(temp.get(j));
+                    if (j < temp.size() - 1) sb.append(' ');
+                }
+                params.add(sb.toString());
+                temp.clear();
+            } else if (quote) {
+                temp.add(str);
+            } else {
+                params.add(str);
+            }
+        }
+        if (quote) throw new IllegalArgumentException("Unclosed quotes in string: " + argStr);
+        List<String> params2 = new ArrayList<>();
+        for (String param : params) {
+            if (!param.isEmpty()) params2.add(param.replaceAll("\\\\\"", "\""));
+        }
+        return params2.toArray(new String[params2.size()]);
+    }
+
     /**
      * Will parse a valid IPv4/IPv6 address and port, may return garbage for invalid address formats. If no port was parsed it will be -1.
      */

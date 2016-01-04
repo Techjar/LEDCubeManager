@@ -7,7 +7,7 @@ import com.techjar.ledcm.ControlUtil;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.animation.Animation;
-import com.techjar.ledcm.hardware.animation.AnimationSequence;
+import com.techjar.ledcm.hardware.animation.sequence.AnimationSequence;
 import com.techjar.ledcm.hardware.tcp.TCPClient;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
@@ -83,15 +83,16 @@ public class CommThread extends Thread {
                     fpsCounter++;
                     ticks++;
                     synchronized (lock) {
-                        if (currentSequence != null) currentSequence.update();
-                        if (currentAnimation != null) {
-                            try {
+                        try {
+                            if (currentSequence != null) currentSequence.update();
+                            if (currentAnimation != null) {
                                 currentAnimation.refresh();
                                 currentAnimation.incTicks();
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                                currentAnimation = null;
                             }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            currentAnimation = null;
+                            currentSequence = null;
                         }
                     }
                     ledManager.updateLEDArray();

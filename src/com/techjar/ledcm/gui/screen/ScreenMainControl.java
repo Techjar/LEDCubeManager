@@ -21,7 +21,7 @@ import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.GUIWindow;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.animation.Animation;
-import com.techjar.ledcm.hardware.animation.AnimationSequence;
+import com.techjar.ledcm.hardware.animation.sequence.AnimationSequence;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.PrintStreamRelayer;
@@ -130,7 +130,9 @@ public class ScreenMainControl extends Screen {
         playBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
+                if (LEDCubeManager.getLEDCube().getCommThread().getCurrentSequence() == null || !LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying()) {
+                    LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
+                }
             }
         });
         container.addComponent(playBtn);
@@ -512,6 +514,8 @@ public class ScreenMainControl extends Screen {
                         sequenceWindow.setVisible(false);
                         chooseFileBtn.setEnabled(!sequence.isMusicSynced());
                         progressSlider.setEnabled(!sequence.isMusicSynced());
+                        stopBtn.setEnabled(!sequence.isMusicSynced());
+                        audioInputBtn.setEnabled(!sequence.isMusicSynced());
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
@@ -529,6 +533,8 @@ public class ScreenMainControl extends Screen {
                 LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(null);
                 chooseFileBtn.setEnabled(true);
                 progressSlider.setEnabled(true);
+                stopBtn.setEnabled(true);
+                audioInputBtn.setEnabled(true);
             }
         });
         sequenceWindow.addComponent(sequenceStopBtn);

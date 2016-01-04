@@ -14,7 +14,7 @@ public class ArgumentParser {
     public static void parse(String[] args, Argument... objects) {
         List<Argument> used = new ArrayList<>();
         for (int i = 0; i < args.length; i++) {
-            if (args[i].toLowerCase().equals("--help")) {
+            if (args[i].equalsIgnoreCase("--help")) {
                 for (Argument obj : objects) {
                     StringBuilder sb = new StringBuilder();
                     for (String name : obj.getNames()) {
@@ -30,7 +30,7 @@ public class ArgumentParser {
             boolean found = false;
             argloop: for (Argument obj : objects) {
                 for (String name : obj.getNames()) {
-                    if (name.toLowerCase().equals(args[i].toLowerCase())) {
+                    if (name.equalsIgnoreCase(args[i])) {
                         if (obj.getHasParameter()) {
                             obj.runAction(args[++i]);
                         } else obj.runAction(null);

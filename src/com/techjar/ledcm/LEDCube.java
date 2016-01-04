@@ -18,6 +18,7 @@ import com.techjar.ledcm.util.AxisAlignedBB;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Direction;
 import com.techjar.ledcm.util.LEDCubeOctreeNode;
+import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Model;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.Util;
@@ -25,6 +26,7 @@ import com.techjar.ledcm.util.Vector3;
 import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;
+import com.techjar.ledcm.util.logging.LogHelper;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -88,9 +90,9 @@ public class LEDCube {
         model = LEDCubeManager.getModelManager().getModel("led.model");
         initOctree();
         initBindings();
-        /*for (int i = 0; i < 64; i++) {
+        /*for (int i = 0; i < 256; i++) {
             double j = i;
-            LogHelper.info(Math.round(MathHelper.cie1931(j/63)*63));
+            LogHelper.info(i + " | " + Math.round(MathHelper.cie1931(i / 255D) * 4095D));
         }*/
     }
 
