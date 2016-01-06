@@ -4,8 +4,9 @@ setanimation Rain
 wait 10000
 setanimation Text animmode 0 text "WOO TESTING!"
 finishwait
-setanimation ProgressiveFill
+setanimation Dissolve
 finishwait
+wait 500
 ^setanimation Snake colormode 2 snakecount 1
 setcolorpicker 255 0 0
 wait 10000

@@ -12,13 +12,13 @@ import org.lwjgl.util.Color;
  *
  * @author Techjar
  */
-public class AnimationProgressiveFill extends Animation {
+public class AnimationDissolve extends Animation {
     private Timer timer = new Timer();
     private Random random = new Random();
     private boolean[] states;
     private int filledCount;
 
-    public AnimationProgressiveFill() {
+    public AnimationDissolve() {
         super();
     }
 
@@ -31,15 +31,15 @@ public class AnimationProgressiveFill extends Animation {
     public synchronized void refresh() {
         if (filledCount < states.length) {
             int count = (int)(timer.getMilliseconds() / 1000);
-            for (int i = 0; i < count + 1;) {
-                if (random.nextInt(10000) < timer.getMilliseconds()) {
+            for (int i = 0; i < (count + 1) * Math.max(ledManager.getLEDCount() / 512, 1); i++) {
+                if (random.nextInt(30000) < timer.getMilliseconds()) {
                     int x = random.nextInt(dimension.x);
                     int y = random.nextInt(dimension.y);
                     int z = random.nextInt(dimension.z);
                     if (!states[Util.encodeCubeVector(x, y, z)]) {
                         states[Util.encodeCubeVector(x, y, z)] = true;
                         ledManager.setLEDColor(x, y, z, LEDCubeManager.getPaintColor());
-                        filledCount++; i++;
+                        filledCount++;
                     }
                 }
             }
