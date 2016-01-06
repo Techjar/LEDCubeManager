@@ -56,6 +56,11 @@ public class AnimationStacker extends Animation {
         layers = 0;
     }
 
+    @Override
+    public boolean isFinished() {
+        return layers == allLayers;
+    }
+
     private boolean checkBit(long number, int bit) {
         return (number & (1L << bit)) != 0;
     }

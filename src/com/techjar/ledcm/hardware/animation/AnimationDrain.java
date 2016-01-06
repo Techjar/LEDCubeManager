@@ -70,4 +70,9 @@ public class AnimationDrain extends Animation {
         spreadZ = 0;
         state = false;
     }
+
+    @Override
+    public boolean isFinished() {
+        return ledManager.getLEDColor(0, 0, 0).equals(new Color());
+    }
 }

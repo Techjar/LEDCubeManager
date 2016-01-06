@@ -2,12 +2,9 @@ musicsync
 loadmusic resources/sounds/music/aerodynamic.mp3
 # This is a comment
 setanimation Rain
-wait 10000
-^setanimation Snake
-setcolorpicker 255 0 0
-wait 20000
+wait 15500
 setanimation Randomize
-wait 30000
+wait 31200
 ^setanimation Scrollers
 setcolorpicker 0 255 0
 wait 31000

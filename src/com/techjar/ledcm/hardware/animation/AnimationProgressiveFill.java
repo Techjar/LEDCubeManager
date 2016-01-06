@@ -52,4 +52,9 @@ public class AnimationProgressiveFill extends Animation {
         states = new boolean[ledManager.getLEDCount()];
         filledCount = 0;
     }
+
+    @Override
+    public boolean isFinished() {
+        return filledCount == states.length;
+    }
 }

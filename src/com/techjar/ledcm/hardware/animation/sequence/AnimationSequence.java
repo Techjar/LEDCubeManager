@@ -29,6 +29,7 @@ public class AnimationSequence {
     private SequenceItem currentItem;
     private SequenceCommand currentCommand;
     @Getter private boolean musicSynced = false;
+    @Getter @Setter private String name;
 
     private AnimationSequence() {
     }

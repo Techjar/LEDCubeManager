@@ -2,6 +2,10 @@ loadmusic resources/sounds/music/aerodynamic.mp3
 # This is a comment
 setanimation Rain 
 wait 10000
+setanimation Text animmode 0 text "WOO TESTING!"
+finishwait
+setanimation ProgressiveFill
+finishwait
 ^setanimation Snake colormode 2 snakecount 1
 setcolorpicker 255 0 0
 wait 10000

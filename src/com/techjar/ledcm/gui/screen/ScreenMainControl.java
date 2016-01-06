@@ -510,6 +510,7 @@ public class ScreenMainControl extends Screen {
                     try {
                         File file = new File("resources/sequences/" + item.toString() + ".sequence");
                         AnimationSequence sequence = AnimationSequence.loadFromFile(file);
+                        sequence.setName(item.toString());
                         LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(sequence);
                         sequenceWindow.setVisible(false);
                         chooseFileBtn.setEnabled(!sequence.isMusicSynced());

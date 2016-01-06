@@ -31,6 +31,7 @@ public class AnimationText extends Animation {
     private float rotation;
     private Color topColor = new Color(0, 255, 255);
     private Color bottomColor = new Color(255, 255, 0);
+    private boolean finished = false;
 
     public AnimationText() {
         super();
@@ -77,6 +78,7 @@ public class AnimationText extends Animation {
                                                 if (index == characters.length - 1) {
                                                     if (vector.getX() > dimension.x * 2) {
                                                         scrollOffset = 0;
+                                                        finished = true;
                                                     }
                                                 }
                                             }
@@ -92,6 +94,7 @@ public class AnimationText extends Animation {
                                             if (index == characters.length - 1) {
                                                 if (vector.getZ() < -dimension.z) {
                                                     scrollOffset = 0;
+                                                    finished = true;
                                                 }
                                             }
                                             return vector;
@@ -108,6 +111,7 @@ public class AnimationText extends Animation {
                                     if (index == characters.length - 1) {
                                         if (vector.getX() < -ch.getThickness()) {
                                             scrollOffset = 0;
+                                            finished = true;
                                         }
                                     }
                                     return vector;
@@ -124,7 +128,10 @@ public class AnimationText extends Animation {
                     scrollOffset = 0;
                     rotation = 0;
                     currentChar++;
-                    if (currentChar >= characters.length) currentChar = 0;
+                    if (currentChar >= characters.length) {
+                        currentChar = 0;
+                        finished = true;
+                    }
                 } else if (scrollOffset < -(dimension.x / 2) && rotation < 1) {
                     final Matrix4f matrix = new Matrix4f();
                     matrix.translate(new Vector3f((ch.getThickness() - 1) / 2F, 0, (ch.getFontSize() - 1) / 2F));
@@ -153,6 +160,7 @@ public class AnimationText extends Animation {
 
     @Override
     public synchronized void reset() {
+        finished = false;
         scrollOffset = 0;
         currentChar = 0;
         rotation = 0;
@@ -161,6 +169,11 @@ public class AnimationText extends Animation {
             characters[i] = LEDCharacter.getChar(text.charAt(i));
             characters[i].setThickness(getThickness());
         }
+    }
+
+    @Override
+    public boolean isFinished() {
+        return finished;
     }
 
     @Override

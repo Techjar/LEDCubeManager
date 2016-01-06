@@ -19,6 +19,7 @@ public abstract class SequenceCommand {
         registerCommand("setoptions", SequenceCommandSetOptions.class);
         registerCommand("setcolorpicker", SequenceCommandSetColorPicker.class);
         registerCommand("clear", SequenceCommandClear.class);
+        registerCommand("finishwait", SequenceCommandFinishWait.class);
     }
 
     protected AnimationSequence sequence;

@@ -50,6 +50,14 @@ public abstract class Animation {
         return false;
     }
 
+    /**
+     * Used for "finishwait" sequence command. You can override this if you want to return a not-finished state
+     * until your animation is "finished". Examples are an animation loops, but "finishes" after one cycle, or one-off animations that don't loop.
+     */
+    public boolean isFinished() {
+        return false;
+    }
+
     public void incTicks() {
         ticks++;
     }

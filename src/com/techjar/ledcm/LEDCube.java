@@ -163,10 +163,13 @@ public class LEDCube {
     public void update(float delta) {
         LEDCubeManager.addInfoText("Serial port: " + (commThread.isPortOpen() ? "open" : "closed"), 100);
         LEDCubeManager.addInfoText("TCP clients: " + commThread.getNumTCPClients(), 110);
-        LEDCubeManager.addInfoText("Current music: " + spectrumAnalyzer.getCurrentTrack(), 120);
-        LEDCubeManager.addInfoText("Music time: " + spectrumAnalyzer.getPositionMillis(), 130);
-        if (commThread.isFrozen()) LEDCubeManager.addInfoText("Animation Frozen", 140);
-        if (ledManager.getResolution() < 255) LEDCubeManager.addInfoText("Color mode: " + (trueColor ? "true" : "full"), 150);
+        if (!spectrumAnalyzer.getCurrentTrack().isEmpty()) {
+            LEDCubeManager.addInfoText("Music: " + spectrumAnalyzer.getCurrentTrack(), 120);
+            LEDCubeManager.addInfoText("Music time: " + spectrumAnalyzer.getPositionMillis(), 130);
+        }
+        if (commThread.getCurrentSequence() != null) LEDCubeManager.addInfoText("Sequence: " + commThread.getCurrentSequence().getName(), 140);
+        if (commThread.isFrozen()) LEDCubeManager.addInfoText("Animation Frozen", 150);
+        if (ledManager.getResolution() < 255) LEDCubeManager.addInfoText("Color mode: " + (trueColor ? "true" : "full"), 160);
         LEDCubeManager.addInfoText("Hovered LED: " + (cursorTrace == null ? "none" : (int)cursorTrace.getX() + ", " + (int)cursorTrace.getY() + ", " + (int)cursorTrace.getZ()), 900);
     }
 
@@ -533,7 +536,7 @@ public class LEDCube {
         addAnimation(new AnimationSpectrumBars());
         addAnimation(new AnimationSpectrumShooters());
         //addAnimation(new AnimationIndividualTest());
-        addAnimation(new AnimationCharTest());
+        //addAnimation(new AnimationCharTest());
         addAnimation(new AnimationText());
         addAnimation(new AnimationStaticFill());
         addAnimation(new AnimationPulsate());
