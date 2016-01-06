@@ -28,6 +28,7 @@ public class AnimationSnake extends Animation {
     private int colorMode = 0;
     private int speed = 3;
     private int deathSpeed = 1;
+    private boolean respawn = true;
     private Timer timer = new Timer();
 
     public AnimationSnake() {
@@ -44,7 +45,7 @@ public class AnimationSnake extends Animation {
         for (int i = 0; i < snakeCount; i++) {
             LinkedList<Vector3> segments = segmentArray[i];
             Color color = getSnakeColor(i);
-            if (segments.isEmpty()) {
+            if (segments.isEmpty() && (respawn || !dead[i])) {
                 dead[i] = false;
                 Vector3 pos = new Vector3(random.nextInt(dimension.x), random.nextInt(dimension.y), random.nextInt(dimension.z));
                 segments.addFirst(pos);
@@ -74,7 +75,7 @@ public class AnimationSnake extends Animation {
                         ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), color);
                     }
                 }
-                if ((dead[i] && ticks % deathSpeed == 0) || (!infinite && segments.size() > snakeLength)) {
+                if (!segments.isEmpty() && ((dead[i] && ticks % deathSpeed == 0) || (!infinite && segments.size() > snakeLength))) {
                     Vector3 pos = segments.removeLast();
                     states[Util.encodeCubeVector(pos)] = false;
                     ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), new Color());
@@ -96,6 +97,15 @@ public class AnimationSnake extends Animation {
     }
 
     @Override
+    public synchronized boolean isFinished() {
+        if (respawn) return false;
+        for (int i = 0; i < dead.length; i++) {
+            if (!dead[i] || !segmentArray[i].isEmpty()) return false;
+        }
+        return true;
+    }
+
+    @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
             new AnimationOption("snakecount", "Snake Count", AnimationOption.OptionType.SPINNER, new Object[]{snakeCount, 1, 1000, 1, 0}),
@@ -104,6 +114,7 @@ public class AnimationSnake extends Animation {
             new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Hue Cycle", 2, "Picker"}),
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
             new AnimationOption("deathspeed", "Death Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (deathSpeed - 1)) / 19F, 1F / 19F}),
+            new AnimationOption("respawn", "Respawn", AnimationOption.OptionType.CHECKBOX, new Object[]{respawn}),
         };
     }
 
@@ -129,6 +140,9 @@ public class AnimationSnake extends Animation {
                 break;
             case "deathspeed":
                 deathSpeed = 1 + (19 - Math.round(19 * Float.parseFloat(value)));
+                break;
+            case "respawn":
+                respawn = Boolean.parseBoolean(value);
                 break;
         }
     }

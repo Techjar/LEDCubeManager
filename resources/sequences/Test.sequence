@@ -7,9 +7,11 @@ finishwait
 setanimation Dissolve
 finishwait
 wait 500
-^setanimation Snake colormode 2 snakecount 1
-setcolorpicker 255 0 0
-wait 10000
+^clear
+setanimation Snake colormode 1 snakecount 1 infinite true
+finishwait
+#setcolorpicker 255 0 0
+#wait 10000
 setanimation Randomize
 wait 10000
 ^setanimation Scrollers
