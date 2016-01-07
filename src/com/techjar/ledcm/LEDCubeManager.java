@@ -342,7 +342,7 @@ public class LEDCubeManager {
         camera = new Camera();
         frustum = new Frustum();
         fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac)", "wav", "mp3", "ogg", "flac"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac, *.m4a, *.aac)", "wav", "mp3", "ogg", "flac", "m4a", "aac"));
         fileChooser.setMultiSelectionEnabled(false);
         if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
         init();
