@@ -76,7 +76,7 @@ public class AnimationDrain extends Animation {
         for (int x = 0; x < dimension.x; x++) {
             for (int y = 0; y < dimension.y; y++) {
                 for (int z = 0; z < dimension.z; z++) {
-                    if (!ledManager.getLEDColor(x, y, z).equals(new Color())) return false;
+                    if (!ledManager.getLEDColor(x, y, z).equals(ReadableColor.BLACK)) return false;
                 }
             }
         }

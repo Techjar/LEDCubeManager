@@ -554,9 +554,6 @@ public class LEDCube {
         addAnimation(new AnimationStacker());
         addAnimation(new AnimationDrain());
         addAnimation(new AnimationFaucet());
-        addAnimation(new AnimationMultiFaucet());
-        addAnimation(new AnimationFaucetFill());
-        addAnimation(new AnimationFaucetFillRainbow());
         addAnimation(new AnimationSlidingBoxes());
         addAnimation(new AnimationBalls());
         addAnimation(new AnimationColorSpectrum());
