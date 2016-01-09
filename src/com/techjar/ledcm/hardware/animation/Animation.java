@@ -3,6 +3,7 @@ package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.GUI;
+import com.techjar.ledcm.gui.GUIAlignment;
 import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUIButton;
@@ -16,6 +17,7 @@ import com.techjar.ledcm.gui.GUILabel;
 import com.techjar.ledcm.gui.GUIRadioButton;
 import com.techjar.ledcm.gui.GUIScrollBox;
 import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpacer;
 import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
@@ -25,6 +27,7 @@ import com.techjar.ledcm.util.Util;
 import java.util.HashMap;
 import java.util.Map;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.ReadableColor;
 
 /**
  *
@@ -258,7 +261,7 @@ public abstract class Animation {
                         final GUIColorPicker colorPicker = new GUIColorPicker(new Color(50, 50, 50));
                         gui = colorPicker;
                         colorPicker.setHeight(30);
-                        colorPicker.setValue((Color)option.params[0]);
+                        colorPicker.setValue((ReadableColor)option.params[0]);
                         colorPicker.setChangeHandler(new GUICallback() {
                             @Override
                             public void run() {
@@ -279,6 +282,43 @@ public abstract class Animation {
                 box.addComponent(gui);
                 position += gui.getHeight() + 5;
             }
+            final GUIButton resetButton = new GUIButton(screen.font, new Color(255, 255, 255), "Reset to Defaults", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+            resetButton.setDimension(300, 35);
+            resetButton.setPosition(0, position);
+            resetButton.setParentAlignment(GUIAlignment.TOP_CENTER);
+            resetButton.setClickHandler(new GUICallback() {
+                @Override
+                public void run() {
+                    try {
+                        Animation anim = Animation.this.getClass().newInstance();
+                        AnimationOption[] options = anim.getOptions();
+                        for (AnimationOption option : options) {
+                            if (option.getType() != AnimationOption.OptionType.BUTTON) {
+                                String value = option.getParams()[0].toString();
+                                if (option.getType() == AnimationOption.OptionType.COMBOBOX || option.getType() == AnimationOption.OptionType.COMBOBUTTON || option.getType() == AnimationOption.OptionType.RADIOGROUP) {
+                                    for (int i = 1; i < option.getParams().length; i += 2) {
+                                        if (option.getParams()[i].toString().equals(value)) {
+                                            value = option.getParams()[i + 1].toString();
+                                            break;
+                                        }
+                                    }
+                                } else if (option.getType() == AnimationOption.OptionType.COLORPICKER) {
+                                    value = Util.colorToString((ReadableColor)option.getParams()[0], false);
+                                }
+                                Util.setOptionInGUI(option.getId(), value);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            box.addComponent(resetButton);
+            position += resetButton.getHeight() + 5;
+            final GUISpacer spacer = new GUISpacer();
+            spacer.setDimension(10, 5);
+            spacer.setPosition(0, position - 5);
+            box.addComponent(spacer);
         } else {
             screen.animOptionsWindow.setVisible(false);
             screen.animOptionsBtn.setEnabled(false);

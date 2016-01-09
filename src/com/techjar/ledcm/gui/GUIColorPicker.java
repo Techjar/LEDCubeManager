@@ -4,6 +4,7 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.render.RenderHelper;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
+import org.lwjgl.util.ReadableColor;
 
 /**
  *
@@ -107,7 +108,7 @@ public class GUIColorPicker extends GUI {
         return new Color(value);
     }
 
-    public void setValue(Color color) {
+    public void setValue(ReadableColor color) {
         value.setRed(color.getRed());
         value.setGreen(color.getGreen());
         value.setBlue(color.getBlue());

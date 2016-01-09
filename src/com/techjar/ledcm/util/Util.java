@@ -5,6 +5,17 @@ import com.google.gson.GsonBuilder;
 import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.gui.GUI;
+import com.techjar.ledcm.gui.GUIBox;
+import com.techjar.ledcm.gui.GUICheckBox;
+import com.techjar.ledcm.gui.GUIColorPicker;
+import com.techjar.ledcm.gui.GUIComboBox;
+import com.techjar.ledcm.gui.GUIComboButton;
+import com.techjar.ledcm.gui.GUIRadioButton;
+import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpinner;
+import com.techjar.ledcm.gui.GUITextField;
+import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.util.json.ShapeInfo;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
@@ -38,6 +49,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
@@ -261,6 +273,47 @@ public final class Util {
 
     public static boolean isInsideCube(Vector3 vector) {
         return isInsideCube((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
+    }
+
+    /**
+     * Sets an animation option using the GUI component rather than directly.
+     *
+     * @param optionId The ID of the option
+     * @param value The value to set (takes String/display value, not internal value)
+     */
+    public static void setOptionInGUI(String optionId, String value) {
+        ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
+        List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);
+        if (components.size() > 0) {
+            GUI component = components.get(0);
+            if (component instanceof GUITextField) {
+                ((GUITextField)component).setText(value);
+            } else if (component instanceof GUISlider) {
+                ((GUISlider)component).setValue(Float.parseFloat(value));
+            } else if (component instanceof GUIComboBox) {
+                ((GUIComboBox)component).setSelectedItem(value);
+            } else if (component instanceof GUIComboButton) {
+                ((GUIComboButton)component).setSelectedItem(value);
+            } else if (component instanceof GUIBox) {
+                GUIBox box = (GUIBox)component;
+                for (GUI gui : box.getAllComponents()) {
+                    if (gui instanceof GUIRadioButton) {
+                        GUIRadioButton radioButton = (GUIRadioButton)gui;
+                        if (radioButton.getLabel().getText().equals(value)) {
+                            radioButton.setSelected(true);
+                        }
+                    }
+                }
+            } else if (component instanceof GUICheckBox) {
+                ((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
+            } else if (component instanceof GUISpinner) {
+                ((GUISpinner)component).setValue(Float.parseFloat(value));
+            } else if (component instanceof GUIColorPicker) {
+                ((GUIColorPicker)component).setValue(Util.stringToColor(value));
+            } else {
+                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(optionId, value);
+            }
+        }
     }
 
     /*public static int getRequiredBits(long value) {
@@ -603,7 +656,7 @@ public final class Util {
         return bytesToMB(bytes) + " MB";
     }
 
-    public static String colorToString(Color color, boolean alpha) {
+    public static String colorToString(ReadableColor color, boolean alpha) {
         return color.getRed() + "," + color.getGreen() + "," + color.getBlue() + (alpha ? "," + color.getAlpha() : "");
     }
 
