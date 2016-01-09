@@ -170,7 +170,12 @@ public class LEDCube {
         if (commThread.getCurrentSequence() != null) LEDCubeManager.addInfoText("Sequence: " + commThread.getCurrentSequence().getName(), 140);
         if (commThread.isFrozen()) LEDCubeManager.addInfoText("Animation Frozen", 150);
         if (ledManager.getResolution() < 255) LEDCubeManager.addInfoText("Color mode: " + (trueColor ? "true" : "full"), 160);
-        LEDCubeManager.addInfoText("Hovered LED: " + (cursorTrace == null ? "none" : (int)cursorTrace.getX() + ", " + (int)cursorTrace.getY() + ", " + (int)cursorTrace.getZ()), 900);
+        if (cursorTrace == null) {
+            LEDCubeManager.addInfoText("Hovered LED: none", 900);
+        } else {
+            Color color = ledManager.getLEDColor((int)cursorTrace.getX(), (int)cursorTrace.getY(), (int)cursorTrace.getZ());
+            LEDCubeManager.addInfoText("Hovered LED: " + (int)cursorTrace.getX() + ", " + (int)cursorTrace.getY() + ", " + (int)cursorTrace.getZ() + " (" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")", 900);
+        }
     }
 
     public int render() {
@@ -539,8 +544,7 @@ public class LEDCube {
         //addAnimation(new AnimationCharTest());
         addAnimation(new AnimationText());
         addAnimation(new AnimationStaticFill());
-        addAnimation(new AnimationPulsate());
-        addAnimation(new AnimationPulsateHue());
+        addAnimation(new AnimationGradient());
         addAnimation(new AnimationRandomize());
         addAnimation(new AnimationRain());
         addAnimation(new AnimationMatrix());
