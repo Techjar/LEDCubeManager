@@ -552,8 +552,6 @@ public class LEDCube {
         addAnimation(new AnimationDissolve());
         addAnimation(new AnimationSine());
         addAnimation(new AnimationStacker());
-        addAnimation(new AnimationRainbowStacker());
-        addAnimation(new AnimationCandyCaneStacker());
         addAnimation(new AnimationDrain());
         addAnimation(new AnimationFaucet());
         addAnimation(new AnimationMultiFaucet());
