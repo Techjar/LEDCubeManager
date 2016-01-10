@@ -36,10 +36,10 @@ public class AnimationGradient extends Animation {
             Color color = new Color();
             if (colorMode == 0) {
                 if (pulsate) value = (float)Math.sin(timer.getSeconds() * (speed / 5) + (((dimension.y - 1) - y) / (dimension.y - 1F)) * scale) * 0.5F + 0.5F;
-                color = MathHelper.lerp(color1, color2, value);
+                color = MathHelper.lerpLab(color1, color2, value);
             }
             else if (colorMode == 1) {
-                if (pulsate) value = (((float)timer.getSeconds() * (speed * 0.0142857F) + (((dimension.y - 1) - y) / (dimension.y - 1F)) / (scale / 0.6F))) % 1;
+                if (pulsate) value = (((float)timer.getSeconds() * (speed * 0.0142857F) + (((dimension.y - 1) - y) / (dimension.y - 1F)) * (scale * 0.0666667F))) % 1;
                 else value *= (300F / 360F);
                 color.fromHSB(value, 1, 1);
             }

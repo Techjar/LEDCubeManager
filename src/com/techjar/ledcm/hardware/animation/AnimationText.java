@@ -238,7 +238,7 @@ public class AnimationText extends Animation {
                 ch.draw(ledManager, new LEDCharacter.Colorizer() {
                     @Override
                     public ReadableColor getColorAt(Vector3 vector) {
-                        return MathHelper.lerp(bottomColor, topColor, vector.getY() / (ch.getFontSize() - 1));
+                        return MathHelper.lerpLab(bottomColor, topColor, vector.getY() / (ch.getFontSize() - 1));
                     }
                 });
                 break;

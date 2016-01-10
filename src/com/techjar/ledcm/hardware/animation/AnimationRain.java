@@ -50,7 +50,7 @@ public class AnimationRain extends Animation {
                         lightning[index]--;
                         if (lightning[index] == 0) {
                             for (int y = 0; y < dimension.y; y++) {
-                                Color color = MathHelper.lerp(bottomColor, topColor, y / (dimension.y - 1F));
+                                Color color = MathHelper.lerpLab(bottomColor, topColor, y / (dimension.y - 1F));
                                 if (y == 0) ledManager.setLEDColor(x, y, z, floor[index] > 0 ? Util.multiplyColor(color, floor[index]) : new Color());
                                 else ledManager.setLEDColor(x, y, z, drops[index].get(y) ? color : new Color());
                             }
@@ -68,7 +68,7 @@ public class AnimationRain extends Animation {
                     for (int y = dimension.y - 1; y >= 0; y--) {
                         int stateIndex = index + y * dimension.x * dimension.z;
                         Color color = new Color();
-                        if (colorMode == 0) color = MathHelper.lerp(bottomColor, topColor, y / (dimension.y - 1F));
+                        if (colorMode == 0) color = MathHelper.lerpLab(bottomColor, topColor, y / (dimension.y - 1F));
                         else if (colorMode == 1) color.fromHSB((y / (dimension.y - 1F)) * (300F / 360F), 1, 1);
                         else if (colorMode == 2) color.fromHSB((1 - (y / (dimension.y - 1F))) * (300F / 360F), 1, 1);
                         if (y == dimension.y - 1) {
