@@ -72,10 +72,14 @@ public class AnimationFaucet extends Animation {
             for (int i = 0; i < faucets.length; i++) {
                 Vector2 pos = faucets[i];
                 if (random.nextInt(2) == 0) {
+                    int j = 0;
                     do {
-                        pos.setX(MathHelper.clamp(pos.getX() + (random.nextInt(3) - 1), 0, dimension.x - 1));
-                        pos.setY(MathHelper.clamp(pos.getY() + (random.nextInt(3) - 1), 0, dimension.z - 1));
-                    } while (isFaucetAt(pos, true));
+                        do {
+                            pos.setX(MathHelper.clamp(pos.getX() + (random.nextInt(3) - 1), 0, dimension.x - 1));
+                            pos.setY(MathHelper.clamp(pos.getY() + (random.nextInt(3) - 1), 0, dimension.z - 1));
+                        } while (isFaucetAt(pos, true));
+                        j++;
+                    } while (j < 20 && !ledManager.getLEDColor((int)pos.getX(), dimension.y - 1, (int)pos.getY()).equals(ReadableColor.BLACK));
                 }
                 if (ledManager.getLEDColor((int)pos.getX(), dimension.y - 1, (int)pos.getY()).equals(ReadableColor.BLACK)) {
                     ledManager.setLEDColor((int)pos.getX(), dimension.y - 1, (int)pos.getY(), getColor(i));
