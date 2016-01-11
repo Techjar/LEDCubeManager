@@ -14,7 +14,6 @@ finishwait
 #wait 10000
 setanimation Randomize
 wait 10000
-
 ^setanimation Scrollers
 setcolorpicker 0 255 0
 wait 1000

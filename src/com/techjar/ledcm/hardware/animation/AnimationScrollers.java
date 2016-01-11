@@ -47,7 +47,9 @@ public class AnimationScrollers extends Animation {
                 boolean doMove = false;
                 if (directionMode == 0 || directions[index] == globalDirection) {
                     if (moveMode == 0) {
-                        doMove = random.nextInt(500 * (dots.length / 64)) == 0;
+                        if (ticks % speed == 0) {
+                            doMove = random.nextInt(500 * (dots.length / 64)) == 0;
+                        }
                     } else if (moveMode == 1) {
                         doMove = true;
                         for (int i = 0; i < moving.length; i++) {
