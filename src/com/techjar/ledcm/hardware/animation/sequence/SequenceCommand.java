@@ -23,6 +23,9 @@ public abstract class SequenceCommand {
         registerCommand("setled", SequenceCommandSetLED.class);
         registerCommand("resetanimation", SequenceCommandResetAnimation.class);
         registerCommand("freeze", SequenceCommandFreeze.class);
+        registerCommand("setreflection", SequenceCommandSetReflection.class);
+        registerCommand("resettransform", SequenceCommandResetTransform.class);
+        registerCommand("rotatetransform", SequenceCommandRotateTransform.class);
     }
 
     protected AnimationSequence sequence;
