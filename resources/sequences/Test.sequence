@@ -14,6 +14,7 @@ finishwait
 #wait 10000
 setanimation Randomize
 wait 10000
+
 ^setanimation Scrollers
 setcolorpicker 0 255 0
 wait 1000
@@ -35,6 +36,7 @@ setcolorpicker 255 127 0
 wait 1000
 setcolorpicker 0 0 255
 wait 1000
+loadmusic resources/sounds/music/lifesthings.mp3
 ^setanimation Strobe
 setcolorpicker 255 255 255
 wait 5000

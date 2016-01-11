@@ -35,6 +35,10 @@ public abstract class SequenceCommand {
     }
     public abstract boolean execute(String[] args);
 
+    public boolean onSequenceLoad(String[] args) {
+        return true;
+    }
+
     public final String getId() {
         return commandMap.inverse().get(this.getClass());
     }

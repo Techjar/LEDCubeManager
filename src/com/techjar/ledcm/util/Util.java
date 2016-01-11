@@ -16,6 +16,7 @@ import com.techjar.ledcm.gui.GUISlider;
 import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
+import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.util.json.ShapeInfo;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
@@ -279,11 +280,20 @@ public final class Util {
      * Sets an animation option using the GUI component rather than directly.
      *
      * @param optionId The ID of the option
-     * @param value The value to set (takes String/display value, not internal value)
+     * @param value The value to set (internal or display value)
      */
-    public static void setOptionInGUI(String optionId, String value) {
+    public static void setOptionInGUI(AnimationOption option, String value) {
+        if (LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null) return;
+        if (option.getType() == AnimationOption.OptionType.COMBOBOX || option.getType() == AnimationOption.OptionType.COMBOBUTTON || option.getType() == AnimationOption.OptionType.RADIOGROUP) {
+            for (int i = 1; i < option.getParams().length; i += 2) {
+                if (option.getParams()[i].toString().equals(value)) {
+                    value = option.getParams()[i + 1].toString();
+                    break;
+                }
+            }
+        }
         ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
-        List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);
+        List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(option.getId());
         if (components.size() > 0) {
             GUI component = components.get(0);
             if (component instanceof GUITextField) {
@@ -311,7 +321,7 @@ public final class Util {
             } else if (component instanceof GUIColorPicker) {
                 ((GUIColorPicker)component).setValue(Util.stringToColor(value));
             } else {
-                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(optionId, value);
+                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(option.getId(), value);
             }
         }
     }

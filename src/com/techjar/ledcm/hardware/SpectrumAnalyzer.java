@@ -24,8 +24,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
@@ -60,6 +63,7 @@ public class SpectrumAnalyzer {
     private AudioFormat dataLineFormat;
     private Thread inputThread;
     private Timer audioInputRestartTimer = new Timer();
+    private List<String> converting = Collections.synchronizedList(new ArrayList<String>());
 
     public SpectrumAnalyzer() {
         super();
@@ -291,19 +295,8 @@ public class SpectrumAnalyzer {
 
     public void loadFile(File file) {
         try {
-            File file2 = new File("resampled/" + Util.getChecksum("SHA1", file.getCanonicalPath()) + ".wav");
-            if (!file2.exists()) {
-                ProcessBuilder pb = new ProcessBuilder();
-                pb.directory(new File(System.getProperty("user.dir")));
-                pb.redirectErrorStream(true);
-                pb.command(LEDCubeManager.getConfig().getString("misc.ffmpegpath"), "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", Integer.toString(sampleRate), file2.getAbsolutePath());
-                Process proc = pb.start();
-                LEDCubeManager.setConvertingAudio(true);
-                Thread psrThread = new PrintStreamRelayer(proc.getInputStream(), System.out);
-                psrThread.setDaemon(true); psrThread.start();
-                proc.waitFor();
-                LEDCubeManager.setConvertingAudio(false);
-            }
+            String hash = Util.getChecksum("SHA1", file.getCanonicalPath());
+            File file2 = convertFile(file, true);
             stopAudioInput();
             LEDCubeManager.getInstance().getScreenMainControl().audioInputBtnBg.setBackgroundColor(new Color(255, 0, 0));
             if (player != null) {
@@ -322,6 +315,55 @@ public class SpectrumAnalyzer {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    /**
+     * Converts audio file to PCM format for playback.
+     *
+     * @param file File to convert
+     * @param block If true, will block and return the file when done. If false, will return the file if already converted, or null if not and do the conversion on a thread. If already being converted, will either block until done or return null.
+     */
+    public File convertFile(final File file, boolean block) throws IOException, NoSuchAlgorithmException, InterruptedException {
+        final String hash = Util.getChecksum("SHA1", file.getCanonicalPath());
+        final File file2 = new File("resampled/" + hash + ".wav");
+        if (converting.contains(hash)) {
+            if (block) {
+                while (converting.contains(hash)) Thread.sleep(1);
+                return file2;
+            } else {
+                return null;
+            }
+        }
+        if (!file2.exists()) {
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ProcessBuilder pb = new ProcessBuilder();
+                        pb.directory(new File(System.getProperty("user.dir")));
+                        pb.redirectErrorStream(true);
+                        pb.command(LEDCubeManager.getConfig().getString("misc.ffmpegpath"), "-i", file.getAbsolutePath(), "-af", "aresample=resampler=soxr", "-sample_fmt", "s16", "-ar", Integer.toString(sampleRate), file2.getAbsolutePath());
+                        Process proc = pb.start();
+                        LEDCubeManager.setConvertingAudio(true);
+                        Thread psrThread = new PrintStreamRelayer(proc.getInputStream(), System.out);
+                        psrThread.setDaemon(true); psrThread.start();
+                        proc.waitFor();
+                        if (converting.size() <= 1) LEDCubeManager.setConvertingAudio(false);
+                        converting.remove(hash);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            };
+            converting.add(hash);
+            if (block) runnable.run();
+            else {
+                Thread thread = new Thread(runnable, "Audio Conversion");
+                thread.setDaemon(true);
+                thread.start();
+            }
+        }
+        return file2;
     }
 
     public void loadFile(String file) {

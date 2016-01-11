@@ -13,6 +13,8 @@ import com.techjar.ledcm.gui.GUISlider;
 import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
+import com.techjar.ledcm.hardware.animation.Animation;
+import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.util.Util;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -54,7 +56,15 @@ public class PacketSetAnimationOption extends Packet {
 
     @Override
     public void process() {
-        Util.setOptionInGUI(optionId, value);
+        Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
+        if (anim != null) {
+            for (AnimationOption option : anim.getOptions()) {
+                if (option.getId().equals(optionId)) {
+                    Util.setOptionInGUI(option, value);
+                    break;
+                }
+            }
+        }
     }
 
     public String getOptionId() {

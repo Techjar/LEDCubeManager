@@ -28,7 +28,7 @@ public class AnimationSequence {
     private int currentIndex = -1;
     private SequenceItem currentItem;
     private SequenceCommand currentCommand;
-    @Getter private boolean musicSynced = false;
+    @Getter @Setter private boolean musicSynced = false;
     @Getter @Setter private String name;
 
     private AnimationSequence() {
@@ -66,7 +66,7 @@ public class AnimationSequence {
         return currentIndex >= 0;
     }
 
-    public static AnimationSequence loadFromStream(InputStream stream) throws IOException {
+    public static AnimationSequence loadFromStream(InputStream stream) throws IOException, NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(stream))) {
             AnimationSequence sequence = new AnimationSequence();
             String line;
@@ -81,14 +81,15 @@ public class AnimationSequence {
                 String[] split = line.split(" ", 2);
                 Class<? extends SequenceCommand> clazz = SequenceCommand.getCommandClassByID(split[0]);
                 if (clazz == null) throw new IllegalArgumentException("Unknown command: " + split[0]);
-                if (clazz == SequenceCommandMusicSync.class) sequence.musicSynced = true;
-                else sequence.items.add(new SequenceItem(clazz, split.length > 1 ? Util.parseArgumentString(split[1]) : new String[0], immediate));
+                String[] args = split.length > 1 ? Util.parseArgumentString(split[1]) : new String[0];
+                SequenceCommand command = clazz.getConstructor(AnimationSequence.class).newInstance(sequence);
+                if (command.onSequenceLoad(args)) sequence.items.add(new SequenceItem(clazz, args, immediate));
             }
             return sequence;
         }
     }
 
-    public static AnimationSequence loadFromFile(File file) throws IOException {
+    public static AnimationSequence loadFromFile(File file) throws IOException, NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         try (FileInputStream fis = new FileInputStream(file)) {
             return loadFromStream(fis);
         }

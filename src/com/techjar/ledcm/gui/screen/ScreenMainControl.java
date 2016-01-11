@@ -517,7 +517,7 @@ public class ScreenMainControl extends Screen {
                         progressSlider.setEnabled(!sequence.isMusicSynced());
                         stopBtn.setEnabled(!sequence.isMusicSynced());
                         audioInputBtn.setEnabled(!sequence.isMusicSynced());
-                    } catch (IOException ex) {
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }

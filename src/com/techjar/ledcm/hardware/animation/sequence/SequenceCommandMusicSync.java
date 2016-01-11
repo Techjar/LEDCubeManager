@@ -15,4 +15,10 @@ public class SequenceCommandMusicSync extends SequenceCommand {
     public boolean execute(String[] args) {
         return true;
     }
+
+    @Override
+    public boolean onSequenceLoad(String[] args) {
+        sequence.setMusicSynced(true);
+        return false;
+    }
 }

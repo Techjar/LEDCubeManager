@@ -914,7 +914,6 @@ public class LEDCubeManager {
 
         if (debugMode) {
             Runtime runtime = Runtime.getRuntime();
-            if (convertingAudio) addInfoText("Converting audio...", 1000);
             addInfoText("Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), 1010);
             Vector3 vector = camera.getAngle().forward();
             addInfoText("Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1020);
@@ -924,6 +923,7 @@ public class LEDCubeManager {
             //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
             //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
         }
+        if (convertingAudio) addInfoText("Converting audio...", 1500);
 
         if (regrab) {
             Mouse.setGrabbed(true);

@@ -20,9 +20,19 @@ public class SequenceCommandLoadMusic extends SequenceCommand {
     public boolean execute(String[] args) {
         if (!loaded) {
             LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
-            LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(new File(args[0]).getAbsolutePath());
+            LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(new File(args[0]));
             loaded = true;
         }
         return LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying();
+    }
+
+    @Override
+    public boolean onSequenceLoad(String[] args) {
+        try {
+            LEDCubeManager.getLEDCube().getSpectrumAnalyzer().convertFile(new File(args[0]), false);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return true;
     }
 }
