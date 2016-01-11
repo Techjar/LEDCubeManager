@@ -86,6 +86,13 @@ public class GUIButton extends GUIText {
         if (guiBg != null) guiBg.setDimension(dimension);
     }
 
+    public void click() {
+        if (clickHandler != null) {
+            clickHandler.setComponent(this);
+            clickHandler.run();
+        }
+    }
+
     public GUICallback getClickHandler() {
         return clickHandler;
     }

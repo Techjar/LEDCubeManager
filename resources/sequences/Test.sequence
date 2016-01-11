@@ -8,7 +8,7 @@ setanimation Dissolve
 finishwait
 wait 500
 ^clear
-setanimation Snake colormode 1 snakecount 1 infinite true
+setanimation Snake colormode 1 snakecount 1 infinite true respawn false
 finishwait
 #setcolorpicker 255 0 0
 #wait 10000

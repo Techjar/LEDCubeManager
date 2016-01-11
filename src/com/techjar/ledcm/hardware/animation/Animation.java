@@ -283,6 +283,7 @@ public abstract class Animation {
                 position += gui.getHeight() + 5;
             }
             final GUIButton resetButton = new GUIButton(screen.font, new Color(255, 255, 255), "Reset to Defaults", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+            resetButton.setName("resetdefaults_button");
             resetButton.setDimension(300, 35);
             resetButton.setPosition(0, position);
             resetButton.setParentAlignment(GUIAlignment.TOP_CENTER);
@@ -295,17 +296,10 @@ public abstract class Animation {
                         for (AnimationOption option : options) {
                             if (option.getType() != AnimationOption.OptionType.BUTTON) {
                                 String value = option.getParams()[0].toString();
-                                if (option.getType() == AnimationOption.OptionType.COMBOBOX || option.getType() == AnimationOption.OptionType.COMBOBUTTON || option.getType() == AnimationOption.OptionType.RADIOGROUP) {
-                                    for (int i = 1; i < option.getParams().length; i += 2) {
-                                        if (option.getParams()[i].toString().equals(value)) {
-                                            value = option.getParams()[i + 1].toString();
-                                            break;
-                                        }
-                                    }
-                                } else if (option.getType() == AnimationOption.OptionType.COLORPICKER) {
+                                if (option.getType() == AnimationOption.OptionType.COLORPICKER) {
                                     value = Util.colorToString((ReadableColor)option.getParams()[0], false);
                                 }
-                                Util.setOptionInGUI(option.getId(), value);
+                                Util.setOptionInGUI(option, value);
                             }
                         }
                     } catch (Exception ex) {
