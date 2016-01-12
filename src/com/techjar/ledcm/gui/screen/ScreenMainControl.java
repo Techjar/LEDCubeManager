@@ -684,6 +684,7 @@ public class ScreenMainControl extends Screen {
         fullscreenCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
         fullscreenCheckbox.setDimension(30, 30);
         fullscreenCheckbox.setPosition(-185, 55);
+        fullscreenCheckbox.setLabel(fullscreenLabel);
         fullscreenCheckbox.setChecked(LEDCubeManager.getInstance().isFullscreen());
         settingsScrollBox.addComponent(fullscreenCheckbox);
         audioInputComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));

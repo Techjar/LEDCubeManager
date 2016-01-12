@@ -42,6 +42,7 @@ import org.lwjgl.input.Controller;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
@@ -57,6 +58,7 @@ public class LEDCube {
     private LEDCubeOctreeNode[] octrees;
     private int ledSpaceMult = 8;
     private boolean drawClick;
+    private ReadableColor drawColor;
     private boolean postInited;
     private Vector3 cursorTrace;
     private Matrix4f transform = new Matrix4f();
@@ -124,13 +126,13 @@ public class LEDCube {
         }
     }
 
-    private void paintLEDHighlight() {
+    private void paintLEDHighlight(ReadableColor color) {
         Dimension3D dim = ledManager.getDimensions();
         for (int x = 0; x < dim.x; x++) {
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
                     if (highlight[Util.encodeCubeVector(x, y, z)]) {
-                        ledManager.setLEDColor(x, y, z, paintColor);
+                        ledManager.setLEDColor(x, y, z, color);
                     }
                 }
             }
@@ -151,7 +153,7 @@ public class LEDCube {
 
     public boolean processMouseEvent() {
         if (!Mouse.isGrabbed() && drawClick) {
-            paintLEDHighlight();
+            paintLEDHighlight(drawColor);
         }
         return !drawClick;
     }
@@ -336,8 +338,27 @@ public class LEDCube {
             @Override
             public boolean onPressed() {
                 if (!Mouse.isGrabbed()) {
+                    drawColor = paintColor;
                     drawClick = true;
-                    paintLEDHighlight();
+                    paintLEDHighlight(drawColor);
+                    return false;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean onReleased() {
+                drawClick = false;
+                return true;
+            }
+        });
+        InputBindingManager.addBinding(new InputBinding("eraseleds", "Erase LEDs", "Cube", true, new InputInfo(InputInfo.Type.MOUSE, 2)) {
+            @Override
+            public boolean onPressed() {
+                if (!Mouse.isGrabbed()) {
+                    drawColor = ReadableColor.BLACK;
+                    drawClick = true;
+                    paintLEDHighlight(drawColor);
                     return false;
                 }
                 return true;
