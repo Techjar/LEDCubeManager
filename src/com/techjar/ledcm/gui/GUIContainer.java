@@ -29,7 +29,10 @@ public abstract class GUIContainer extends GUI {
     @Override
     public boolean processMouseEvent() {
         for (GUI gui : components)
-            if (gui.isVisible() && gui.isEnabled() && !gui.processMouseEvent()) return false;
+            if (gui.isVisible() && gui.isEnabled() && !gui.processMouseEvent()) {
+                closeComboBoxesRecursive(this, gui);
+                return false;
+            }
         return true;
     }
 
@@ -99,6 +102,17 @@ public abstract class GUIContainer extends GUI {
     
     protected Rectangle getScissorBox() {
         return getContainerBox();
+    }
+
+    protected void closeComboBoxesRecursive(GUIContainer container, GUI triggered) {
+        for (GUI gui : container.components) {
+            if (gui == triggered) continue;
+            if (gui instanceof GUIComboBox) {
+                ((GUIComboBox)gui).setOpened(false);
+            } else if (gui instanceof GUIContainer) {
+                closeComboBoxesRecursive((GUIContainer)gui, triggered);
+            }
+        }
     }
     
     public boolean containsComponent(GUI component) {
