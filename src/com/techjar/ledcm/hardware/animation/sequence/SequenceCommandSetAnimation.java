@@ -10,7 +10,8 @@ import com.techjar.ledcm.util.Util;
 import java.util.List;
 
 /**
- * Args: (animation class name) [(option value) sets]
+ * Args: (animation class name) [(option value) sets]<br><br>
+ * The animation's options will be reset to default when set.
  *
  * @author Techjar
  */
