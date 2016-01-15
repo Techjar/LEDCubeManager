@@ -22,7 +22,8 @@ public class AnimationFireworks extends Animation {
     private List<Dot> dots = new ArrayList<>();
     private int speed = 3;
     private int chance = 30;
-    private int colorMode;
+    private int colorMode = 1;
+    private Color rocketColor = new Color(255, 255, 255);
 
     @Override
     public String getName() {
@@ -39,7 +40,7 @@ public class AnimationFireworks extends Animation {
             Iterator<Dot> it = dots.iterator();
             while (it.hasNext()) {
                 Dot dot = it.next();
-                if (dot.firework) {
+                if (dot.rocket) {
                     if ((int)dot.position.getY() >= dimension.y - 3) {
                         it.remove();
                         for (int x = (int)dot.position.getX() - 2; x <= (int)dot.position.getX() + 2; x++) {
@@ -78,6 +79,7 @@ public class AnimationFireworks extends Animation {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
+            new AnimationOption("rocketcolor", "R. Color", AnimationOption.OptionType.COLORPICKER, new Object[]{rocketColor}),
             new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Random Hue", 2, "Picker"}),
             new AnimationOption("chance", "Chance", AnimationOption.OptionType.SLIDER, new Object[]{(199 - (chance - 1)) / 199F, 1F / 199F, false}),
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
@@ -87,6 +89,9 @@ public class AnimationFireworks extends Animation {
     @Override
     public synchronized void optionChanged(String name, String value) {
         switch (name) {
+            case "rocketcolor":
+                rocketColor = Util.stringToColor(value);
+                break;
             case "colormode":
                 colorMode = Integer.parseInt(value);
                 break;
@@ -105,7 +110,7 @@ public class AnimationFireworks extends Animation {
             color.fromHSB(random.nextFloat(), 1, 1);
             return color;
         } else if (colorMode == 2) {
-            return LEDCubeManager.getPaintColor();
+            return new Color(LEDCubeManager.getPaintColor());
         }
         return new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
     }
@@ -114,7 +119,7 @@ public class AnimationFireworks extends Animation {
         LEDUtil.clear(ledManager);
         for (Dot dot : dots) {
             if (Util.isInsideCube(dot.position)) {
-                ledManager.setLEDColor((int)dot.position.getX(), (int)dot.position.getY(), (int)dot.position.getZ(), Util.multiplyColor(dot.color, dot.brightness));
+                ledManager.setLEDColor((int)dot.position.getX(), (int)dot.position.getY(), (int)dot.position.getZ(), dot.rocket ? rocketColor : Util.multiplyColor(dot.color, dot.brightness));
             }
         }
     }
@@ -123,6 +128,6 @@ public class AnimationFireworks extends Animation {
         public Vector3 position;
         public Color color;
         public float brightness;
-        public boolean firework;
+        public boolean rocket;
     }
 }
