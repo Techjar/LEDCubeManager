@@ -583,6 +583,7 @@ public class LEDCube {
         addAnimation(new AnimationBalls());
         addAnimation(new AnimationColorSpectrum());
         addAnimation(new AnimationSlidingPanels());
+        addAnimation(new AnimationFireworks());
         for (Animation anim : animations.values()) {
             anim.postLoadInitOptions();
         }

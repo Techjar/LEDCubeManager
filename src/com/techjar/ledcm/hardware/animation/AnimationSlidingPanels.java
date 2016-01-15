@@ -31,7 +31,7 @@ public class AnimationSlidingPanels  extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % speed == 0) {
             LEDUtil.clear(ledManager);
             for (int i = 0; i < 3; i++) {
@@ -47,7 +47,7 @@ public class AnimationSlidingPanels  extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         colorSeed = random.nextInt();
         panelPos = new int[3];
         panelDirection = new boolean[3];
