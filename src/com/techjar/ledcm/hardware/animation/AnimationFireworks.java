@@ -12,7 +12,6 @@ import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.lwjgl.util.Color;
-import org.lwjgl.util.ReadableColor;
 
 /**
  *

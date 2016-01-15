@@ -585,6 +585,7 @@ public class LEDCube {
         addAnimation(new AnimationSlidingPanels());
         addAnimation(new AnimationFireworks());
         addAnimation(new AnimationWalls());
+        addAnimation(new AnimationWireframe());
         for (Animation anim : animations.values()) {
             anim.postLoadInitOptions();
         }

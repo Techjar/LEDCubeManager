@@ -8,7 +8,6 @@ import com.techjar.ledcm.util.Util;
 import java.util.Arrays;
 import java.util.Random;
 import org.lwjgl.util.Color;
-import org.lwjgl.util.ReadableColor;
 
 /**
  *
@@ -110,6 +109,6 @@ public class AnimationWalls  extends Animation {
         for (Direction dir : dirs) {
             if (dir != current && dir != current.getOpposite()) return dir;
         }
-        throw new RuntimeException("what");
+        throw new RuntimeException("what"); // This should never happen
     }
 }
