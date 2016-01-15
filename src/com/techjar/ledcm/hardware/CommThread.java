@@ -39,6 +39,7 @@ public class CommThread extends Thread {
     @Getter private AnimationSequence currentSequence;
     @Getter private TCPServer tcpServer;
     @Getter @Setter private boolean frozen;
+    @Getter @Setter private boolean sequenceFrozen;
 
     public CommThread(PortHandler portHandler) throws IOException {
         this.setName("Animation / Communication");
@@ -85,7 +86,7 @@ public class CommThread extends Thread {
                     synchronized (lock) {
                         try {
                             if (currentSequence != null) currentSequence.update();
-                            if (currentAnimation != null) {
+                            if (currentAnimation != null && !sequenceFrozen) {
                                 currentAnimation.refresh();
                                 currentAnimation.incTicks();
                             }

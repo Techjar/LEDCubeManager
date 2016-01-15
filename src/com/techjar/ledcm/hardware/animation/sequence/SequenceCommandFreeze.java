@@ -15,7 +15,7 @@ public class SequenceCommandFreeze extends SequenceCommand {
 
     @Override
     public boolean execute(String[] args) {
-        LEDCubeManager.getLEDCube().getCommThread().setFrozen(Boolean.parseBoolean(args[0]));
+        LEDCubeManager.getLEDCube().getCommThread().setSequenceFrozen(Boolean.parseBoolean(args[0]));
         return true;
     }
 }
