@@ -40,6 +40,7 @@ public class AnimationWireframe  extends Animation {
     public synchronized void refresh() {
         if (ticks % speed == 0) {
             if (animMode == 0) {
+                LEDUtil.clear(ledManager);
                 for (int x = 0; x < dimension.x; x++) {
                     for (int y = 0; y < dimension.y; y++) {
                         for (int z = 0; z < dimension.z; z++) {
@@ -107,6 +108,7 @@ public class AnimationWireframe  extends Animation {
                     }
                 }
             } else if (animMode == 2) {
+                drawResizeBox();
                 if (resizeDir == null) {
                     do {
                         resizeDir = new Vector3(random.nextBoolean() ? 1 : -1, random.nextBoolean() ? 1 : -1, random.nextBoolean() ? 1 : -1);
@@ -141,15 +143,12 @@ public class AnimationWireframe  extends Animation {
                         resizeState = true;
                     }
                 }
-                LEDUtil.clear(ledManager);
-                for (int x = (int)resizeMin.getX(); x < (int)resizeMax.getX() + 1; x++) {
-                    for (int y = (int)resizeMin.getY(); y < (int)resizeMax.getY() + 1; y++) {
-                        for (int z = (int)resizeMin.getZ(); z < (int)resizeMax.getZ() + 1; z++) {
-                            if (((x == (int)resizeMin.getX() || x == (int)resizeMax.getX()) && (y == (int)resizeMin.getY() || y == (int)resizeMax.getY())) || ((x == (int)resizeMin.getX() || x == (int)resizeMax.getX()) && (z == (int)resizeMin.getZ() || z == (int)resizeMax.getZ())) || ((y == (int)resizeMin.getY() || y == (int)resizeMax.getY()) && (z == (int)resizeMin.getZ() || z == (int)resizeMax.getZ()))) {
-                                ledManager.setLEDColor(x, y, z, getColor(x, y, z));
-                            }
-                        }
-                    }
+            } else if (animMode == 3) {
+                drawResizeBox();
+                resizeMin = resizeState ? resizeMin.add(new Vector3(1, 1, 1)) : resizeMin.subtract(new Vector3(1, 1, 1));
+                resizeMax = resizeState ? resizeMax.subtract(new Vector3(1, 1, 1)) : resizeMax.add(new Vector3(1, 1, 1));
+                if ((int)resizeMin.getX() == 0 || (int)resizeMin.getX() == 3) {
+                    resizeState = !resizeState;
                 }
             }
         }
@@ -157,7 +156,7 @@ public class AnimationWireframe  extends Animation {
 
     @Override
     public synchronized void reset() {
-        LEDUtil.clear(ledManager);
+        if (animMode == 1) LEDUtil.clear(ledManager);
         traceDir = 1;
         traceState = true;
         for (int i = 0; i < traceOffsets.length; i++) {
@@ -171,7 +170,7 @@ public class AnimationWireframe  extends Animation {
     @Override
     public AnimationOption[] getOptions() {
         return new AnimationOption[]{
-            new AnimationOption("animmode", "Animation", AnimationOption.OptionType.COMBOBOX, new Object[]{animMode, 0, "Static", 1, "Trace", 2, "Resize"}),
+            new AnimationOption("animmode", "Animation", AnimationOption.OptionType.COMBOBOX, new Object[]{animMode, 0, "Static", 1, "Trace", 2, "Resize", 3, "Resize Center"}),
             new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Spectrum"}),
             new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
         };
@@ -202,6 +201,19 @@ public class AnimationWireframe  extends Animation {
 
     private void setLED(int x, int y, int z, boolean black)  {
         ledManager.setLEDColor(x, y, z, black ? ReadableColor.BLACK : getColor(x, y, z));
+    }
+
+    private void drawResizeBox() {
+        LEDUtil.clear(ledManager);
+        for (int x = (int)resizeMin.getX(); x < (int)resizeMax.getX() + 1; x++) {
+            for (int y = (int)resizeMin.getY(); y < (int)resizeMax.getY() + 1; y++) {
+                for (int z = (int)resizeMin.getZ(); z < (int)resizeMax.getZ() + 1; z++) {
+                    if (((x == (int)resizeMin.getX() || x == (int)resizeMax.getX()) && (y == (int)resizeMin.getY() || y == (int)resizeMax.getY())) || ((x == (int)resizeMin.getX() || x == (int)resizeMax.getX()) && (z == (int)resizeMin.getZ() || z == (int)resizeMax.getZ())) || ((y == (int)resizeMin.getY() || y == (int)resizeMax.getY()) && (z == (int)resizeMin.getZ() || z == (int)resizeMax.getZ()))) {
+                        ledManager.setLEDColor(x, y, z, getColor(x, y, z));
+                    }
+                }
+            }
+        }
     }
 
     @Override
