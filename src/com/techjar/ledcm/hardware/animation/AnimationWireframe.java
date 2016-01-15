@@ -194,4 +194,9 @@ public class AnimationWireframe  extends Animation {
         }
         return LEDCubeManager.getPaintColor();
     }
+
+    @Override
+    public boolean isFinished() {
+        return !traceState;
+    }
 }

@@ -134,7 +134,7 @@ public class AnimationGradient extends Animation {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "color1":
                 color1 = Util.stringToColor(value);
