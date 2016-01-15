@@ -18,7 +18,7 @@ public class AnimationWireframe  extends Animation {
     private int animMode = 0;
     private int colorMode = 0;
     private int speed = 3;
-    private Vector3[] traceOffsets = new Vector3[3];
+    private Vector3[] traceOffsets = new Vector3[6];
     private int traceDir;
     private boolean traceState;
     private Vector3 resizeMin;
@@ -52,7 +52,7 @@ public class AnimationWireframe  extends Animation {
             } else if (animMode == 1) {
                 for (int i = 0; i < traceOffsets.length; i++) {
                     Vector3 offset = traceOffsets[i];
-                    ledManager.setLEDColor((int)offset.getX(), (int)offset.getY(), (int)offset.getZ(), traceState ? getColor((int)offset.getX(), (int)offset.getY(), (int)offset.getZ()) : ReadableColor.BLACK);
+                    setLED((int)offset.getX(), (int)offset.getY(), (int)offset.getZ(), !traceState);
                     switch (i) {
                         case 0:
                             if (offset.getX() == (traceDir > 0 ? dimension.x - 1 : 0)) {
@@ -61,6 +61,8 @@ public class AnimationWireframe  extends Animation {
                                         traceOffsets[i] = offset.add(new Vector3(0, 0, traceDir));
                                     }
                                 } else {
+                                    Vector3 offset2 = new Vector3(offset.getX(), offset.getZ(), offset.getY());
+                                    setLED((int)offset2.getX(), (int)offset2.getY(), (int)offset2.getZ(), !traceState);
                                     traceOffsets[i] = offset.add(new Vector3(0, traceDir, 0));
                                 }
                             } else {
@@ -74,6 +76,8 @@ public class AnimationWireframe  extends Animation {
                                         traceOffsets[i] = offset.add(new Vector3(traceDir, 0, 0));
                                     }
                                 } else {
+                                    Vector3 offset2 = new Vector3(offset.getZ(), offset.getY(), offset.getX());
+                                    setLED((int)offset2.getX(), (int)offset2.getY(), (int)offset2.getZ(), !traceState);
                                     traceOffsets[i] = offset.add(new Vector3(0, 0, traceDir));
                                 }
                             } else {
@@ -86,19 +90,20 @@ public class AnimationWireframe  extends Animation {
                                     if (offset.getY() != (traceDir > 0 ? dimension.y - 1 : 0)) {
                                         traceOffsets[i] = offset.add(new Vector3(0, traceDir, 0));
                                     } else {
-                                        traceDir = -1;
+                                        traceState = !traceState;
+                                        for (int j = 0; j < traceOffsets.length; j++) {
+                                            traceOffsets[j] = new Vector3();
+                                        }
                                     }
                                 } else {
+                                    Vector3 offset2 = new Vector3(offset.getY(), offset.getX(), offset.getZ());
+                                    setLED((int)offset2.getX(), (int)offset2.getY(), (int)offset2.getZ(), !traceState);
                                     traceOffsets[i] = offset.add(new Vector3(traceDir, 0, 0));
                                 }
                             } else {
                                 traceOffsets[i] = offset.add(new Vector3(0, 0, traceDir));
                             }
                             break;
-                    }
-                    if (traceOffsets[2].equals(new Vector3())) {
-                        traceState = !traceState;
-                        traceDir = 1;
                     }
                 }
             } else if (animMode == 2) {
@@ -193,6 +198,10 @@ public class AnimationWireframe  extends Animation {
             return new Color(Math.round((x / (dimension.x - 1F)) * 255), Math.round((y / (dimension.y - 1F)) * 255), Math.round((z / (dimension.z - 1F)) * 255));
         }
         return LEDCubeManager.getPaintColor();
+    }
+
+    private void setLED(int x, int y, int z, boolean black)  {
+        ledManager.setLEDColor(x, y, z, black ? ReadableColor.BLACK : getColor(x, y, z));
     }
 
     @Override
