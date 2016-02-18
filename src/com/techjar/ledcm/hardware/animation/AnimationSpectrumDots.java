@@ -52,7 +52,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         amplitudes = new float[dimension.x];
     }
 
@@ -65,7 +65,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "colorMode":
                 colorMode = Integer.parseInt(value);

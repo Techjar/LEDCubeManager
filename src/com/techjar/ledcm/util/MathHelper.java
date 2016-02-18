@@ -214,19 +214,21 @@ public final class MathHelper {
     public static float[] lerpColorSpace(float[] start, float[] end, float fraction) {
         float[] ret = new float[3];
         float fractionInverse = 1 - fraction;
-        //System.out.println(fraction);
         ret[0] = (start[0] * fractionInverse) + (end[0] * fraction);
         ret[1] = (start[1] * fractionInverse) + (end[1] * fraction);
         ret[2] = (start[2] * fractionInverse) + (end[2] * fraction);
+        //if (fraction > .85 && fraction < 1) System.out.println(ret[0] + " " + ret[1] + " " + ret[2]);
         return ret;
     }
 
     private static float pivotRgb(float n) {
-        return n > 0.04045F ? (float)Math.pow((n + 0.055F) / 1.055F, 2.4F) : n / 12.92F;
+        return n > 0.04045F ? (float)Math.pow((n + 0.055F) / 1.055F, 2.4) : n / 12.92F;
+        //return n <= 0.08F ? 100 * n / 903.3F : (float)Math.pow((n + 0.16) / 1.16F, 3);
     }
 
     private static float pivotRgbInverse(float n) {
-        return n > 0.0031308F ? 1.055F * (float)Math.pow(n, 1F / 2.4F) - 0.055F : 12.92F * n;
+        return n > 0.0031308F ? 1.055F * (float)Math.pow(n, 1 / 2.4) - 0.055F : 12.92F * n;
+        //return n <= 0.008856F ? n * 903.3F / 100 : 1.16F * (float)Math.pow(n, 1F / 3F) - 0.16F;
     }
 
     public static Color xyzToRgb(float[] xyz) {
@@ -235,11 +237,11 @@ public final class MathHelper {
         float z = xyz[2];
 
         // (Observer = 2°, Illuminant = D65)
-        float r = pivotRgbInverse(x * 3.240479F + y * -1.537150F + z * -0.498535F);
-        float g = pivotRgbInverse(x * -0.969256F + y * 1.875992F + z * 0.041556F);
-        float b = pivotRgbInverse(x * 0.055648F + y * -0.204043F + z * 1.057311F);
+        float r = pivotRgbInverse(x * 3.2404542F + y * -1.5371385F + z * -0.4985314F);
+        float g = pivotRgbInverse(x * -0.969266F + y * 1.8760108F + z * 0.041556F);
+        float b = pivotRgbInverse(x * 0.0556434F + y * -0.2040259F + z * 1.0572252F);
 
-        return new Color(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
+        return new Color(clamp(Math.round(r * 255), 0, 255), clamp(Math.round(g * 255), 0, 255), clamp(Math.round(b * 255), 0, 255));
     }
 
     public static float[] rgbToXyz(Color color) {
@@ -249,35 +251,41 @@ public final class MathHelper {
         float b = pivotRgb(color.getBlue() / 255F);
 
         // (Observer = 2°, Illuminant = D65)
-        xyz[0] = r * 0.412453F + g * 0.357580F + b * 0.180423F;
-        xyz[1] = r * 0.212671F + g * 0.715160F + b * 0.072169F;
-        xyz[2] = r * 0.019334F + g * 0.119193F + b * 0.950227F;
-        
+        xyz[0] = r * 0.4124564F + g * 0.3575761F + b * 0.1804375F;
+        xyz[1] = r * 0.2126729F + g * 0.7151522F + b * 0.072175F;
+        xyz[2] = r * 0.0193339F + g * 0.119192F + b * 0.9503041F;
+
         return xyz;
     }
-    
+
     private static float pivotLab(float n) {
-        return n > 0.008856F ? (float)Math.pow(n, 1F / 3F) : (1F / 3F) * (float)Math.pow(29F / 6F, 2) * n + (4F / 29F);
+        return n > 0.008856F ? (float)Math.cbrt(n) : (903.3F * n + 16) / 116F;
     }
 
     private static float pivotLabInverse(float n) {
-        return n > 6F / 29F ? (float)Math.pow(n, 3) : 3F * (float)Math.pow(6F / 29F, 2) * (n - (4F / 29F));
+        float f3 = (float)Math.pow(n, 3);
+        return f3 > 0.008856F ? f3 : (116F * n - 16) / 903.3F;
+    }
+
+    private static float pivotLabInverse2(float n) {
+        return n > 903.3F * 0.008856F ? (float)Math.pow((n + 16F) / 116F, 3) : n / 903.3F;
     }
 
     public static float[] xyzToLab(float[] xyz) {
         float[] lab = new float[3];
-        lab[0] = 116 * pivotLab(xyz[1] / xyzWhiteRef[1]) - 16;
-        lab[1] = 500 * (pivotLab(xyz[0] / xyzWhiteRef[0]) - pivotLab(xyz[1] / xyzWhiteRef[1]));
-        lab[2] = 200 * (pivotLab(xyz[1] / xyzWhiteRef[1]) - pivotLab(xyz[2] / xyzWhiteRef[2]));
+        float fy = pivotLab(xyz[1] / xyzWhiteRef[1]);
+        lab[0] = 116 * fy - 16;
+        lab[1] = 500 * (pivotLab(xyz[0] / xyzWhiteRef[0]) - fy);
+        lab[2] = 200 * (fy - pivotLab(xyz[2] / xyzWhiteRef[2]));
         return lab;
     }
 
     public static float[] labToXyz(float[] lab) {
         float[] xyz = new float[3];
-        float p = (lab[0] + 16F) / 116F;
-        xyz[0] = xyzWhiteRef[0] * pivotLabInverse(p + (lab[1] / 500F));
-        xyz[1] = xyzWhiteRef[1] * pivotLabInverse(p);
-        xyz[2] = xyzWhiteRef[2] * pivotLabInverse(p - (lab[2] / 200F));
+        float fy = (lab[0] + 16F) / 116F;
+        xyz[0] = xyzWhiteRef[0] * pivotLabInverse(fy + (lab[1] / 500F));
+        xyz[1] = xyzWhiteRef[1] * pivotLabInverse2(lab[0]);
+        xyz[2] = xyzWhiteRef[2] * pivotLabInverse(fy - (lab[2] / 200F));
         return xyz;
     }
 }

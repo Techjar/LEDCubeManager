@@ -2,7 +2,7 @@
 package com.techjar.ledcm.gui.screen;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.gui.GUIAlignment;
 import com.techjar.ledcm.gui.GUIBackground;
 import com.techjar.ledcm.gui.GUIButton;
@@ -19,9 +19,9 @@ import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITabbed;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.GUIWindow;
-import com.techjar.ledcm.hardware.LEDManager;
+import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.animation.Animation;
-import com.techjar.ledcm.hardware.animation.AnimationSequence;
+import com.techjar.ledcm.hardware.animation.sequence.AnimationSequence;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.PrintStreamRelayer;
@@ -118,7 +118,7 @@ public class ScreenMainControl extends Screen {
     
     public ScreenMainControl() {
         super();
-        final LEDManager ledManager = LEDCubeManager.getLEDManager();
+        final LEDManager ledManager = LEDCubeManager.getLEDCube().getLEDManager();
         final Dimension3D ledDim = ledManager.getDimensions();
 
         font = LEDCubeManager.getFontManager().getFont("chemrea", 30, false, false).getUnicodeFont();
@@ -130,7 +130,9 @@ public class ScreenMainControl extends Screen {
         playBtn.setClickHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
+                if (LEDCubeManager.getLEDCube().getCommThread().getCurrentSequence() == null || !LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying()) {
+                    LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
+                }
             }
         });
         container.addComponent(playBtn);
@@ -508,11 +510,14 @@ public class ScreenMainControl extends Screen {
                     try {
                         File file = new File("resources/sequences/" + item.toString() + ".sequence");
                         AnimationSequence sequence = AnimationSequence.loadFromFile(file);
+                        sequence.setName(item.toString());
                         LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(sequence);
                         sequenceWindow.setVisible(false);
                         chooseFileBtn.setEnabled(!sequence.isMusicSynced());
                         progressSlider.setEnabled(!sequence.isMusicSynced());
-                    } catch (IOException ex) {
+                        stopBtn.setEnabled(!sequence.isMusicSynced());
+                        audioInputBtn.setEnabled(!sequence.isMusicSynced());
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
@@ -529,6 +534,8 @@ public class ScreenMainControl extends Screen {
                 LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(null);
                 chooseFileBtn.setEnabled(true);
                 progressSlider.setEnabled(true);
+                stopBtn.setEnabled(true);
+                audioInputBtn.setEnabled(true);
             }
         });
         sequenceWindow.addComponent(sequenceStopBtn);
@@ -677,6 +684,7 @@ public class ScreenMainControl extends Screen {
         fullscreenCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
         fullscreenCheckbox.setDimension(30, 30);
         fullscreenCheckbox.setPosition(-185, 55);
+        fullscreenCheckbox.setLabel(fullscreenLabel);
         fullscreenCheckbox.setChecked(LEDCubeManager.getInstance().isFullscreen());
         settingsScrollBox.addComponent(fullscreenCheckbox);
         audioInputComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));

@@ -2,7 +2,7 @@ package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Vector2;
 import java.util.ArrayList;
 import java.util.Collections;

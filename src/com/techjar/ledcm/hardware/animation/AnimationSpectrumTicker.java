@@ -74,7 +74,7 @@ public class AnimationSpectrumTicker extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         amplitudes = new float[64];
     }
 
@@ -93,7 +93,7 @@ public class AnimationSpectrumTicker extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "speed":
                 speed = 1 + Math.round(15 * (1 - Float.parseFloat(value)));

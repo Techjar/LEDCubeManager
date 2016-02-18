@@ -31,7 +31,7 @@ public class AnimationGradient extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         for (int x = 0; x < dimension.x; x++) {
             float value = x / (dimension.x - 1F);
             if (pulsate) value = (float)Math.sin(timer.getSeconds() * (speed / 5) + ((dimension.x - x) / (float)dimension.x) * scale) * 0.5F + 0.5F;
@@ -45,7 +45,7 @@ public class AnimationGradient extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
     }
 
     @Override
@@ -60,7 +60,7 @@ public class AnimationGradient extends Animation {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "color1":
                 color1 = Util.stringToColor(value);

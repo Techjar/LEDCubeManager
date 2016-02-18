@@ -9,7 +9,7 @@ import org.lwjgl.util.Dimension;
 import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.geom.Rectangle;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Timer;
 import java.awt.HeadlessException;
 import java.awt.Toolkit;

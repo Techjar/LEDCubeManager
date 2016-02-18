@@ -1,12 +1,14 @@
 
-package com.techjar.ledcm.hardware;
+package com.techjar.ledcm.hardware.manager;
 
+import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.Vector3;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
 /**
+ * Manages the LED cube data. Must have a constructor that accept a String array.
  *
  * @author Techjar
  */

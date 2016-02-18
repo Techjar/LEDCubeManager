@@ -49,7 +49,7 @@ public class AnimationPulsateHue extends Animation {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "speed":
                 speed = 1 + (149 * Float.parseFloat(value));

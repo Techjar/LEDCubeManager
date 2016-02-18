@@ -41,7 +41,7 @@ public class AnimationPingPong extends Animation {
     }
 
     @Override
-    public void refresh() {
+    public synchronized void refresh() {
         if (ticks % speed == 0) {
             if (twoballs) {
                 int half = dimension.x / 2 - 1;
@@ -97,7 +97,7 @@ public class AnimationPingPong extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
         position1 = dotSize - 1;
         position2 = dimension.x - 1;
         direction = true;
@@ -116,7 +116,7 @@ public class AnimationPingPong extends Animation {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "speed":
                 speed = 1 + Math.round(15 * (1 - Float.parseFloat(value)));

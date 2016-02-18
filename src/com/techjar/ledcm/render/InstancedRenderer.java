@@ -1,5 +1,5 @@
 
-package com.techjar.ledcm;
+package com.techjar.ledcm.render;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -92,11 +92,12 @@ public final class InstancedRenderer {
     }
 
     public static void prepareItems() {
+        groupedNormal.clear();
+        groupedAlpha.clear();
         for (ModelMesh key : itemsNormal.keySet()) {
             LinkedList<InstanceItem> list = itemsNormal.get(key);
             groupedNormal.add(new Tuple<>(key, list));
         }
-        itemsNormal.clear();
         Collections.sort(itemsAlpha, new AlphaSorter());
         LinkedList<InstanceItem> currentList = null;
         ModelMesh currentMesh = null;

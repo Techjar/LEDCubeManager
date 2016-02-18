@@ -5,6 +5,18 @@ import com.google.gson.GsonBuilder;
 import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.gui.GUI;
+import com.techjar.ledcm.gui.GUIBox;
+import com.techjar.ledcm.gui.GUICheckBox;
+import com.techjar.ledcm.gui.GUIColorPicker;
+import com.techjar.ledcm.gui.GUIComboBox;
+import com.techjar.ledcm.gui.GUIComboButton;
+import com.techjar.ledcm.gui.GUIRadioButton;
+import com.techjar.ledcm.gui.GUISlider;
+import com.techjar.ledcm.gui.GUISpinner;
+import com.techjar.ledcm.gui.GUITextField;
+import com.techjar.ledcm.gui.screen.ScreenMainControl;
+import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.util.json.ShapeInfo;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
@@ -38,9 +50,11 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.ReadableColor;
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
+import org.lwjgl.util.vector.Vector4f;
 import org.newdawn.slick.geom.Circle;
 import org.newdawn.slick.geom.Ellipse;
 import org.newdawn.slick.geom.Polygon;
@@ -232,18 +246,59 @@ public final class Util {
         return new org.lwjgl.util.Color(MathHelper.clamp(color1.getRed() - color2.getRed(), 0, 255), MathHelper.clamp(color1.getGreen() - color2.getGreen(), 0, 255), MathHelper.clamp(color1.getBlue() - color2.getBlue(), 0, 255));
     }
 
+    public static org.lwjgl.util.Color multiplyColors(org.lwjgl.util.Color color1, org.lwjgl.util.Color color2) {
+        float[] floats1 = colorToFloats(color1);
+        float[] floats2 = colorToFloats(color2);
+        return floatsToColor(new float[]{floats1[0] * floats2[0], floats1[1] * floats2[1], floats1[2] * floats2[2], floats1[3] * floats2[3]});
+    }
+
+    public static org.lwjgl.util.Color divideColors(org.lwjgl.util.Color color1, org.lwjgl.util.Color color2) {
+        float[] floats1 = colorToFloats(color1);
+        float[] floats2 = colorToFloats(color2);
+        return floatsToColor(new float[]{floats1[0] / floats2[0], floats1[1] / floats2[1], floats1[2] / floats2[2], floats1[3] / floats2[3]});
+    }
+
     public static org.lwjgl.util.Color multiplyColor(org.lwjgl.util.Color color1, double mult) {
         return new org.lwjgl.util.Color(MathHelper.clamp((int)Math.round(color1.getRed() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getGreen() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getBlue() * mult), 0, 255));
     }
 
+    public static float[] colorToFloats(org.lwjgl.util.Color color) {
+        return new float[]{color.getRed() / 255F, color.getGreen() / 255F, color.getBlue() / 255F, color.getAlpha() / 255F};
+    }
+
+    public static org.lwjgl.util.Color floatsToColor(float[] floats) {
+        if (floats.length < 4) {
+            return new Color(Math.round(floats[0] * 255), Math.round(floats[1] * 255), Math.round(floats[2] * 255));
+        } else {
+            return new Color(Math.round(floats[0] * 255), Math.round(floats[1] * 255), Math.round(floats[2] * 255), Math.round(floats[3] * 255));
+        }
+    }
+
+    public static Vector3 transformVector(Vector3 vector, Matrix4f matrix, boolean round) {
+        Vector4f vec = Matrix4f.transform(matrix, new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1), null);
+        return round ? new Vector3(Math.round(vec.x), Math.round(vec.y), Math.round(vec.z)) : new Vector3(vec.x, vec.y, vec.z);
+    }
+
+    /**
+     * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(Vector3)} instead
+     */
+    @Deprecated
     public static int encodeCubeVector(Vector3 vector) {
         return LEDCubeManager.getLEDManager().encodeVector(vector);
     }
 
+    /**
+     * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(int, int, int)} instead
+     */
+    @Deprecated
     public static int encodeCubeVector(int x, int y, int z) {
         return LEDCubeManager.getLEDManager().encodeVector(x, y, z);
     }
 
+    /**
+     * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#decodeVector(int)} instead
+     */
+    @Deprecated
     public static Vector3 decodeCubeVector(int number) {
         return LEDCubeManager.getLEDManager().decodeVector(number);
     }
@@ -255,6 +310,56 @@ public final class Util {
 
     public static boolean isInsideCube(Vector3 vector) {
         return isInsideCube((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
+    }
+
+    /**
+     * Sets an animation option using the GUI component rather than directly.
+     *
+     * @param optionId The ID of the option
+     * @param value The value to set (internal or display value)
+     */
+    public static void setOptionInGUI(AnimationOption option, String value) {
+        if (LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null) return;
+        if (option.getType() == AnimationOption.OptionType.COMBOBOX || option.getType() == AnimationOption.OptionType.COMBOBUTTON || option.getType() == AnimationOption.OptionType.RADIOGROUP) {
+            for (int i = 1; i < option.getParams().length; i += 2) {
+                if (option.getParams()[i].toString().equals(value)) {
+                    value = option.getParams()[i + 1].toString();
+                    break;
+                }
+            }
+        }
+        ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
+        List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(option.getId());
+        if (components.size() > 0) {
+            GUI component = components.get(0);
+            if (component instanceof GUITextField) {
+                ((GUITextField)component).setText(value);
+            } else if (component instanceof GUISlider) {
+                ((GUISlider)component).setValue(Float.parseFloat(value));
+            } else if (component instanceof GUIComboBox) {
+                ((GUIComboBox)component).setSelectedItem(value);
+            } else if (component instanceof GUIComboButton) {
+                ((GUIComboButton)component).setSelectedItem(value);
+            } else if (component instanceof GUIBox) {
+                GUIBox box = (GUIBox)component;
+                for (GUI gui : box.getAllComponents()) {
+                    if (gui instanceof GUIRadioButton) {
+                        GUIRadioButton radioButton = (GUIRadioButton)gui;
+                        if (radioButton.getLabel().getText().equals(value)) {
+                            radioButton.setSelected(true);
+                        }
+                    }
+                }
+            } else if (component instanceof GUICheckBox) {
+                ((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
+            } else if (component instanceof GUISpinner) {
+                ((GUISpinner)component).setValue(Float.parseFloat(value));
+            } else if (component instanceof GUIColorPicker) {
+                ((GUIColorPicker)component).setValue(Util.stringToColor(value));
+            } else {
+                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(option.getId(), value);
+            }
+        }
     }
 
     /*public static int getRequiredBits(long value) {
@@ -328,6 +433,48 @@ public final class Util {
         return new Rectangle(getMouseX(), getMouseY(), 1, 1);
     }
 
+    public static String[] parseArgumentString(String argStr) {
+        boolean quote = false;
+        List<String> params = new ArrayList<>();
+        List<String> temp = new ArrayList<>();
+        String[] split = argStr.split(" ");
+        for (int i = 0; i < split.length; i++) {
+            String str = split[i];
+            char first = str.isEmpty() ? '\u0000' : str.charAt(0);
+            char last = str.isEmpty() ? '\u0000' : str.charAt(str.length() - 1);
+            char beforeLast = str.length() < 2 ? '\u0000' : str.charAt(str.length() - 2);
+            if (first == '"' && last == '"' && beforeLast != '\\') {
+                if (quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                params.add(str.replaceFirst("^\"(.*)\"$", "$1"));
+            } else if (first == '"') {
+                if (quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                quote = true;
+                temp.add(str.replaceFirst("^\"", ""));
+            } else if (last == '"' && beforeLast != '\\') {
+                if (!quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                quote = false;
+                temp.add(str.replaceFirst("\"$", ""));
+                StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < temp.size(); j++) {
+                    sb.append(temp.get(j));
+                    if (j < temp.size() - 1) sb.append(' ');
+                }
+                params.add(sb.toString());
+                temp.clear();
+            } else if (quote) {
+                temp.add(str);
+            } else {
+                params.add(str);
+            }
+        }
+        if (quote) throw new IllegalArgumentException("Unclosed quotes in string: " + argStr);
+        List<String> params2 = new ArrayList<>();
+        for (String param : params) {
+            if (!param.isEmpty()) params2.add(param.replaceAll("\\\\\"", "\""));
+        }
+        return params2.toArray(new String[params2.size()]);
+    }
+
     /**
      * Will parse a valid IPv4/IPv6 address and port, may return garbage for invalid address formats. If no port was parsed it will be -1.
      */
@@ -348,22 +495,27 @@ public final class Util {
         return new IPInfo(InetAddress.getByName(ip), port, ipv6);
     }
 
-    public static String getFileMD5(File file) throws IOException, NoSuchAlgorithmException {
-        @Cleanup FileInputStream fis = new FileInputStream(file);
-        byte[] bytes = new byte[(int)file.length()];
-        fis.read(bytes);
+    public static String getChecksum(String method, byte[] bytes) throws IOException, NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(bytes);
         byte[] digest = md.digest();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < digest.length; i++) {
-            sb.append(Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1));
+            sb.append(String.format("%02x", digest[i] & 0xFF));
         }
         return sb.toString();
     }
 
-    public static String getFileMD5(String file) throws IOException, NoSuchAlgorithmException {
-        return getFileMD5(new File(file));
+    public static String getChecksum(String method, String str) throws IOException, NoSuchAlgorithmException {
+        return getChecksum(method, str.getBytes("UTF-8"));
+    }
+
+    public static String getFileChecksum(String method, File file) throws IOException, NoSuchAlgorithmException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int)file.length()];
+            fis.read(bytes);
+            return getChecksum(method, bytes);
+        }
     }
 
     @SneakyThrows(FileNotFoundException.class)
@@ -550,7 +702,7 @@ public final class Util {
         return bytesToMB(bytes) + " MB";
     }
 
-    public static String colorToString(Color color, boolean alpha) {
+    public static String colorToString(ReadableColor color, boolean alpha) {
         return color.getRed() + "," + color.getGreen() + "," + color.getBlue() + (alpha ? "," + color.getAlpha() : "");
     }
 

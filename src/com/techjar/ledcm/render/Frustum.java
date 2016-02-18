@@ -1,5 +1,5 @@
 
-package com.techjar.ledcm;
+package com.techjar.ledcm.render;
 
 import static org.lwjgl.opengl.GL11.*;
 

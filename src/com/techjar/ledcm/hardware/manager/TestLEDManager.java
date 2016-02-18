@@ -1,8 +1,10 @@
 
-package com.techjar.ledcm.hardware;
+package com.techjar.ledcm.hardware.manager;
 
+import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
+import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector3;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
@@ -18,18 +20,26 @@ public class TestLEDManager implements LEDManager {
     private final int xSize;
     private final int ySize;
     private final int zSize;
+    private final boolean monochrome;
+    private final Color monochromeColor;
     private boolean gammaCorrection;
     private LEDArray ledArray;
 
-    public TestLEDManager(boolean gammaCorrection, int xSize, int ySize, int zSize) {
+    public TestLEDManager(boolean gammaCorrection, int xSize, int ySize, int zSize, boolean monochrome, Color monochromeColor) {
         this.gammaCorrection = gammaCorrection;
         this.xSize = xSize;
         this.ySize = ySize;
         this.zSize = zSize;
+        this.monochrome = monochrome;
+        this.monochromeColor = monochromeColor;
         red = new byte[xSize * ySize * zSize];
         green = new byte[xSize * ySize * zSize];
         blue = new byte[xSize * ySize * zSize];
         updateLEDArray();
+    }
+
+    public TestLEDManager(String[] args) {
+        this(Boolean.parseBoolean(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]), args.length > 4 ? Boolean.parseBoolean(args[4]) : false, args.length > 4 ? Util.stringToColor(args[5]) : null);
     }
 
     @Override
@@ -54,12 +64,12 @@ public class TestLEDManager implements LEDManager {
 
     @Override
     public boolean isMonochrome() {
-        return false;
+        return monochrome;
     }
 
     @Override
     public Color getMonochromeColor() {
-        return null;
+        return monochromeColor;
     }
 
     @Override
@@ -120,6 +130,7 @@ public class TestLEDManager implements LEDManager {
         if (y < 0 || y >= ySize) throw new IllegalArgumentException("Invalid Y coordinate: " + y);
         if (z < 0 || z >= zSize) throw new IllegalArgumentException("Invalid Z coordinate: " + z);
 
+        if (monochrome) color = Util.multiplyColors((Color)color, monochromeColor);
         int index = x + xSize * (y + ySize * z);
         red[index] = color.getRedByte();
         green[index] = color.getGreenByte();

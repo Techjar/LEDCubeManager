@@ -1,4 +1,8 @@
 package com.techjar.ledcm;
+import com.techjar.ledcm.render.LightingHandler;
+import com.techjar.ledcm.render.Camera;
+import com.techjar.ledcm.render.Frustum;
+import com.techjar.ledcm.render.InstancedRenderer;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -15,20 +19,23 @@ import static org.lwjgl.util.glu.GLU.*;
 import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.hackoeur.jglm.Matrices;
+import com.hackoeur.jglm.Vec3;
 import com.obj.WavefrontObject;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.screen.Screen;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
-import com.techjar.ledcm.hardware.LEDManager;
-import com.techjar.ledcm.hardware.ArduinoLEDManager;
+import com.techjar.ledcm.hardware.manager.LEDManager;
+import com.techjar.ledcm.hardware.manager.ArduinoLEDManager;
 import com.techjar.ledcm.hardware.CommThread;
 import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
-import com.techjar.ledcm.hardware.TLC5940LEDManager;
-import com.techjar.ledcm.hardware.TestLEDManager;
+import com.techjar.ledcm.hardware.manager.TLC5940LEDManager;
+import com.techjar.ledcm.hardware.manager.TestLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
+import com.techjar.ledcm.render.pipeline.RenderPipeline;
+import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.Axis;
@@ -45,6 +52,8 @@ import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
+import com.techjar.ledcm.util.Timer;
+import com.techjar.ledcm.util.Tuple;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
@@ -109,6 +118,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Controllers;
+import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -129,6 +139,7 @@ public class LEDCubeManager {
     //public static final int SCREEN_WIDTH = 1024;
     //public static final int SCREEN_HEIGHT = 768;
     @Getter private static LEDCubeManager instance;
+    @Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledstripmanager");
     @Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
     private DisplayMode newDisplayMode;
     private DisplayMode configDisplayMode;
@@ -149,16 +160,23 @@ public class LEDCubeManager {
     @Getter private static Frustum frustum;
     @Getter private static JFileChooser fileChooser;
     @Getter private static String serialPortName = "COM3";
+    @Getter private static String portHandlerName = "SerialPortHandler";
+    @Getter private static String ledManagerName = null;
+    @Getter private static String[] ledManagerArgs = new String[0];
     @Getter private static int serverPort = 7545;
     @Getter private static FrameServer frameServer;
     @Getter private static SystemTray systemTray;
     @Getter @Setter private static boolean convertingAudio;
+    private static Cursor currentCursor;
+    private static Cursor lastCursor;
     private static LEDCube ledCube;
     private List<Screen> screenList = new ArrayList<>();
     private List<ScreenHolder> screensToAdd = new ArrayList<>();
     private List<GUICallback> resizeHandlers = new ArrayList<>();
     private Map<String, Integer> validControllers = new HashMap<>();
+    private List<Tuple<RenderPipeline, Integer>> pipelines = new ArrayList<>();
     private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
+    private static List<Tuple<String, Integer>> debugText = new ArrayList<>();
     private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
     private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
     private int fpsCounter;
@@ -177,69 +195,95 @@ public class LEDCubeManager {
     public final int antiAliasingMaxSamples;
     @Getter private boolean antiAliasing = true;
     @Getter private int antiAliasingSamples = 4;
-    private float fieldOfView;
-    private float viewDistance;
+    @Getter @Setter private float fieldOfView;
+    @Getter @Setter private float viewDistance;
     private int multisampleFBO;
     private int multisampleTexture;
     private int multisampleDepthTexture;
     private int shadowMapSize = 1024;
     private int depthFBO;
     private int depthTexture;
+    private final Timer frameServeTimer = new Timer();
+    private final Timer rateCapTimer = new Timer();
 
     // Screens
     @Getter private ScreenMainControl screenMainControl;
 
     // Really import OpenGL matrix stuff
     private Mat4 projectionMatrix;
-    private Matrix4f viewMatrix;
-    public Matrix4f modelMatrix;
+    private Matrix4f viewMatrix = new Matrix4f();
+    public Matrix4f modelMatrix = new Matrix4f();
 
     @Getter private LightingHandler lightingHandler;
-    private ShaderProgram spMain;
     private ShaderProgram spDepthDraw; // TODO
 
     public LEDCubeManager(String[] args) throws LWJGLException {
         instance = this;
         System.setProperty("sun.java2d.noddraw", "true");
-        LogHelper.init(new File(Constants.DATA_DIRECTORY, "logs"));
-        LongSleeperThread.startSleeper();
-
-        ArgumentParser.parse(args, new ArgumentParser.Argument(true, "--loglevel") {
+        ArgumentParser.parse(args, new ArgumentParser.Argument(true, "\nSpecify logging detail level", "--loglevel") {
             @Override
             public void runAction(String parameter) {
                 LogHelper.setLevel(Level.parse(parameter));
             }
-        }, new ArgumentParser.Argument(false, "--showfps") {
+        }, new ArgumentParser.Argument(false, "\nDisplay frames per second", "--showfps") {
             @Override
             public void runAction(String parameter) {
                 renderFPS = true;
             }
-        }, new ArgumentParser.Argument(false, "--debug") {
+        }, new ArgumentParser.Argument(false, "\nDisplay debug output", "--debug") {
             @Override
             public void runAction(String parameter) {
                 debugMode = true;
             }
-        }, new ArgumentParser.Argument(false, "--debug-gl") {
+        }, new ArgumentParser.Argument(false, "\nDisplay OpenGL errors", "--debug-gl") {
             @Override
             public void runAction(String parameter) {
                 debugGL = true;
             }
-        }, new ArgumentParser.Argument(false, "--wireframe") {
+        }, new ArgumentParser.Argument(false, "\nEnable wireframe rendering", "--wireframe") {
             @Override
             public void runAction(String parameter) {
                 wireframe = true;
             }
-        }, new ArgumentParser.Argument(true, "--serialport") {
+        }, new ArgumentParser.Argument(true, "<name>\nSpecify serial port name", "--serialport") {
             @Override
             public void runAction(String parameter) {
                 serialPortName = parameter;
             }
-        }, new ArgumentParser.Argument(true, "--serverport") {
+        }, new ArgumentParser.Argument(true, "<port number>\nSpecify internal TCP server port", "--serverport") {
             @Override
             public void runAction(String parameter) {
                 serverPort = Integer.parseInt(parameter);
             }
+        }, new ArgumentParser.Argument(true, "<class name>\nSpecify PortHandler class", "--porthandler") {
+            @Override
+            public void runAction(String parameter) {
+                portHandlerName = parameter;
+            }
+        }, new ArgumentParser.Argument(true, "<class name and constructor parameters (comma-separated)>\nSpecify LEDManager class", "--ledmanager") {
+            @Override
+            public void runAction(String parameter) {
+                String[] split = parameter.split("(?<!,),");
+                for (int i = 0; i < split.length; i++) split[i] = split[i].replaceAll(",,", ",");
+                ledManagerName = split[0];
+                ledManagerArgs = new String[split.length - 1];
+                System.arraycopy(split, 1, ledManagerArgs, 0, split.length - 1);
+            }
+        }, new ArgumentParser.Argument(true, "<directory path>\nSpecify a custom directory for config/logs/etc.", "--datadir") {
+            @Override
+            public void runAction(String parameter) {
+                dataDirectory = new File(parameter);
+                if (!dataDirectory.exists()) {
+                    if (!dataDirectory.mkdirs()) {
+                        System.out.println("Failed to create directory: " + dataDirectory);
+                        System.exit(0);
+                    }
+                }
+            }
         });
+
+        LogHelper.init(new File(dataDirectory, "logs"));
+        LongSleeperThread.startSleeper();
 
         Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
         pb.makeCurrent();
@@ -288,6 +332,8 @@ public class LEDCubeManager {
         else if (!validControllers.containsKey(config.getString("controls.controller"))) config.setProperty("controls.controller", defaultController);
         if (config.hasChanged()) config.save();
 
+        addRenderPipeline(new RenderPipelineStandard(), 0);
+
         textureManager = new TextureManager();
         modelManager = new ModelManager(textureManager);
         fontManager = new FontManager();
@@ -296,7 +342,7 @@ public class LEDCubeManager {
         camera = new Camera();
         frustum = new Frustum();
         fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac)", "wav", "mp3", "ogg", "flac"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac, *.m4a, *.aac)", "wav", "mp3", "ogg", "flac", "m4a", "aac"));
         fileChooser.setMultiSelectionEnabled(false);
         if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
         init();
@@ -452,7 +498,12 @@ public class LEDCubeManager {
     public void run() throws LWJGLException {
         while (!Display.isCloseRequested() && !closeRequested) {
             try {
-                runGameLoop();
+                if (rateCapTimer.getMilliseconds() >= 1000D / 300D) {
+                    rateCapTimer.restart();
+                    runGameLoop();
+                } else if (1000D / 300D - rateCapTimer.getMilliseconds() > 1) {
+                    Thread.sleep(1);
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
                 closeRequested = true;
@@ -610,7 +661,7 @@ public class LEDCubeManager {
 
     private void initConfig() {
         if (displayMode == null) displayMode = new DisplayMode(1024, 768);
-        config = new ConfigManager(new File(Constants.DATA_DIRECTORY, "options.yml"), false);
+        config = new ConfigManager(new File(dataDirectory, "options.yml"), false);
         config.load();
         config.defaultProperty("display.width", displayMode.getWidth());
         config.defaultProperty("display.height", displayMode.getHeight());
@@ -746,7 +797,9 @@ public class LEDCubeManager {
     }
     
     private void initShaders() {
-        spMain = new ShaderProgram().loadShader("main").link();
+        for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+            tuple.getA().loadShaders();
+        }
     }
 
     public void resizeGL(int width, int height) {
@@ -755,6 +808,9 @@ public class LEDCubeManager {
     }
 
     private void preProcess() {
+        lastCursor = currentCursor;
+        currentCursor = null;
+        debugText.clear();
         ledCube.preProcess();
     }
 
@@ -849,6 +905,26 @@ public class LEDCubeManager {
         }
         screensToAdd.clear();
 
+        try {
+            if (currentCursor != null) Mouse.setNativeCursor(currentCursor);
+            else if (lastCursor != null) Mouse.setNativeCursor(CursorType.DEFAULT.getCursor());
+        } catch (LWJGLException ex) {
+            ex.printStackTrace();
+        }
+
+        if (debugMode) {
+            Runtime runtime = Runtime.getRuntime();
+            addInfoText("Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), 1010);
+            Vector3 vector = camera.getAngle().forward();
+            addInfoText("Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1020);
+            vector = camera.getPosition();
+            addInfoText("Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1030);
+            //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
+            //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
+            //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
+        }
+        if (convertingAudio) addInfoText("Converting audio...", 1500);
+
         if (regrab) {
             Mouse.setGrabbed(true);
             regrab = false;
@@ -869,7 +945,8 @@ public class LEDCubeManager {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         // Setup projection matrix
-        projectionMatrix = Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, viewDistance);
+        setupView(Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, viewDistance), camera.getPosition(), camera.getAngle());
+        // State stuff
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glEnable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
@@ -900,7 +977,9 @@ public class LEDCubeManager {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
             glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
         }
-        if (screenshot || frameServer.numClients > 0) {
+        boolean frameServe = frameServer.numClients > 0 && frameServeTimer.getMilliseconds() >= 1000D / 60D;
+        if (screenshot || frameServe) {
+            frameServeTimer.restart();
             ByteBuffer buffer = BufferUtils.createByteBuffer(displayMode.getWidth() * displayMode.getHeight() * 3);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glReadPixels(0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
@@ -916,7 +995,7 @@ public class LEDCubeManager {
             if (screenshot) {
                 screenshot = false;
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-                File screenshotDir = new File(Constants.DATA_DIRECTORY, "screenshots");
+                File screenshotDir = new File(dataDirectory, "screenshots");
                 screenshotDir.mkdirs();
                 File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
                 for (int i = 2; file.exists(); i++) {
@@ -925,7 +1004,7 @@ public class LEDCubeManager {
                 ImageIO.write(image, "png", file);
             }
             
-            if (frameServer.numClients > 0) {
+            if (frameServe) {
                 frameServer.queueFrame(image);
             }
         }
@@ -934,17 +1013,15 @@ public class LEDCubeManager {
     public void render3D() {
         glPushMatrix();
         
-        spMain.use();
-        setupView(camera.getPosition(), camera.getAngle());
-        sendMatrixToProgram();
-        lightingHandler.sendToShader();
-        
         faceCount = ledCube.render();
+        addInfoText("Rendered faces: " + faceCount, 1040);
 
-        InstancedRenderer.prepareItems();
-        InstancedRenderer.renderAll();
+        for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+            for (int i = 0; i < tuple.getA().get3DPasses(); i++) {
+                tuple.getA().render3D(i);
+            }
+        }
         InstancedRenderer.resetItems();
-        ShaderProgram.useNone();
         
         glPopMatrix();
     }
@@ -952,41 +1029,25 @@ public class LEDCubeManager {
     public void render2D() {
         glPushMatrix();
 
+        for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+            for (int i = 0; i < tuple.getA().get2DPasses(); i++) {
+                tuple.getA().render2D(i);
+            }
+        }
+
         for (Screen screen : screenList)
             if (screen.isVisible()) screen.render();
 
-        long renderTime = System.nanoTime() - renderStart;
-        if (/*renderFPS || renderDebug ||*/ true) {
-            UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
-            org.newdawn.slick.Color debugColor = org.newdawn.slick.Color.yellow;
-            int y = 0;
-            if (renderFPS || debugMode) {
-                debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, debugColor);
-                debugFont.drawString(5, 5 + y++ * 25, "Animation FPS: " + ledCube.getCommThread().getFPS(), debugColor);
-            }
-            debugFont.drawString(5, 5 + y++ * 25, "Serial port: " + (ledCube.getCommThread().isPortOpen() ? "open" : "closed"), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "TCP clients: " + ledCube.getCommThread().getNumTCPClients(), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Current music: " + ledCube.getSpectrumAnalyzer().getCurrentTrack(), debugColor);
-            debugFont.drawString(5, 5 + y++ * 25, "Music time: " + ledCube.getSpectrumAnalyzer().getPositionMillis(), debugColor);
-            if (ledCube.getCommThread().isFrozen()) debugFont.drawString(5, 5 + y++ * 25, "Animation Frozen", debugColor);
-            if (ledCube.getLEDManager().getResolution() < 255) debugFont.drawString(5, 5 + y++ * 25, "Color mode: " + (ledCube.isTrueColor() ? "true" : "full"), debugColor);
-            if (convertingAudio) debugFont.drawString(5, 5 + y++ * 25, "Converting audio...", debugColor);
-            if (debugMode) {
-                Runtime runtime = Runtime.getRuntime();
-                debugFont.drawString(5, 5 + y++ * 25, "Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Update time: " + (updateTime / 1000000D), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Render time: " + (renderTime / 1000000D), debugColor);
-                Vector3 vector = camera.getPosition();
-                debugFont.drawString(5, 5 + y++ * 25, "Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
-                Angle angle = camera.getAngle();
-                debugFont.drawString(5, 5 + y++ * 25, "Camera angle: " + angle.getPitch() + ", " + angle.getYaw() + ", " + angle.getRoll(), debugColor);
-                vector = angle.forward();
-                debugFont.drawString(5, 5 + y++ * 25, "Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
-                debugFont.drawString(5, 5 + y++ * 25, "Rendered faces: " + faceCount, debugColor);
-                //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
-            }
+
+        UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
+        org.newdawn.slick.Color infoColor = org.newdawn.slick.Color.yellow;
+        int y = 0;
+        if (renderFPS || debugMode) {
+            debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, infoColor);
+            debugFont.drawString(5, 5 + y++ * 25, "Animation FPS: " + ledCube.getCommThread().getFPS(), infoColor);
+        }
+        for (Tuple<String, Integer> tuple : debugText) {
+            debugFont.drawString(5, (y++ * 25) + 5, tuple.getA(), infoColor);
         }
 
         glPopMatrix();
@@ -1002,17 +1063,19 @@ public class LEDCubeManager {
         }
     }
 
-    private void setupView(Vector3 position, Quaternion rotation) {
-        viewMatrix = new Matrix4f();
-        modelMatrix = new Matrix4f();
-        Matrix4f.mul(viewMatrix, rotation.getMatrix(), viewMatrix);
+    public void setupView(Mat4 projection, Vector3 position, Quaternion rotation) {
+        projectionMatrix = projection;
+        viewMatrix.setIdentity();
+        modelMatrix.setIdentity();
+        Matrix4f.mul(viewMatrix, (Matrix4f)rotation.getMatrix().negate(), viewMatrix);
         viewMatrix.translate(Util.convertVector(position.negate()));
         frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
     }
 
-    private void setupView(Vector3 position, Angle angle) {
-        viewMatrix = new Matrix4f();
-        modelMatrix = new Matrix4f();
+    public void setupView(Mat4 projection, Vector3 position, Angle angle) {
+        projectionMatrix = projection;
+        viewMatrix.setIdentity();
+        modelMatrix.setIdentity();
         viewMatrix.rotate((float)Math.toRadians(angle.getRoll()), new Vector3f(0, 0, -1));
         viewMatrix.rotate((float)Math.toRadians(angle.getPitch()), new Vector3f(-1, 0, 0));
         viewMatrix.rotate((float)Math.toRadians(angle.getYaw()), new Vector3f(0, -1, 0));
@@ -1020,7 +1083,7 @@ public class LEDCubeManager {
         frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
     }
 
-    private void sendMatrixToProgram() {
+    public void sendMatrixToProgram() {
         ShaderProgram program = ShaderProgram.getCurrent();
         if (program == null) return;
         int projectionMatrixLoc = program.getUniformLocation("projection_matrix");
@@ -1060,9 +1123,12 @@ public class LEDCubeManager {
         ledCube.setPaintColor(color);
     }
 
-    @SneakyThrows(LWJGLException.class)
+    /**
+     * Cursor will reset to default every frame, so you must set it every frame to keep it persistent.
+     * This is to avoid the cursor being left in odd states when it shouldn't be.
+     */
     public static void setCursorType(CursorType ct) {
-        Mouse.setNativeCursor(ct.getCursor());
+        currentCursor = ct == null ? null : ct.getCursor();
     }
 
     public Controller getController(String name) {
@@ -1183,6 +1249,43 @@ public class LEDCubeManager {
         for (Screen screen : screenList)
             screen.remove();
         screenList.clear();
+    }
+
+    /**
+     * Lower priority number is rendered earlier.
+     */
+    public void addRenderPipeline(RenderPipeline pipeline, int priority) {
+        if (pipelines.size() < 1) {
+            pipelines.add(new Tuple<>(pipeline, priority));
+        } else {
+            for (int i = 0; i <= pipelines.size(); i++) {
+                Tuple<RenderPipeline, Integer> tuple = i == pipelines.size() ? null : pipelines.get(i);
+                if (tuple == null || priority <= tuple.getB()) {
+                    pipelines.add(i, new Tuple<>(pipeline, priority));
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds the text at the top left of the screen. Lower priority number is higher on the list.
+     * FPS always appears at the top and cannot be overridden through this method.
+     *
+     * The list is cleared every frame, so you should call this on every update().
+     */
+    public static void addInfoText(String text, int priority) {
+        if (debugText.size() < 1) {
+            debugText.add(new Tuple<>(text, priority));
+        } else {
+            for (int i = 0; i <= debugText.size(); i++) {
+                Tuple<String, Integer> tuple = i == debugText.size() ? null : debugText.get(i);
+                if (tuple == null || priority <= tuple.getB()) {
+                    debugText.add(i, new Tuple<>(text, priority));
+                    break;
+                }
+            }
+        }
     }
 
     public static int getWidth() {

@@ -54,7 +54,7 @@ public class AnimationTicker extends Animation {
     }
 
     @Override
-    public void reset() {
+    public synchronized void reset() {
     }
 
     @Override
@@ -67,7 +67,7 @@ public class AnimationTicker extends Animation {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "speed":
                 speed = 1 + Math.round(15 * (1 - Float.parseFloat(value)));

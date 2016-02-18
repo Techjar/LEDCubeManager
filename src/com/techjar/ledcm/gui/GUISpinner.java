@@ -5,7 +5,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import com.google.common.base.Strings;
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.RenderHelper;
+import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import java.math.RoundingMode;

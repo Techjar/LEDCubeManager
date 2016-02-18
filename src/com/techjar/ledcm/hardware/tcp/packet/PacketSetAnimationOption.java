@@ -13,6 +13,8 @@ import com.techjar.ledcm.gui.GUISlider;
 import com.techjar.ledcm.gui.GUISpinner;
 import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
+import com.techjar.ledcm.hardware.animation.Animation;
+import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.util.Util;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -54,36 +56,13 @@ public class PacketSetAnimationOption extends Packet {
 
     @Override
     public void process() {
-        ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
-        List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);
-        if (components.size() > 0) {
-            GUI component = components.get(0);
-            if (component instanceof GUITextField) {
-                ((GUITextField)component).setText(value);
-            } else if (component instanceof GUISlider) {
-                ((GUISlider)component).setValue(Float.parseFloat(value));
-            } else if (component instanceof GUIComboBox) {
-                ((GUIComboBox)component).setSelectedItem(value);
-            } else if (component instanceof GUIComboButton) {
-                ((GUIComboButton)component).setSelectedItem(value);
-            } else if (component instanceof GUIBox) {
-                GUIBox box = (GUIBox)component;
-                for (GUI gui : box.getAllComponents()) {
-                    if (gui instanceof GUIRadioButton) {
-                        GUIRadioButton radioButton = (GUIRadioButton)gui;
-                        if (radioButton.getLabel().getText().equals(value)) {
-                            radioButton.setSelected(true);
-                        }
-                    }
+        Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
+        if (anim != null) {
+            for (AnimationOption option : anim.getOptions()) {
+                if (option.getId().equals(optionId)) {
+                    Util.setOptionInGUI(option, value);
+                    break;
                 }
-            } else if (component instanceof GUICheckBox) {
-                ((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
-            } else if (component instanceof GUISpinner) {
-                ((GUISpinner)component).setValue(Float.parseFloat(value));
-            } else if (component instanceof GUIColorPicker) {
-                ((GUIColorPicker)component).setValue(Util.stringToColor(value));
-            } else {
-                LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(optionId, value);
             }
         }
     }

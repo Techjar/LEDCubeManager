@@ -36,7 +36,7 @@ public class InputBindingManager {
     public static void addBinding(InputBinding binding) {
         if (bindings.contains(binding)) return;
         for (InputBinding bind : bindings) {
-            if (bind.getId().toLowerCase().equals(binding.getId().toLowerCase())) {
+            if (bind.getId().equalsIgnoreCase(binding.getId())) {
                 throw new IllegalArgumentException("Binding with ID \"" + binding.getId() + "\" already exists!");
             }
         }

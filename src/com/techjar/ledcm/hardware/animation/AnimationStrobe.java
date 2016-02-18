@@ -49,7 +49,7 @@ public class AnimationStrobe extends Animation {
     }
 
     @Override
-    public void optionChanged(String name, String value) {
+    public synchronized void optionChanged(String name, String value) {
         switch (name) {
             case "speed":
                 speed = 1 + Math.round(59 * (1 - Float.parseFloat(value)));

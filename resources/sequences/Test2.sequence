@@ -1,25 +1,48 @@
-@@resources/sounds/music/aerodynamic.mp3
+musicsync
+loadmusic resources/sounds/music/aerodynamic.mp3
 # This is a comment
-Rain 0
-Snake 10000 255 0 0
-Randomize 20000
-Scrollers 30000 0 255 0
-null 31000 0 0 255
-null 32000 255 0 255
-null 33000 255 255 0
-null 34000 255 255 255
-null 35000 255 0 0
-null 36000 0 255 255
-null 37000 127 0 255
-null 38000 255 127 0
-null 39000 0 0 255
-Strobe 40000 0 0 255
-null 41000 0 0 255
-null 42000 255 0 255
-null 43000 255 255 0
-null 44000 255 255 255
-null 45000 255 0 0
-null 46000 0 255 255
-null 47000 127 0 255
-null 48000 255 127 0
-null 49000 0 0 255
+setanimation Rain
+wait 15500
+setanimation Randomize
+wait 31200
+^setanimation Scrollers
+setcolorpicker 0 255 0
+wait 31000
+setcolorpicker 0 0 255
+wait 32000
+setcolorpicker 255 0 255
+wait 33000
+setcolorpicker 255 255 0
+wait 34000
+setcolorpicker 255 255 255
+wait 35000
+setcolorpicker 255 0 0
+wait 36000
+setcolorpicker 0 255 255
+wait 37000
+setcolorpicker 127 0 255
+wait 38000
+setcolorpicker 255 127 0
+wait 39000
+setcolorpicker 0 0 255
+wait 40000
+^setanimation Strobe
+setcolorpicker 0 0 255
+wait 41000
+setcolorpicker 0 0 255
+wait 42000
+setcolorpicker 255 0 255
+wait 43000
+setcolorpicker 255 255 0
+wait 44000
+setcolorpicker 255 255 255
+wait 45000
+setcolorpicker 255 0 0
+wait 46000
+setcolorpicker 0 255 255
+wait 47000
+setcolorpicker 127 0 255
+wait 48000
+setcolorpicker 255 127 0
+wait 49000
+setcolorpicker 0 0 255

@@ -4,7 +4,7 @@ package com.techjar.ledcm.util;
 import static org.lwjgl.opengl.GL15.*;
 
 import com.obj.WavefrontObject;
-import com.techjar.ledcm.InstancedRenderer;
+import com.techjar.ledcm.render.InstancedRenderer;
 import com.techjar.ledcm.LEDCubeManager;
 import lombok.Getter;
 import org.lwjgl.util.Color;

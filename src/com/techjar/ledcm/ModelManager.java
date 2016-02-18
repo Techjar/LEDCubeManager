@@ -75,7 +75,7 @@ public class ModelManager {
                     break;
                 case "material":
                     for (int i = 0; i < Math.min(subsplit.length, 4); i++) {
-                        if ("default".equals(subsplit[i].toLowerCase())) continue;
+                        if ("default".equalsIgnoreCase(subsplit[i])) continue;
                         String[] subsubsplit = subsplit[i].split(",", 3);
                         switch (i) {
                             case 0:
