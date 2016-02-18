@@ -39,7 +39,6 @@ public class CommThread extends Thread {
     @Getter private AnimationSequence currentSequence;
     @Getter private TCPServer tcpServer;
     @Getter @Setter private boolean frozen;
-    @Getter @Setter private boolean sequenceFrozen;
 
     public CommThread(PortHandler portHandler) throws IOException {
         this.setName("Animation / Communication");
@@ -75,18 +74,18 @@ public class CommThread extends Thread {
             long diff = System.nanoTime() - updateTime;
             if (diff >= interval) {
                 updateTime = System.nanoTime();
+                if (frameTimer.getMilliseconds() >= 1000) {
+                    fpsDisplay = fpsCounter;
+                    fpsCounter = 0;
+                    frameTimer.restart();
+                }
+                fpsCounter++;
+                ticks++;
                 if (!frozen) {
-                    if (frameTimer.getMilliseconds() >= 1000) {
-                        fpsDisplay = fpsCounter;
-                        fpsCounter = 0;
-                        frameTimer.restart();
-                    }
-                    fpsCounter++;
-                    ticks++;
                     synchronized (lock) {
                         try {
                             if (currentSequence != null) currentSequence.update();
-                            if (currentAnimation != null && !sequenceFrozen) {
+                            if (currentAnimation != null) {
                                 currentAnimation.refresh();
                                 currentAnimation.incTicks();
                             }
@@ -96,23 +95,19 @@ public class CommThread extends Thread {
                             currentSequence = null;
                         }
                     }
-                    ledManager.updateLEDArray();
-                    byte[] data = ledManager.getCommData();
-                    tcpServer.sendPacket(new PacketCubeFrame(data));
-                    synchronized (lock) {
-                        try {
-                            if (portHandler.isOpened()) {
-                                portHandler.writeBytes(data);
-                            }
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            closePort();
+                }
+                ledManager.updateLEDArray();
+                byte[] data = ledManager.getCommData();
+                tcpServer.sendPacket(new PacketCubeFrame(data));
+                synchronized (lock) {
+                    try {
+                        if (portHandler.isOpened()) {
+                            portHandler.writeBytes(data);
                         }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        closePort();
                     }
-                } else {
-                    fpsCounter = 0;
-                    fpsDisplay = 0;
-                    ledManager.updateLEDArray();
                 }
             }
             else if (interval - diff > 1000000) {

@@ -147,7 +147,7 @@ public class AnimationWireframe  extends Animation {
                 drawResizeBox();
                 resizeMin = resizeState ? resizeMin.add(new Vector3(1, 1, 1)) : resizeMin.subtract(new Vector3(1, 1, 1));
                 resizeMax = resizeState ? resizeMax.subtract(new Vector3(1, 1, 1)) : resizeMax.add(new Vector3(1, 1, 1));
-                if ((int)resizeMin.getX() == 0 || (int)resizeMin.getX() == 3) {
+                if ((int)resizeMin.getX() == 0 || (int)resizeMin.getX() == (Math.min(dimension.x, Math.min(dimension.y, dimension.z)) - 1) / 2) {
                     resizeState = !resizeState;
                 }
             }
@@ -192,6 +192,11 @@ public class AnimationWireframe  extends Animation {
         }
     }
 
+    @Override
+    public boolean isFinished() {
+        return !traceState;
+    }
+
     private Color getColor(int x, int y, int z) {
         if (colorMode == 1) {
             return new Color(Math.round((x / (dimension.x - 1F)) * 255), Math.round((y / (dimension.y - 1F)) * 255), Math.round((z / (dimension.z - 1F)) * 255));
@@ -214,10 +219,5 @@ public class AnimationWireframe  extends Animation {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean isFinished() {
-        return !traceState;
     }
 }

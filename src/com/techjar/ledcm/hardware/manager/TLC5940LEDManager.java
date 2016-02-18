@@ -98,9 +98,9 @@ public class TLC5940LEDManager implements LEDManager {
             }
             for (int y = 0; y < 8; y++) {
                 int index = 285 + (288 * y);
-                int[][] arrs = {red2, green2, blue2};
+                int[][] arrs = {blue2, green2, red2};
                 for (int[] arr : arrs) {
-                    for (int i = 62; i >= 0; i -= 2, index -= 3) {
+                    for (int i = 0; i < 64; i += 2, index -= 3) {
                         encode12BitValues(arr[(i + 1) | (y << 6)], arr[i | (y << 6)], array, index);
                     }
                 }

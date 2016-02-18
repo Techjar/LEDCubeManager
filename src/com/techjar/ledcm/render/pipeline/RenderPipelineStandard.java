@@ -31,7 +31,6 @@ public class RenderPipelineStandard implements RenderPipeline {
         LEDCubeManager ledcm = LEDCubeManager.getInstance();
 
         mainShader.use();
-        ledcm.setupView(Matrices.perspective(ledcm.getFieldOfView(), (float)LEDCubeManager.getDisplayMode().getWidth() / (float)LEDCubeManager.getDisplayMode().getHeight(), 0.1F, ledcm.getViewDistance()), LEDCubeManager.getCamera().getPosition(), LEDCubeManager.getCamera().getAngle());
         ledcm.sendMatrixToProgram();
         ledcm.getLightingHandler().sendToShader();
 

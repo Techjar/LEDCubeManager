@@ -94,6 +94,7 @@ public class AnimationSlidingBoxes extends Animation {
         }
         List<Vector3> offsetList = getOffsets();
         Collections.shuffle(offsetList);
+        if (offsetList.size() < 1) return;
         offsetList.remove(0);
         boxCountReal = 0;
         for (int i = 0; i < boxCount; i++) {

@@ -246,8 +246,32 @@ public final class Util {
         return new org.lwjgl.util.Color(MathHelper.clamp(color1.getRed() - color2.getRed(), 0, 255), MathHelper.clamp(color1.getGreen() - color2.getGreen(), 0, 255), MathHelper.clamp(color1.getBlue() - color2.getBlue(), 0, 255));
     }
 
+    public static org.lwjgl.util.Color multiplyColors(org.lwjgl.util.Color color1, org.lwjgl.util.Color color2) {
+        float[] floats1 = colorToFloats(color1);
+        float[] floats2 = colorToFloats(color2);
+        return floatsToColor(new float[]{floats1[0] * floats2[0], floats1[1] * floats2[1], floats1[2] * floats2[2], floats1[3] * floats2[3]});
+    }
+
+    public static org.lwjgl.util.Color divideColors(org.lwjgl.util.Color color1, org.lwjgl.util.Color color2) {
+        float[] floats1 = colorToFloats(color1);
+        float[] floats2 = colorToFloats(color2);
+        return floatsToColor(new float[]{floats1[0] / floats2[0], floats1[1] / floats2[1], floats1[2] / floats2[2], floats1[3] / floats2[3]});
+    }
+
     public static org.lwjgl.util.Color multiplyColor(org.lwjgl.util.Color color1, double mult) {
         return new org.lwjgl.util.Color(MathHelper.clamp((int)Math.round(color1.getRed() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getGreen() * mult), 0, 255), MathHelper.clamp((int)Math.round(color1.getBlue() * mult), 0, 255));
+    }
+
+    public static float[] colorToFloats(org.lwjgl.util.Color color) {
+        return new float[]{color.getRed() / 255F, color.getGreen() / 255F, color.getBlue() / 255F, color.getAlpha() / 255F};
+    }
+
+    public static org.lwjgl.util.Color floatsToColor(float[] floats) {
+        if (floats.length < 4) {
+            return new Color(Math.round(floats[0] * 255), Math.round(floats[1] * 255), Math.round(floats[2] * 255));
+        } else {
+            return new Color(Math.round(floats[0] * 255), Math.round(floats[1] * 255), Math.round(floats[2] * 255), Math.round(floats[3] * 255));
+        }
     }
 
     public static Vector3 transformVector(Vector3 vector, Matrix4f matrix, boolean round) {
@@ -255,14 +279,26 @@ public final class Util {
         return round ? new Vector3(Math.round(vec.x), Math.round(vec.y), Math.round(vec.z)) : new Vector3(vec.x, vec.y, vec.z);
     }
 
+    /**
+     * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(Vector3)} instead
+     */
+    @Deprecated
     public static int encodeCubeVector(Vector3 vector) {
         return LEDCubeManager.getLEDManager().encodeVector(vector);
     }
 
+    /**
+     * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(int, int, int)} instead
+     */
+    @Deprecated
     public static int encodeCubeVector(int x, int y, int z) {
         return LEDCubeManager.getLEDManager().encodeVector(x, y, z);
     }
 
+    /**
+     * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#decodeVector(int)} instead
+     */
+    @Deprecated
     public static Vector3 decodeCubeVector(int number) {
         return LEDCubeManager.getLEDManager().decodeVector(number);
     }

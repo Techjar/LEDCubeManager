@@ -118,7 +118,7 @@ public class ScreenMainControl extends Screen {
     
     public ScreenMainControl() {
         super();
-        final LEDManager ledManager = LEDCubeManager.getLEDManager();
+        final LEDManager ledManager = LEDCubeManager.getLEDCube().getLEDManager();
         final Dimension3D ledDim = ledManager.getDimensions();
 
         font = LEDCubeManager.getFontManager().getFont("chemrea", 30, false, false).getUnicodeFont();

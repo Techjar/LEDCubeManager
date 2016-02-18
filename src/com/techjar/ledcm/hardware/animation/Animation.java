@@ -40,7 +40,7 @@ public abstract class Animation {
     protected long ticks;
 
     public Animation() {
-        this.ledManager = LEDCubeManager.getLEDManager();
+        this.ledManager = LEDCubeManager.getLEDCube().getLEDManager();
         this.dimension = this.ledManager.getDimensions();
         this.optionValues = new HashMap<>();
     }

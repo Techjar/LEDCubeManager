@@ -31,7 +31,7 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
     public AnimationSpectrumShooters() {
         size = dimension.z * dimension.y;
         bandIncrement = Math.max(Math.round(256F / size), 1);
-        bandRepeat = Math.max(Math.round(size / 512F), 1);
+        bandRepeat = Math.max(Math.round(size / 256F), 1);
         indexDivisor = size + 6;
     }
 

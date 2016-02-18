@@ -30,7 +30,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
     public AnimationSpectrumBars() {
         size = dimension.x * dimension.z;
         bandIncrement = Math.max(Math.round(256F / size), 1);
-        bandRepeat = Math.max(Math.round(size / 512F), 1);
+        bandRepeat = Math.max(Math.round(size / 256F), 1);
         indexDivisor = size + 6;
     }
 
