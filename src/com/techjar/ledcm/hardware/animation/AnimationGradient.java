@@ -35,7 +35,7 @@ public class AnimationGradient extends Animation {
         for (int x = 0; x < dimension.x; x++) {
             float value = x / (dimension.x - 1F);
             if (pulsate) value = (float)Math.sin(timer.getSeconds() * (speed / 5) + ((dimension.x - x) / (float)dimension.x) * scale) * 0.5F + 0.5F;
-            Color color = MathHelper.lerpXyz(color1, color2, value);
+            Color color = MathHelper.lerpLab(color1, color2, value);
             for (int y = 0; y < dimension.y; y++) {
                 for (int z = 0; z < dimension.z; z++) {
                     ledManager.setLEDColor(x, y, z, color);
