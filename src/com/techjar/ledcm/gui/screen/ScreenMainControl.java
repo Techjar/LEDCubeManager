@@ -24,6 +24,7 @@ import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.sequence.AnimationSequence;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
+import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.PrintStreamRelayer;
 import com.techjar.ledcm.util.Vector3;
 import java.io.File;
@@ -57,7 +58,8 @@ public class ScreenMainControl extends Screen {
     public final GUIButton settingsBtn;
     public final GUIButton audioInputBtn;
     public final GUIBackground audioInputBtnBg;
-    public final GUISlider mixerGainSlider;
+    public final GUISpinner mixerGainSpinner;
+    public final GUILabel mixerGainLabel;
     public final GUISlider layerSlider;
     public final GUIComboBox animComboBox;
     public final GUIComboBox resolutionComboBox;
@@ -115,6 +117,7 @@ public class ScreenMainControl extends Screen {
     public final GUILabel previewTransformLabel;
     public final GUILabel fullscreenLabel;
     public final GUICheckBox fullscreenCheckbox;
+    public final GUIButton exitBtn;
     
     public ScreenMainControl() {
         super();
@@ -738,19 +741,41 @@ public class ScreenMainControl extends Screen {
             }
         });
         container.addComponent(audioInputBtn);
-        mixerGainSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
-        mixerGainSlider.setParentAlignment(GUIAlignment.TOP_RIGHT);
-        mixerGainSlider.setDimension(200, 30);
-        mixerGainSlider.setPosition(-5, 125);
-        mixerGainSlider.setChangeHandler(new GUICallback() {
+        mixerGainSpinner = new GUISpinner(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+        mixerGainSpinner.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        mixerGainSpinner.setDimension(200, 30);
+        mixerGainSpinner.setPosition(-5, 125);
+        mixerGainSpinner.setMinValue(-100);
+        mixerGainSpinner.setMaxValue(100);
+        mixerGainSpinner.setValue(0);
+        mixerGainSpinner.setIncrement(1);
+        mixerGainSpinner.setDecimalPlaces(1);
+        mixerGainSpinner.setChangeHandler(new GUICallback() {
             @Override
             public void run() {
-                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(mixerGainSlider.getValue() * 20);
-                LEDCubeManager.getConfig().setProperty("sound.inputgain", mixerGainSlider.getValue());
+                float gain = (float)Math.pow(4, mixerGainSpinner.getValue() / 20F);
+                LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(gain);
+                LEDCubeManager.getConfig().setProperty("sound.inputgain", gain);
             }
         });
-        mixerGainSlider.setValue(LEDCubeManager.getConfig().getFloat("sound.inputgain"));
-        container.addComponent(mixerGainSlider);
+        mixerGainSpinner.setValue((float)MathHelper.log(LEDCubeManager.getConfig().getFloat("sound.inputgain"), 4) * 20);
+        container.addComponent(mixerGainSpinner);
+        mixerGainLabel = new GUILabel(font, new Color(255, 255, 255), "Gain (dBA)");
+        mixerGainLabel.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        mixerGainLabel.setDimension(150, 30);
+        mixerGainLabel.setPosition(-215, 125);
+        container.addComponent(mixerGainLabel);
+        exitBtn = new GUIButton(font, new Color(255, 255, 255), "Exit", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+        exitBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+        exitBtn.setDimension(90, 35);
+        exitBtn.setPosition(-170, 45);
+        exitBtn.setClickHandler(new GUICallback() {
+            @Override
+            public void run() {
+                LEDCubeManager.getInstance().shutdown();
+            }
+        });
+        container.addComponent(exitBtn);
 
         transformWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
         transformWindow.setDimension(310, 272);
