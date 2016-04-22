@@ -3,6 +3,13 @@ You need ffmpeg to play audio. Get it at http://www.ffmpeg.org
 
 Builds can be found at http://ci.techjargaming.com/job/LED%20Cube%20Manager/
 
+## Configuration
+Many settings can be changed in the software. There a few hidden settings, the config will be located in a directory based on your OS.
+
+Windows: `%APPDATA%\.ledcubemanager`
+Mac OS X: `~/Library/Application Support/ledcubemanager`
+Linux: `~/.ledcubemanager`
+
 ## Building
 You need to add lombok.jar (in lib directory) to your IDE's annotation processors.
 
