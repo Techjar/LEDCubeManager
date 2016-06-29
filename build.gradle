@@ -1,0 +1,72 @@
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+buildscript {
+	repositories {
+		maven { url "https://plugins.gradle.org/m2/" }
+	}
+	dependencies {
+		classpath "gradle.plugin.com.stehno:gradle-natives:0.2.4"
+	}
+}
+
+apply plugin: 'com.stehno.natives'
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+	// Use 'jcenter' for resolving your dependencies.
+	// You can declare any Maven/Ivy/file repository here.
+	jcenter()
+	mavenCentral()
+	maven { url "https://clojars.org/repo" }
+}
+
+// In this section you declare the dependencies for your production and test code
+dependencies {
+	compile "org.projectlombok:lombok:1.16.8"
+	compile "org.lwjgl.lwjgl:lwjgl:2.9.3"
+	compile "org.lwjgl.lwjgl:lwjgl_util:2.9.3"
+	compile "com.google.guava:guava:18.0"
+	compile "com.flowpowered:flow-noise:1.0.0"
+	compile "com.google.code.gson:gson:2.2.4"
+	compile "ddf.minim:ddf.minim:2.2.0"
+	compile "org.yaml:snakeyaml:1.13"
+	compile "org.scream3r:jssc:2.8.0"
+	compile fileTree(dir: 'lib', include: '*.jar')
+}
+
+natives {
+	jars = [
+		'lwjgl-platform-2.9.3-natives-windows',
+		'lwjgl-platform-2.9.3-natives-osx',
+		'lwjgl-platform-2.9.3-natives-linux',
+		'jinput-platform-2.0.5-natives-windows',
+		'jinput-platform-2.0.5-natives-osx',
+		'jinput-platform-2.0.5-natives-linux'
+	]
+}
+
+jar {
+	manifest {
+		attributes ('Main-Class': 'com.techjar.ledcm.Main', 'Class-Path': 'build/libs/' + configurations.compile.findAll { !it.getName().contains('lombok') && !it.getName().contains('natives') }.collect { it.getName() }.join(' build/libs/'))
+	}
+}
+
+task zip(dependsOn: [jar, unpackNatives], type: Zip) {
+	from([configurations.runtime.allArtifacts.files, 'start.bat', 'start.sh']) {
+		into '/'
+	}
+	from('resources') {
+		into 'resources'
+	}
+	from(configurations.runtime) {
+		exclude { details -> details.file.name.contains('lombok') }
+		exclude { details -> details.file.name.contains('natives') }
+		into 'build/libs'
+	}
+	from('build/natives') {
+		into 'build/natives'
+	}
+	archiveName project.name + '-build' + System.getenv().BUILD_NUMBER + '.zip'
+}

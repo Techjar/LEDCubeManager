@@ -40,6 +40,10 @@ javadoc/
 archive/
 resampled/
 config.yml
+/.apt_generated
 
 # Keep This Shit
 !/lib/*.jar
+
+# Gradle junk
+.gradle

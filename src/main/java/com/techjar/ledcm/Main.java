@@ -27,8 +27,8 @@ public class Main {
         }
         try {
             File workingDir = new File(System.getProperty("user.dir"));
-            File natives = new File(workingDir, "lib/native/" + OperatingSystem.getTypeString());
-            Util.addLibraryPath(new File(workingDir, "lib/webp-native/x" + OperatingSystem.getJavaArch()).getPath());
+            File natives = new File(workingDir, "build/natives/" + OperatingSystem.getTypeString());
+            //Util.addLibraryPath(new File(workingDir, "build/webp-native/x" + OperatingSystem.getJavaArch()).getPath());
             System.setProperty("org.lwjgl.librarypath", natives.getPath());
             System.setProperty("net.java.games.input.librarypath", natives.getPath());
 
