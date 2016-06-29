@@ -57,7 +57,7 @@ task zip(dependsOn: [jar, unpackNatives], type: Zip) {
 	from([configurations.runtime.allArtifacts.files, 'start.bat', 'start.sh']) {
 		into '/'
 	}
-	from('src/main/resources') {
+	from('resources') {
 		into 'resources'
 	}
 	from(configurations.runtime) {
