@@ -35,7 +35,7 @@ generated/
 
 # Misc
 logs/
-resources/sounds/music/
+src/main/resources/sounds/music/
 javadoc/
 archive/
 resampled/
