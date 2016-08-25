@@ -3,6 +3,7 @@ import com.techjar.ledcm.render.LightingHandler;
 import com.techjar.ledcm.render.Camera;
 import com.techjar.ledcm.render.Frustum;
 import com.techjar.ledcm.render.InstancedRenderer;
+
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL13.*;
@@ -35,6 +36,7 @@ import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.render.pipeline.RenderPipeline;
+import com.techjar.ledcm.render.pipeline.RenderPipelineGUI;
 import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
@@ -61,6 +63,7 @@ import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;
 import com.techjar.ledcm.util.logging.LogHelper;
+
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
@@ -98,6 +101,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
+
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -109,10 +113,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.Value;
+
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
@@ -180,7 +186,7 @@ public class LEDCubeManager {
 	private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
 	private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 	private int fpsCounter;
-	private int fpsRender;
+	@Getter private int fpsRender;
 	private long timeCounter;
 	private long deltaTime;
 	private long renderStart;
@@ -332,6 +338,7 @@ public class LEDCubeManager {
 		if (config.hasChanged()) config.save();
 
 		addRenderPipeline(new RenderPipelineStandard(), 10);
+		addRenderPipeline(new RenderPipelineGUI(), 20);
 
 		textureManager = new TextureManager();
 		modelManager = new ModelManager(textureManager);
@@ -1014,9 +1021,7 @@ public class LEDCubeManager {
 		ledCube.render();
 
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
-			for (int i = 0; i < tuple.getA().get3DPasses(); i++) {
-				tuple.getA().render3D(i);
-			}
+			tuple.getA().render3D();
 		}
 		InstancedRenderer.resetItems();
 
@@ -1027,23 +1032,7 @@ public class LEDCubeManager {
 		glPushMatrix();
 
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
-			for (int i = 0; i < tuple.getA().get2DPasses(); i++) {
-				tuple.getA().render2D(i);
-			}
-		}
-
-		for (Screen screen : screenList)
-			if (screen.isVisible()) screen.render();
-
-		UnicodeFont debugFont = fontManager.getFont("chemrea", 20, false, false).getUnicodeFont();
-		org.newdawn.slick.Color infoColor = org.newdawn.slick.Color.yellow;
-		int y = 0;
-		if (renderFPS || debugMode) {
-			debugFont.drawString(5, 5 + y++ * 25, "FPS: " + fpsRender, infoColor);
-			debugFont.drawString(5, 5 + y++ * 25, "Animation FPS: " + ledCube.getCommThread().getFPS(), infoColor);
-		}
-		for (Tuple<String, Integer> tuple : debugText) {
-			debugFont.drawString(5, (y++ * 25) + 5, tuple.getA(), infoColor);
+			tuple.getA().render2D();
 		}
 
 		glPopMatrix();
@@ -1287,6 +1276,10 @@ public class LEDCubeManager {
 			 }
 		 }
 	 }
+
+	public List<Tuple<String, Integer>> getDebugText() {
+		return Collections.unmodifiableList(debugText);
+	}
 
 	 public static int getWidth() {
 		 return displayMode.getWidth();

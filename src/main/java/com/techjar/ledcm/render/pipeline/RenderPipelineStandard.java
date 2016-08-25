@@ -18,22 +18,12 @@ public class RenderPipelineStandard implements RenderPipeline {
 	}
 
 	@Override
-	public int get3DPasses() {
-		return 1;
-	}
-
-	@Override
-	public int get2DPasses() {
-		return 0;
-	}
-
-	@Override
 	public void update() {
 
 	}
 
 	@Override
-	public void render3D(int pass) {
+	public void render3D() {
 		LEDCubeManager.getInstance().faceCount = 0;
 		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 
@@ -50,7 +40,7 @@ public class RenderPipelineStandard implements RenderPipeline {
 	}
 
 	@Override
-	public void render2D(int pass) {
+	public void render2D() {
 	}
 
 	@Override
