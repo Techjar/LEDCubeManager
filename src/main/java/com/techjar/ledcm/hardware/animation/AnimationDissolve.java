@@ -36,8 +36,8 @@ public class AnimationDissolve extends Animation {
 					int x = random.nextInt(dimension.x);
 					int y = random.nextInt(dimension.y);
 					int z = random.nextInt(dimension.z);
-					if (!states[Util.encodeCubeVector(x, y, z)]) {
-						states[Util.encodeCubeVector(x, y, z)] = true;
+					if (!states[ledManager.encodeVector(x, y, z)]) {
+						states[ledManager.encodeVector(x, y, z)] = true;
 						ledManager.setLEDColor(x, y, z, LEDCubeManager.getPaintColor());
 						filledCount++;
 					}

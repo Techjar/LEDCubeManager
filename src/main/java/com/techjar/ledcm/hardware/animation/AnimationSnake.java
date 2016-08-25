@@ -49,7 +49,7 @@ public class AnimationSnake extends Animation {
 				dead[i] = false;
 				Vector3 pos = new Vector3(random.nextInt(dimension.x), random.nextInt(dimension.y), random.nextInt(dimension.z));
 				segments.addFirst(pos);
-				states[Util.encodeCubeVector(pos)] = true;
+				states[ledManager.encodeVector(pos)] = true;
 				ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), color);
 			} else {
 				if (!dead[i] && ticks % speed == 0) {
@@ -71,13 +71,13 @@ public class AnimationSnake extends Animation {
 					} else {
 						Vector3 pos = head.add(direction[i].getVector());
 						segments.addFirst(pos);
-						states[Util.encodeCubeVector(pos)] = true;
+						states[ledManager.encodeVector(pos)] = true;
 						ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), color);
 					}
 				}
 				if (!segments.isEmpty() && ((dead[i] && ticks % deathSpeed == 0) || (!infinite && segments.size() > snakeLength))) {
 					Vector3 pos = segments.removeLast();
-					states[Util.encodeCubeVector(pos)] = false;
+					states[ledManager.encodeVector(pos)] = false;
 					ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), new Color());
 				}
 			}
@@ -161,6 +161,6 @@ public class AnimationSnake extends Animation {
 
 	private boolean isValidPosition(Vector3 position) {
 		if (!Util.isInsideCube(position)) return false;
-		return !states[Util.encodeCubeVector(position)];
+		return !states[ledManager.encodeVector(position)];
 	}
 }

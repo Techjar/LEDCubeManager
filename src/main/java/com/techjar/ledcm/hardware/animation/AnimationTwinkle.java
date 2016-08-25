@@ -34,12 +34,12 @@ public class AnimationTwinkle extends Animation {
 			int x = random.nextInt(dimension.x);
 			int y = random.nextInt(dimension.y);
 			int z = random.nextInt(dimension.z);
-			int index = Util.encodeCubeVector(x, y, z);
+			int index = ledManager.encodeVector(x, y, z);
 			twinkles[index] = 3 + random.nextInt(5);
 			colors[index] = new Color(random.nextInt(ledManager.getResolution() + 1), random.nextInt(ledManager.getResolution() + 1), random.nextInt(ledManager.getResolution() + 1));
 		}
 		for (int i = 0; i < twinkles.length; i++) {
-			Vector3 pos = Util.decodeCubeVector(i);
+			Vector3 pos = ledManager.decodeVector(i);
 			ledManager.setLEDColorReal((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), twinkles[i]-- > 0 ? colors[i] : new Color());
 		}
 	}

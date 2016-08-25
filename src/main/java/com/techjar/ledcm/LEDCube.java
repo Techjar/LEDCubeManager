@@ -120,7 +120,7 @@ public class LEDCube {
 				for (int y = (int)cursorTrace.getY(); y <= Math.min((int)cursorTrace.getY() + (int)paintSize.getY(), dim.y - 1); y++) {
 					for (int z = (int)cursorTrace.getZ(); z <= Math.min((int)cursorTrace.getZ() + (int)paintSize.getZ(), dim.z - 1); z++) {
 						if (isLEDWithinIsolation(x, y, z)) {
-							highlight[Util.encodeCubeVector(x, y, z)] = true;
+							highlight[ledManager.encodeVector(x, y, z)] = true;
 						}
 					}
 				}
@@ -133,7 +133,7 @@ public class LEDCube {
 		for (int x = 0; x < dim.x; x++) {
 			for (int y = 0; y < dim.y; y++) {
 				for (int z = 0; z < dim.z; z++) {
-					if (highlight[Util.encodeCubeVector(x, y, z)]) {
+					if (highlight[ledManager.encodeVector(x, y, z)]) {
 						ledManager.setLEDColor(x, y, z, color);
 					}
 				}
@@ -206,7 +206,7 @@ public class LEDCube {
 		for (int y = 0; y < dim.y; y++) {
 			for (int x = 0; x < dim.x; x++) {
 				for (int z = 0; z < dim.z; z++) {
-					if (highlight[Util.encodeCubeVector(x, y, z)]) {
+					if (highlight[ledManager.encodeVector(x, y, z)]) {
 						if (isLEDWithinIsolation(x, y, z)) {
 							Vector3 pos = new Vector3(x * mult, y * mult, z * mult);
 							model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), new Vector3(1.2F, 1.2F, 1.2F));
@@ -387,11 +387,11 @@ public class LEDCube {
 								Color color = ledArray.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
 								if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
 									ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
-									processed[Util.encodeCubeVector(current)] = true;
+									processed[ledManager.encodeVector(current)] = true;
 									for (int i = 0; i < 6; i++) {
 										Vector3 offset = Direction.values()[i].getVector();
 										Vector3 node = current.add(offset);
-										if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[Util.encodeCubeVector(node)]) {
+										if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[ledManager.encodeVector(node)]) {
 											stack.push(node);
 										}
 									}

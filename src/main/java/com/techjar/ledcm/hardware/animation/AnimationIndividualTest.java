@@ -35,7 +35,7 @@ public class AnimationIndividualTest extends Animation {
 					}
 				}
 			}
-			Vector3 pos = Util.decodeCubeVector(index / 3);
+			Vector3 pos = ledManager.decodeVector(index / 3);
 			ledManager.setLEDColor((int)pos.getX(), (int)pos.getY(), (int)pos.getZ(), new Color(index % 3 == 0 ? 255 : 0, index % 3 == 1 ? 255 : 0, index % 3 == 2 ? 255 : 0));
 			if (index++ >= count) {
 				index = 0;
