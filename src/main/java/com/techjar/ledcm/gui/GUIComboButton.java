@@ -3,10 +3,12 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -32,16 +34,16 @@ public class GUIComboButton extends GUI {
         if (guiBg != null) guiBg.setParent(this);
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
-        return true;
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return true;
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (state) {
             if (checkMouseIntersect(getComponentBox())) {
-                if (Mouse.getEventButton() == 0) {
+                if (button == 0) {
                     LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
                     if (++selectedItem >= items.size()) selectedItem = 0;
                     if (changeHandler != null) {
@@ -49,7 +51,7 @@ public class GUIComboButton extends GUI {
                         changeHandler.run();
                     }
                 }
-                else if (Mouse.getEventButton() == 1) {
+                else if (button == 1) {
                     LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
                     if (--selectedItem < 0) selectedItem = items.size() - 1;
                     if (changeHandler != null) {
@@ -60,11 +62,11 @@ public class GUIComboButton extends GUI {
             }
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {
-        if (!Mouse.isButtonDown(0)) {
+        if (!mouseState[0]) {
             if (checkMouseIntersect(getComponentBox())) {
                 if (!hovered) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);
                 hovered = true;

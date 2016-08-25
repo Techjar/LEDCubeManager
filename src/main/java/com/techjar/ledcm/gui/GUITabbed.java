@@ -4,10 +4,12 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Vector2;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -33,19 +35,19 @@ public class GUITabbed extends GUI {
         this.guiBg = guiBg;
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
         TabInfo tab = getSelectedTab();
-        if (tab != null && !tab.getContainer().processKeyboardEvent()) return false;
+        if (tab != null && !tab.getContainer().keyboardEvent(key, state, character)) return false;
         return true;
-    }
+	}
 
-    @Override
-    public boolean processMouseEvent() {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
         TabInfo tab = getSelectedTab();
-        if (tab != null && !tab.getContainer().processMouseEvent()) return false;
-        if (Mouse.getEventButtonState()) {
-            if (Mouse.getEventButton() == 0) {
+        if (tab != null && !tab.getContainer().mouseEvent(button, state, dwheel)) return false;
+        if (state) {
+            if (button == 0) {
                 Rectangle[] boxes = getTabBoxes();
                 for (int i = 0; i < boxes.length; i++) {
                     if (i == selectedTab) continue;
@@ -58,7 +60,7 @@ public class GUITabbed extends GUI {
             }
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {

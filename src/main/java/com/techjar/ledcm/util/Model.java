@@ -6,7 +6,10 @@ import static org.lwjgl.opengl.GL15.*;
 import com.obj.WavefrontObject;
 import com.techjar.ledcm.render.InstancedRenderer;
 import com.techjar.ledcm.LEDCubeManager;
+
 import lombok.Getter;
+
+import org.lwjgl.opengl.Display;
 import org.lwjgl.util.Color;
 import org.newdawn.slick.opengl.Texture;
 
@@ -36,20 +39,19 @@ public class Model {
      *
      * @return Number of faces in the chosen mesh.
      */
-    public int render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean frustumCheck) {
+    public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced) {
         float distance = LEDCubeManager.getCamera().getPosition().distance(position);
-        ModelMesh mesh = getMeshByDistance(distance - meshes[0].getRadius());
-        if (!mesh.isInFrustum(position)) return 0;
-        InstancedRenderer.addItem(mesh, position, rotation, color, scale, distance);
-        return mesh.getFaceCount();
+        ModelMesh mesh = lod ? getMeshByDistance(distance - meshes[0].getRadius()) : meshes[0];
+        if (instanced) InstancedRenderer.addItem(mesh, position, rotation, color, scale);
+        else InstancedRenderer.draw(mesh, position, rotation, color, scale);
     }
 
-    public int render(Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
-        return render(position, rotation, color, scale, true, true);
+    public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
+        render(position, rotation, color, scale, true, true);
     }
 
-    public int render(Vector3 position, Quaternion rotation, Color color) {
-        return render(position, rotation, color, new Vector3(1, 1, 1), true, true);
+    public void render(Vector3 position, Quaternion rotation, Color color) {
+        render(position, rotation, color, new Vector3(1, 1, 1), true, true);
     }
 
     public void loadMesh(int lod, float lodDistance, int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {

@@ -184,7 +184,7 @@ public class LEDCubeManager {
     private long timeCounter;
     private long deltaTime;
     private long renderStart;
-    private long faceCount;
+    public long faceCount;
     private boolean screenshot;
     private boolean regrab;
     public boolean renderFPS;
@@ -210,9 +210,8 @@ public class LEDCubeManager {
     @Getter private ScreenMainControl screenMainControl;
 
     // Really import OpenGL matrix stuff
-    private Mat4 projectionMatrix;
+    private Matrix4f projectionMatrix;
     private Matrix4f viewMatrix = new Matrix4f();
-    public Matrix4f modelMatrix = new Matrix4f();
 
     @Getter private LightingHandler lightingHandler;
     private ShaderProgram spDepthDraw; // TODO
@@ -332,7 +331,7 @@ public class LEDCubeManager {
         else if (!validControllers.containsKey(config.getString("controls.controller"))) config.setProperty("controls.controller", defaultController);
         if (config.hasChanged()) config.save();
 
-        addRenderPipeline(new RenderPipelineStandard(), 0);
+        addRenderPipeline(new RenderPipelineStandard(), 10);
 
         textureManager = new TextureManager();
         modelManager = new ModelManager(textureManager);
@@ -919,6 +918,7 @@ public class LEDCubeManager {
             addInfoText("Camera vector: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1020);
             vector = camera.getPosition();
             addInfoText("Camera position: " + vector.getX() + ", " + vector.getY() + ", " + vector.getZ(), 1030);
+            addInfoText("Rendered faces: " + faceCount, 1040);
             //debugFont.drawString(5, 5 + y++ * 25, "Cursor position: " + Util.getMouseX() + ", " + Util.getMouseY(), debugColor);
             //debugFont.drawString(5, 5 + y++ * 25, "Cursor offset: " + (Util.getMouseX() - getWidth() / 2) + ", " + (Util.getMouseY() - getHeight() / 2 + 1), debugColor);
             //debugFont.drawString(5, 5 + y++ * 25, "Entities: " + (world != null ? world.getEntityCount() : 0), debugColor);
@@ -942,10 +942,8 @@ public class LEDCubeManager {
         gluPerspective(45, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, 1000);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();*/
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        // Setup projection matrix
-        setupView(Matrices.perspective(fieldOfView, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, viewDistance), camera.getPosition(), camera.getAngle());
+        //glMatrixMode(GL_PROJECTION);
+        //glLoadIdentity();
         // State stuff
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glEnable(GL_LIGHTING);
@@ -1013,8 +1011,7 @@ public class LEDCubeManager {
     public void render3D() {
         glPushMatrix();
         
-        faceCount = ledCube.render();
-        addInfoText("Rendered faces: " + faceCount, 1040);
+        ledCube.render();
 
         for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
             for (int i = 0; i < tuple.getA().get3DPasses(); i++) {
@@ -1062,19 +1059,23 @@ public class LEDCubeManager {
         }
     }
 
-    public void setupView(Mat4 projection, Vector3 position, Quaternion rotation) {
+    public void setupView(Matrix4f projection, Matrix4f view) {
+        projectionMatrix = projection;
+        viewMatrix = view;
+        frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
+    }
+
+    public void setupView(Matrix4f projection, Vector3 position, Quaternion rotation) {
         projectionMatrix = projection;
         viewMatrix.setIdentity();
-        modelMatrix.setIdentity();
         Matrix4f.mul(viewMatrix, (Matrix4f)rotation.getMatrix().negate(), viewMatrix);
         viewMatrix.translate(Util.convertVector(position.negate()));
         frustum.update(Util.matrixToArray(projectionMatrix), Util.matrixToArray(viewMatrix));
     }
 
-    public void setupView(Mat4 projection, Vector3 position, Angle angle) {
+    public void setupView(Matrix4f projection, Vector3 position, Angle angle) {
         projectionMatrix = projection;
         viewMatrix.setIdentity();
-        modelMatrix.setIdentity();
         viewMatrix.rotate((float)Math.toRadians(angle.getRoll()), new Vector3f(0, 0, -1));
         viewMatrix.rotate((float)Math.toRadians(angle.getPitch()), new Vector3f(-1, 0, 0));
         viewMatrix.rotate((float)Math.toRadians(angle.getYaw()), new Vector3f(0, -1, 0));
@@ -1088,7 +1089,7 @@ public class LEDCubeManager {
         int projectionMatrixLoc = program.getUniformLocation("projection_matrix");
         int viewMatrixLoc = program.getUniformLocation("view_matrix");
         matrixBuffer.rewind();
-        Util.storeMatrixInBuffer(projectionMatrix, matrixBuffer);
+        projectionMatrix.store(matrixBuffer);
         matrixBuffer.rewind();
         glUniformMatrix4(projectionMatrixLoc, false, matrixBuffer);
         matrixBuffer.rewind();

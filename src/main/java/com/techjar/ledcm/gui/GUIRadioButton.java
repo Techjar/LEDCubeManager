@@ -3,7 +3,9 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
+
 import java.util.List;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -30,15 +32,15 @@ public class GUIRadioButton extends GUI {
         this.circle = LEDCubeManager.getTextureManager().getTexture("ui/circle.png");
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
-        return true;
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return true;
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        if (Mouse.getEventButtonState()) {
-            if (Mouse.getEventButton() == 0) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (state) {
+            if (button == 0) {
                 if (checkMouseIntersect(getComponentBox()) || (label != null && label.checkMouseIntersect(label.getComponentBox()))) {
                     if (!selected) {
                         LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
@@ -49,14 +51,14 @@ public class GUIRadioButton extends GUI {
             }
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {
         //circle1.setLocation(getPosition().getX() + (dimension.getWidth() / 2), getPosition().getY() + (dimension.getHeight() / 2));
         //circle2.setLocation(getPosition().getX() + (dimension.getWidth() / 2), getPosition().getY() + (dimension.getHeight() / 2));
         //circle2.setLocation(getPosition().getX() + (dimension.getWidth() / 2), getPosition().getY() + (dimension.getHeight() / 2));
-        if (!Mouse.isButtonDown(0)) {
+        if (!mouseState[0]) {
             if (checkMouseIntersect(getComponentBox()) || (label != null && label.checkMouseIntersect(label.getComponentBox()))) {
                 if (!hovered) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);
                 hovered = true;

@@ -8,8 +8,10 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
+
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
@@ -63,28 +65,28 @@ public class GUISpinner extends GUI {
         updateRegex();
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
         boolean ret = true;
         if (focused) {
-            if (Keyboard.getEventKeyState()) {
-                if (Keyboard.getEventKey() == Keyboard.KEY_UP) {
+            if (state) {
+                if (key == Keyboard.KEY_UP) {
                     updateValue(value + increment);
                     ret = false;
-                } else if (Keyboard.getEventKey() == Keyboard.KEY_DOWN) {
+                } else if (key == Keyboard.KEY_DOWN) {
                     updateValue(value - increment);
                     ret = false;
                 }
             }
         }
-        if (!textField.processKeyboardEvent()) ret = false;
+        if (!textField.keyboardEvent(key, state, character)) ret = false;
         return ret;
-    }
+	}
 
-    @Override
-    public boolean processMouseEvent() {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
         boolean ret = true;
-        if (Mouse.getEventButtonState() && Mouse.getEventButton() == 0) {
+        if (state && button == 0) {
             Rectangle btnUp = new Rectangle(getPosition().getX() + (dimension.getWidth() - buttonWidth), getPosition().getY(), buttonWidth, (dimension.getHeight() / 2) - 1);
             Rectangle btnDown = new Rectangle(getPosition().getX() + (dimension.getWidth() - buttonWidth), getPosition().getY() + (dimension.getHeight() / 2) + (dimension.getHeight() % 2 == 0 ? 1 : 2), buttonWidth, (dimension.getHeight() / 2) - 1);
             if (checkMouseIntersect(btnUp)) {
@@ -99,7 +101,7 @@ public class GUISpinner extends GUI {
         }
         if (!textField.processMouseEvent()) ret = false;
         return ret;
-    }
+	}
 
     @Override
     public void update(float delta) {

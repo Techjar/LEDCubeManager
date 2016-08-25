@@ -28,16 +28,16 @@ public class GUIBackground extends GUI {
     public GUIBackground() {
         this(new Color(50, 50, 50), new Color(200, 0, 0), 2);
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        return true;
-    }
 
-    @Override
-    public boolean processMouseEvent() {
-        return true;
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return true;
+	}
+
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+		return true;
+	}
 
     @Override
     public void update(float delta) {

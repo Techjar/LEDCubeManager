@@ -33,6 +33,7 @@ dependencies {
 	compile "ddf.minim:ddf.minim:2.2.0"
 	compile "org.yaml:snakeyaml:1.13"
 	compile "org.scream3r:jssc:2.8.0"
+	compile "net.java.dev.jna:jna:4.2.1"
 	compile fileTree(dir: 'lib', include: '*.jar')
 }
 
@@ -49,15 +50,21 @@ natives {
 
 jar {
 	manifest {
-		attributes ('Main-Class': 'com.techjar.ledcm.Main', 'Class-Path': 'build/libs/' + configurations.compile.findAll { !it.getName().contains('lombok') && !it.getName().contains('natives') }.collect { it.getName() }.join(' build/libs/'))
+		attributes ('Main-Class': 'com.techjar.ledcm.Main', 'Class-Path': configurations.compile.findAll { !it.getName().contains('lombok') && !it.getName().contains('natives') }.collect { 'build/libs/' + it.getName() }.join(' '))
 	}
 }
 
-task zip(dependsOn: [jar, unpackNatives], type: Zip) {
+task unpackNatives2(dependsOn: unpackNatives, type: Copy) {
+	from 'lib/natives'
+	into 'build/natives'
+}
+
+task zip(dependsOn: [jar, unpackNatives2], type: Zip) {
 	from([configurations.runtime.allArtifacts.files, 'start.bat', 'start.sh']) {
 		into '/'
 	}
 	from('resources') {
+		exclude { details -> details.file.name.toLowerCase().endsWith('.psd') }
 		into 'resources'
 	}
 	from(configurations.runtime) {

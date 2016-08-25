@@ -4,6 +4,7 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
+
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
@@ -36,13 +37,13 @@ public class GUISlider extends GUI {
         this.showNotches = true;
         this.vertical = false;
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        if (Keyboard.getEventKeyState()) {
+
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+        if (state) {
             if (checkMouseIntersect(getComponentBox())) {
                 float incr = increment > 0 ? increment : 0.05F;
-                switch (Keyboard.getEventKey()) {
+                switch (key) {
                     case Keyboard.KEY_LEFT:
                     case Keyboard.KEY_DOWN:
                         value = MathHelper.clamp(value - incr, 0, 1);
@@ -65,13 +66,13 @@ public class GUISlider extends GUI {
             }
         }
         return true;
-    }
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        if (Mouse.getEventButton() == 0) {
-            if (Mouse.getEventButtonState()) {
-                Rectangle box = getSliderBox();
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (button == 0) {
+            if (state) {
+                //Rectangle box = getSliderBox();
                 if (checkMouseIntersect(getComponentBox())) {
                     dragging = true;
                     return false;
@@ -80,7 +81,7 @@ public class GUISlider extends GUI {
             else dragging = false;
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {
@@ -103,7 +104,7 @@ public class GUISlider extends GUI {
             lastValue = value;
         }
         
-        if (!Mouse.isButtonDown(0)) {
+        if (!mouseState[0]) {
             Rectangle box = getSliderBox();
             if (checkMouseIntersect(box)) {
                 if (!hovered && !dragging) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);

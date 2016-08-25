@@ -3,9 +3,13 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.logging.LogHelper;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.lwjgl.input.Controller;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Dimension;
 import org.newdawn.slick.geom.Rectangle;
 import org.newdawn.slick.geom.Shape;
@@ -28,13 +32,33 @@ public abstract class GUI {
     protected boolean enabled = true;
     protected boolean removeRequested;
     protected boolean hovered;
+    protected static boolean[] keyState = new boolean[256];
+    protected static boolean[] mouseState = new boolean[Mouse.getButtonCount()];
     
-    public abstract boolean processKeyboardEvent();
-    public abstract boolean processMouseEvent();
+    protected abstract boolean keyboardEvent(int key, boolean state, char character);
+    protected abstract boolean mouseEvent(int button, boolean state, int dwheel);
     public abstract void update(float delta);
     public abstract void render();
+    
+    public static boolean doKeyboardEvent(GUI gui, int key, boolean state, char character) {
+    	if (key >= 0 && key < keyState.length) keyState[key] = state;
+    	return gui.keyboardEvent(key, state, character);
+    }
+    
+    public static boolean doMouseEvent(GUI gui, int button, boolean state, int dwheel) {
+    	if (button >= 0 && button < mouseState.length) mouseState[button] = state;
+    	return gui.mouseEvent(button, state, dwheel);
+    }
+    
+    public final boolean processKeyboardEvent() {
+    	return doKeyboardEvent(this, Keyboard.getEventKey(), Keyboard.getEventKeyState(), Keyboard.getEventCharacter());
+    }
+    
+    public final boolean processMouseEvent() {
+    	return doMouseEvent(this, Mouse.getEventButton(), Mouse.getEventButtonState(), Mouse.getEventDWheel());
+    }
 
-    public boolean processControllerEvent(Controller controller) {
+    public final boolean processControllerEvent(Controller controller) {
         return true;
     }
 

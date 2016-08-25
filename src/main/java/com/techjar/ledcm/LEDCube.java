@@ -62,6 +62,7 @@ public class LEDCube {
     private boolean postInited;
     private Vector3 cursorTrace;
     private Matrix4f transform = new Matrix4f();
+    private Matrix4f renderTransform = new Matrix4f();
     @Getter private Vector3f centerPoint;
     @Getter private boolean reflectX;
     @Getter private boolean reflectY;
@@ -88,6 +89,7 @@ public class LEDCube {
         }
         Dimension3D dim = ledManager.getDimensions();
         centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
+        //setRenderOffset(Util.convertVector(centerPoint).multiply(ledSpaceMult).negate());
         highlight = new boolean[ledManager.getLEDCount()];
         model = LEDCubeManager.getModelManager().getModel("led.model");
         initOctree();
@@ -180,8 +182,7 @@ public class LEDCube {
         }
     }
 
-    public int render() {
-        int faceCount = 0;
+    public void render() {
         float mult = ledSpaceMult;
 
         Dimension3D dim = ledManager.getDimensions();
@@ -196,7 +197,7 @@ public class LEDCube {
                             Color ledColor = ledArray.getLEDColorReal(x, y, z);
                             color = new Color(Math.round(ledColor.getRed() * ledManager.getFactor()), Math.round(ledColor.getGreen() * ledManager.getFactor()), Math.round(ledColor.getBlue() * ledManager.getFactor()));
                         } else color = ledArray.getLEDColor(x, y, z);
-                        faceCount += model.render(pos, new Quaternion(), color);
+                        model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color);
                     }
                 }
             }
@@ -208,13 +209,12 @@ public class LEDCube {
                     if (highlight[Util.encodeCubeVector(x, y, z)]) {
                         if (isLEDWithinIsolation(x, y, z)) {
                             Vector3 pos = new Vector3(x * mult, y * mult, z * mult);
-                            faceCount += model.render(pos, new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), new Vector3(1.2F, 1.2F, 1.2F));
+                            model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), new Vector3(1.2F, 1.2F, 1.2F));
                         }
                     }
                 }
             }
         }
-        return faceCount;
     }
 
     public LEDManager getLEDManager() {
@@ -483,7 +483,7 @@ public class LEDCube {
 
     public Vector3 traceCursorToLED() {
         Vector3[] ray = LEDCubeManager.getInstance().getCursorRay();
-        Vector3 position = ray[0];
+        Vector3 position = Util.transformVector(ray[0], Matrix4f.invert(renderTransform, null), false);
         Vector3 direction = ray[1].multiply(0.5F);
 
         float mult = ledSpaceMult;
@@ -553,6 +553,11 @@ public class LEDCube {
         if (reflectZ) vector.setZ((dim.z - 1) - vector.getZ());
         Vector4f vec = Matrix4f.transform(transform, new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1), null);
         return new Vector3(Math.round(vec.x), Math.round(vec.y), Math.round(vec.z));
+    }
+    
+    public void setRenderOffset(Vector3 offset) {
+    	renderTransform.setIdentity();
+    	renderTransform.translate(Util.convertVector(offset));
     }
 
     public void loadAnimations() {

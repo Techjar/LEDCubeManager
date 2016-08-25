@@ -2,6 +2,7 @@ package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.MathHelper;
+
 import org.lwjgl.util.Color;
 
 /**
@@ -17,16 +18,16 @@ public class GUIProgressBar extends GUI {
         this.color = color;
         this.bgColor = bgColor;
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        return true;
-    }
 
-    @Override
-    public boolean processMouseEvent() {
-        return true;
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return true;
+	}
+
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+		return true;
+	}
 
     @Override
     public void update(float delta) {

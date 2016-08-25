@@ -1,10 +1,12 @@
 package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.render.RenderHelper;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
 import org.lwjgl.input.Controller;
 import org.newdawn.slick.geom.Rectangle;
 
@@ -18,30 +20,30 @@ public abstract class GUIContainer extends GUI {
     public GUIContainer() {
         components = new ArrayList<>();
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        for (GUI gui : components)
-            if (gui.isVisible() && gui.isEnabled() && !gui.processKeyboardEvent()) return false;
-        return true;
-    }
 
-    @Override
-    public boolean processMouseEvent() {
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
         for (GUI gui : components)
-            if (gui.isVisible() && gui.isEnabled() && !gui.processMouseEvent()) {
+            if (gui.isVisible() && gui.isEnabled() && !gui.keyboardEvent(key, state, character)) return false;
+        return true;
+	}
+
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        for (GUI gui : components)
+            if (gui.isVisible() && gui.isEnabled() && !gui.mouseEvent(button, state, dwheel)) {
                 closeComboBoxesRecursive(this, gui);
                 return false;
             }
         return true;
-    }
+	}
 
-    @Override
+    /*@Override
     public boolean processControllerEvent(Controller controller) {
         for (GUI gui : components)
             if (gui.isVisible() && gui.isEnabled() && !gui.processControllerEvent(controller)) return false;
         return true;
-    }
+    }*/
     
     @Override
     public void update(float delta) {

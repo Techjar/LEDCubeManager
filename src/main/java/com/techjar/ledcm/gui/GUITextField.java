@@ -2,15 +2,18 @@ package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
+
 import org.lwjgl.util.Color;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Dimension;
 import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.geom.Rectangle;
+
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Timer;
+
 import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -53,18 +56,18 @@ public class GUITextField extends GUIText {
     public GUITextField(UnicodeFont font, Color color, GUIBackground guiBg) {
         this(font, color, guiBg, "");
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        super.processKeyboardEvent();
+
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+        super.keyboardEvent(key, state, character);
         if (focused) {
-            if (Keyboard.getEventKey() == Keyboard.KEY_LCONTROL || Keyboard.getEventKey() == Keyboard.KEY_RCONTROL) {
-                ctrlPressed = Keyboard.getEventKeyState();
+            if (key == Keyboard.KEY_LCONTROL || key == Keyboard.KEY_RCONTROL) {
+                ctrlPressed = state;
             }
-            else if (Keyboard.getEventKeyState()) {
+            else if (state) {
                 if (ctrlPressed) {
                     try {
-                        if (Keyboard.getEventKey() == Keyboard.KEY_V) {
+                        if (key == Keyboard.KEY_V) {
                             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                             Transferable data = clipboard.getContents(this);
                             if (data != null && data.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -97,10 +100,9 @@ public class GUITextField extends GUIText {
                     }
                     return false;
                 }
-                char ch = Keyboard.getEventCharacter();
-                handleKeyOrCharacter(Keyboard.getEventKey(), ch);
-                repeatLastKey = Keyboard.getEventKey();
-                repeatLastChar = Keyboard.getEventCharacter();
+                handleKeyOrCharacter(key, character);
+                repeatLastKey = key;
+                repeatLastChar = character;
                 repeatStartTimer.restart();
             }
             else if (Keyboard.getEventKey() == repeatLastKey || Keyboard.getEventCharacter() == repeatLastChar) {
@@ -109,12 +111,12 @@ public class GUITextField extends GUIText {
             return false;
         }
         return true;
-    }
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        return super.processMouseEvent();
-    }
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+		return super.mouseEvent(button, state, dwheel);
+	}
     
     @Override
     public void update(float delta) {
@@ -124,7 +126,7 @@ public class GUITextField extends GUIText {
             cursorTimer.restart();
         }
 
-        if (!mouse0Pressed && Mouse.isButtonDown(0)) {
+        if (!mouse0Pressed && mouseState[0]) {
             mouse0Pressed = true;
             Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
             if (checkMouseIntersect(box)) {
@@ -149,7 +151,7 @@ public class GUITextField extends GUIText {
             } else if(focused && canLoseFocus) {
                 focused = false;
             }
-        } else if (mouse0Pressed && !Mouse.isButtonDown(0)) {
+        } else if (mouse0Pressed && !mouseState[0]) {
             mouse0Pressed = false;
         }
         

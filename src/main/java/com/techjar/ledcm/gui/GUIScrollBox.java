@@ -4,7 +4,9 @@ import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Vector2;
+
 import lombok.NonNull;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.newdawn.slick.geom.Rectangle;
@@ -36,17 +38,17 @@ public class GUIScrollBox extends GUIContainer {
     public GUIScrollBox(Color color) {
         this(color, new Color(15, 15, 15));
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        return super.processKeyboardEvent();
-    }
 
-    @Override
-    public boolean processMouseEvent() {
-        if (!super.processMouseEvent()) return false;
-        if (Mouse.getEventButton() == 0) {
-            if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return super.keyboardEvent(key, state, character);
+	}
+
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (!super.mouseEvent(button, state, dwheel)) return false;
+        if (button == 0) {
+            if (state) {
                 Vector2 scrollbarOffset = getScrollbarOffset();
                 int[] size = getScrollbarSize();
                 if (getScrollX()) {
@@ -72,16 +74,17 @@ public class GUIScrollBox extends GUIContainer {
             }
             else scrolling = 0;
         }
-        if (scrolling == 0 && Mouse.getEventDWheel() != 0) {
+        if (scrolling == 0 && dwheel != 0) {
+        	System.out.println(dwheel);
             if (checkMouseIntersect(getComponentBox())) {
                 int[] maxScrollOffset = getMaxScrollOffset();
-                if (scrollYIncrement > 0) scrollOffset.setY(MathHelper.clamp(scrollOffset.getY() + (scrollYIncrement * -MathHelper.sign(Mouse.getEventDWheel())), 0, maxScrollOffset[1]));
-                else scrollOffset.setY(MathHelper.clamp(scrollOffset.getY() - Mouse.getEventDWheel(), 0, maxScrollOffset[1]));
+                if (scrollYIncrement > 0) scrollOffset.setY(MathHelper.clamp(scrollOffset.getY() + (scrollYIncrement * -MathHelper.sign(dwheel)), 0, maxScrollOffset[1]));
+                else scrollOffset.setY(MathHelper.clamp(scrollOffset.getY() - dwheel, 0, maxScrollOffset[1]));
                 return false;
             }
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {

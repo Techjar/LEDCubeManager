@@ -5,6 +5,7 @@ import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputInfo;
+
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Controllers;
 import org.lwjgl.input.Keyboard;
@@ -40,10 +41,10 @@ public class GUIInputOption extends GUI {
         this(binding, font, color, null);
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
-        if (assign && Keyboard.getEventKeyState()) {
-            binding.setBind(new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.getEventKey()));
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+        if (assign && state) {
+            binding.setBind(new InputInfo(InputInfo.Type.KEYBOARD, key));
             if (changeHandler != null) {
                 changeHandler.setComponent(this);
                 changeHandler.run();
@@ -52,11 +53,11 @@ public class GUIInputOption extends GUI {
             return false;
         }
         return true;
-    }
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (state) {
             if (assign) {
                 binding.setBind(new InputInfo(InputInfo.Type.MOUSE, Mouse.getEventButton()));
                 if (changeHandler != null) {
@@ -65,7 +66,7 @@ public class GUIInputOption extends GUI {
                 }
                 assign = false;
                 return false;
-            } else if (Mouse.getEventButton() == 0) {
+            } else if (button == 0) {
                 Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
                 if (checkMouseIntersect(box)) {
                     assign = true;
@@ -73,7 +74,7 @@ public class GUIInputOption extends GUI {
                     return false;
                 }
                 else assign = false;
-            } else if (Mouse.getEventButton() == 1) {
+            } else if (button == 1) {
                 Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
                 if (checkMouseIntersect(box)) {
                     if (binding.isUnbindable()) {
@@ -88,11 +89,11 @@ public class GUIInputOption extends GUI {
             }
         }
         return true;
-    }
+	}
 
-    @Override
+    /*@Override
     public boolean processControllerEvent(Controller controller) { // TODO n' stuff
-        /*if (assign && Controllers.isEventButton()) {
+        if (assign && Controllers.isEventButton()) {
             binding.setBind(new InputInfo(InputInfo.Type.CONTROLLER, Controllers.getEventControlIndex()));
             if (changeHandler != null) {
                 changeHandler.setComponent(this);
@@ -100,16 +101,16 @@ public class GUIInputOption extends GUI {
             }
             assign = false;
             return false;
-        }*/
+        }
         return true;
-    }
+    }*/
 
     @Override
     public void update(float delta) {
         if (assign && bindTimer.getSeconds() >= 3) {
             assign = false;
         }
-        if (!Mouse.isButtonDown(0) && !assign) {
+        if (!mouseState[0] && !assign) {
             Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
             if (checkMouseIntersect(box)) {
                 if (!hovered) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);

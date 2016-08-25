@@ -7,16 +7,16 @@ package com.techjar.ledcm.gui;
 public class GUISpacer extends GUI {
     public GUISpacer() {
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        return true;
-    }
 
-    @Override
-    public boolean processMouseEvent() {
-        return true;
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return true;
+	}
+
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+		return true;
+	}
 
     @Override
     public void update(float delta) {

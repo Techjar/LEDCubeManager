@@ -1,6 +1,7 @@
 package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.util.Util;
+
 import org.lwjgl.util.Color;
 import org.newdawn.slick.UnicodeFont;
 
@@ -18,16 +19,16 @@ public abstract class GUIText extends GUI {
         this.color = color;
         this.text = new StringBuilder(text);
     }
-    
-    @Override
-    public boolean processKeyboardEvent() {
-        return true;
-    }
 
-    @Override
-    public boolean processMouseEvent() {
-        return true;
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return true;
+	}
+
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+		return true;
+	}
     
     @Override
     public void update(float delta) {

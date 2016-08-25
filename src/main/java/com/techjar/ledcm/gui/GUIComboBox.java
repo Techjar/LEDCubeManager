@@ -7,11 +7,13 @@ import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Vector2;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -47,16 +49,16 @@ public class GUIComboBox extends GUI {
     }
     
     @Override
-    public boolean processKeyboardEvent() {
-        if (opened && !scrollBox.processKeyboardEvent()) return false;
+    protected boolean keyboardEvent(int key, boolean state, char character) {
+        if (opened && !scrollBox.keyboardEvent(key, state, character)) return false;
         return true;
     }
 
-    @Override
-    public boolean processMouseEvent() {
-        if (opened && !scrollBox.processMouseEvent()) return false;
-        if (Mouse.getEventButton() == 0) {
-            if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (opened && !scrollBox.mouseEvent(button, state, dwheel)) return false;
+        if (button == 0) {
+            if (state) {
                 Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
                 if (checkMouseIntersect(box)) {
                     setOpened(!opened);
@@ -66,11 +68,11 @@ public class GUIComboBox extends GUI {
             }
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {
-        if (!Mouse.isButtonDown(0)) {
+        if (!mouseState[0]) {
             if (checkMouseIntersect(getComponentBox())) {
                 if (!opened && !hovered) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);
                 hovered = true;

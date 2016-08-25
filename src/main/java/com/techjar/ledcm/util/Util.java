@@ -87,10 +87,10 @@ public final class Util {
                     return;
                 }
             }
-            String[] tmp = new String[paths.length+1];
+            String[] tmp = new String[paths.length + 1];
             System.arraycopy(paths, 0, tmp, 0, paths.length);
             tmp[paths.length] = path;
-            field.set(null,tmp);
+            field.set(null, tmp);
             System.setProperty("java.library.path", System.getProperty("java.library.path") + File.pathSeparator + path);
         } catch (IllegalAccessException e) {
             throw new IOException("Failed to get permissions to set library path");
@@ -444,14 +444,14 @@ public final class Util {
             char last = str.isEmpty() ? '\u0000' : str.charAt(str.length() - 1);
             char beforeLast = str.length() < 2 ? '\u0000' : str.charAt(str.length() - 2);
             if (first == '"' && last == '"' && beforeLast != '\\') {
-                if (quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                if (quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
                 params.add(str.replaceFirst("^\"(.*)\"$", "$1"));
             } else if (first == '"') {
-                if (quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                if (quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
                 quote = true;
                 temp.add(str.replaceFirst("^\"", ""));
             } else if (last == '"' && beforeLast != '\\') {
-                if (!quote) throw new IllegalArgumentException("Errornous quote in word " + i + ": " + str);
+                if (!quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
                 quote = false;
                 temp.add(str.replaceFirst("\"$", ""));
                 StringBuilder sb = new StringBuilder();

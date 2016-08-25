@@ -5,6 +5,7 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.Vector2;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -55,20 +56,20 @@ public class GUIWindow extends GUIContainer {
         });
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
-        return super.processKeyboardEvent();
-    }
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+		return super.keyboardEvent(key, state, character);
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        if (!closeBtn.processMouseEvent()) return false;
-        if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (!closeBtn.mouseEvent(button, state, dwheel)) return false;
+        if (state) {
             if (!onTop && checkMouseIntersect(getComponentBox())) setToBePutOnTop(true);
         }
-        if (!super.processMouseEvent()) return false;
-        if (Mouse.getEventButton() == 0) {
-            if (Mouse.getEventButtonState()) {
+        if (!super.mouseEvent(button, state, dwheel)) return false;
+        if (button == 0) {
+            if (state) {
                 if (canResizeX || canResizeY) {
                     Rectangle[] boxes = getBoxes();
                     if (canResizeY && checkMouseIntersect(boxes[0])) {
@@ -113,7 +114,7 @@ public class GUIWindow extends GUIContainer {
             }
         }
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {

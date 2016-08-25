@@ -2,6 +2,7 @@
 package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.render.RenderHelper;
+
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
 import org.lwjgl.util.ReadableColor;
@@ -62,21 +63,21 @@ public class GUIColorPicker extends GUI {
         });
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
-        if (!redSlider.processKeyboardEvent()) return false;
-        if (!greenSlider.processKeyboardEvent()) return false;
-        if (!blueSlider.processKeyboardEvent()) return false;
+	@Override
+	protected boolean keyboardEvent(int key, boolean state, char character) {
+        if (!redSlider.keyboardEvent(key, state, character)) return false;
+        if (!greenSlider.keyboardEvent(key, state, character)) return false;
+        if (!blueSlider.keyboardEvent(key, state, character)) return false;
         return true;
-    }
+	}
 
-    @Override
-    public boolean processMouseEvent() {
-        if (!redSlider.processMouseEvent()) return false;
-        if (!greenSlider.processMouseEvent()) return false;
-        if (!blueSlider.processMouseEvent()) return false;
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (!redSlider.mouseEvent(button, state, dwheel)) return false;
+        if (!greenSlider.mouseEvent(button, state, dwheel)) return false;
+        if (!blueSlider.mouseEvent(button, state, dwheel)) return false;
         return true;
-    }
+	}
 
     @Override
     public void update(float delta) {

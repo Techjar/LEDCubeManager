@@ -3,6 +3,7 @@ package com.techjar.ledcm.gui;
 import static org.lwjgl.opengl.GL11.*;
 
 import com.techjar.ledcm.render.RenderHelper;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.newdawn.slick.UnicodeFont;
@@ -29,10 +30,10 @@ public class GUIComboItem extends GUIText {
         this.selectedBgColor = selectedBgColor;
     }
 
-    @Override
-    public boolean processMouseEvent() {
-        if (Mouse.getEventButton() == 0) {
-            if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+        if (button == 0) {
+            if (state) {
                 Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
                 if (checkMouseIntersect(box)) {
                     pressed = true;
@@ -44,7 +45,7 @@ public class GUIComboItem extends GUIText {
             else pressed = false;
         }
         return true;
-    }
+	}
 
     @Override
     public void render() {

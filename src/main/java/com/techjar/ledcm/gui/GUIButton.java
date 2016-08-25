@@ -2,6 +2,7 @@ package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
+
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -28,15 +29,10 @@ public class GUIButton extends GUIText {
         this(font, color, text, null);
     }
 
-    @Override
-    public boolean processKeyboardEvent() {
-        return super.processKeyboardEvent();
-    }
-
-    @Override
-    public boolean processMouseEvent() {
-        if (Mouse.getEventButton() == 0) {
-            if (Mouse.getEventButtonState()) {
+	@Override
+	protected boolean mouseEvent(int button, boolean state, int dwheel) {
+		if (button == 0) {
+            if (state) {
                 Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
                 if (checkMouseIntersect(!windowClose, box)) {
                     pressed = true;
@@ -51,11 +47,11 @@ public class GUIButton extends GUIText {
             else pressed = false;
         }
         return true;
-    }
+	}
     
     @Override
     public void update(float delta) {
-        if (!Mouse.isButtonDown(0)) {
+        if (!mouseState[0]) {
             if (checkMouseIntersect(!windowClose, getComponentBox())) {
                 if (!hovered) LEDCubeManager.getSoundManager().playEffect("ui/rollover.wav", false);
                 hovered = true;
