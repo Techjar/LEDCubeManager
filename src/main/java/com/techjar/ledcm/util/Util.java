@@ -282,87 +282,87 @@ public final class Util {
 	/**
 	 * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(Vector3)} instead
 	 */
-	 @Deprecated
-	 public static int encodeCubeVector(Vector3 vector) {
-		 return LEDCubeManager.getLEDManager().encodeVector(vector);
-	 }
+	@Deprecated
+	public static int encodeCubeVector(Vector3 vector) {
+		return LEDCubeManager.getLEDManager().encodeVector(vector);
+	}
 
-	 /**
-	  * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(int, int, int)} instead
-	  */
-	  @Deprecated
-	  public static int encodeCubeVector(int x, int y, int z) {
-		  return LEDCubeManager.getLEDManager().encodeVector(x, y, z);
-	  }
+	/**
+	 * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#encodeVector(int, int, int)} instead
+	 */
+	@Deprecated
+	public static int encodeCubeVector(int x, int y, int z) {
+		return LEDCubeManager.getLEDManager().encodeVector(x, y, z);
+	}
 
-	  /**
-	   * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#decodeVector(int)} instead
-	   */
-	   @Deprecated
-	   public static Vector3 decodeCubeVector(int number) {
-		   return LEDCubeManager.getLEDManager().decodeVector(number);
-	   }
+	/**
+	 * @deprecated use {@link com.techjar.ledcm.hardware.manager.LEDManager#decodeVector(int)} instead
+	 */
+	@Deprecated
+	public static Vector3 decodeCubeVector(int number) {
+		return LEDCubeManager.getLEDManager().decodeVector(number);
+	}
 
-	   public static boolean isInsideCube(int x, int y, int z) {
-		   Dimension3D dim = LEDCubeManager.getLEDCube().getLEDManager().getDimensions();
-		   return x >= 0 && x < dim.x && y >= 0 && y < dim.y && z >= 0 && z < dim.z;
-	   }
+	public static boolean isInsideCube(int x, int y, int z) {
+		Dimension3D dim = LEDCubeManager.getLEDCube().getLEDManager().getDimensions();
+		return x >= 0 && x < dim.x && y >= 0 && y < dim.y && z >= 0 && z < dim.z;
+	}
 
-	   public static boolean isInsideCube(Vector3 vector) {
-		   return isInsideCube((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
-	   }
+	public static boolean isInsideCube(Vector3 vector) {
+		return isInsideCube((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
+	}
 
-	   /**
-	    * Sets an animation option using the GUI component rather than directly.
-	    *
-	    * @param optionId The ID of the option
-	    * @param value The value to set (internal or display value)
-	    */
-	   public static void setOptionInGUI(AnimationOption option, String value) {
-		   if (LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null) return;
-		   if (option.getType() == AnimationOption.OptionType.COMBOBOX || option.getType() == AnimationOption.OptionType.COMBOBUTTON || option.getType() == AnimationOption.OptionType.RADIOGROUP) {
-			   for (int i = 1; i < option.getParams().length; i += 2) {
-				   if (option.getParams()[i].toString().equals(value)) {
-					   value = option.getParams()[i + 1].toString();
-					   break;
-				   }
-			   }
-		   }
-		   ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
-		   List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(option.getId());
-		   if (components.size() > 0) {
-			   GUI component = components.get(0);
-			   if (component instanceof GUITextField) {
-				   ((GUITextField)component).setText(value);
-			   } else if (component instanceof GUISlider) {
-				   ((GUISlider)component).setValue(Float.parseFloat(value));
-			   } else if (component instanceof GUIComboBox) {
-				   ((GUIComboBox)component).setSelectedItem(value);
-			   } else if (component instanceof GUIComboButton) {
-				   ((GUIComboButton)component).setSelectedItem(value);
-			   } else if (component instanceof GUIBox) {
-				   GUIBox box = (GUIBox)component;
-				   for (GUI gui : box.getAllComponents()) {
-					   if (gui instanceof GUIRadioButton) {
-						   GUIRadioButton radioButton = (GUIRadioButton)gui;
-						   if (radioButton.getLabel().getText().equals(value)) {
-							   radioButton.setSelected(true);
-						   }
-					   }
-				   }
-			   } else if (component instanceof GUICheckBox) {
-				   ((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
-			   } else if (component instanceof GUISpinner) {
-				   ((GUISpinner)component).setValue(Float.parseFloat(value));
-			   } else if (component instanceof GUIColorPicker) {
-				   ((GUIColorPicker)component).setValue(Util.stringToColor(value));
-			   } else {
-				   LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(option.getId(), value);
-			   }
-		   }
-	   }
+	/**
+	 * Sets an animation option using the GUI component rather than directly.
+	 *
+	 * @param optionId The ID of the option
+	 * @param value The value to set (internal or display value)
+	 */
+	public static void setOptionInGUI(AnimationOption option, String value) {
+		if (LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation() == null) return;
+		if (option.getType() == AnimationOption.OptionType.COMBOBOX || option.getType() == AnimationOption.OptionType.COMBOBUTTON || option.getType() == AnimationOption.OptionType.RADIOGROUP) {
+			for (int i = 1; i < option.getParams().length; i += 2) {
+				if (option.getParams()[i].toString().equals(value)) {
+					value = option.getParams()[i + 1].toString();
+					break;
+				}
+			}
+		}
+		ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
+		List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(option.getId());
+		if (components.size() > 0) {
+			GUI component = components.get(0);
+			if (component instanceof GUITextField) {
+				((GUITextField)component).setText(value);
+			} else if (component instanceof GUISlider) {
+				((GUISlider)component).setValue(Float.parseFloat(value));
+			} else if (component instanceof GUIComboBox) {
+				((GUIComboBox)component).setSelectedItem(value);
+			} else if (component instanceof GUIComboButton) {
+				((GUIComboButton)component).setSelectedItem(value);
+			} else if (component instanceof GUIBox) {
+				GUIBox box = (GUIBox)component;
+				for (GUI gui : box.getAllComponents()) {
+					if (gui instanceof GUIRadioButton) {
+						GUIRadioButton radioButton = (GUIRadioButton)gui;
+						if (radioButton.getLabel().getText().equals(value)) {
+							radioButton.setSelected(true);
+						}
+					}
+				}
+			} else if (component instanceof GUICheckBox) {
+				((GUICheckBox)component).setChecked(Boolean.parseBoolean(value));
+			} else if (component instanceof GUISpinner) {
+				((GUISpinner)component).setValue(Float.parseFloat(value));
+			} else if (component instanceof GUIColorPicker) {
+				((GUIColorPicker)component).setValue(Util.stringToColor(value));
+			} else {
+				LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().setOption(option.getId(), value);
+			}
+		}
+	}
 
-	   /*public static int getRequiredBits(long value) {
+	/*public static int getRequiredBits(long value) {
         int i = 0;
         for (; i < 64; i++) {
             if (value == 0) break;
@@ -375,406 +375,406 @@ public final class Util {
         return new Dimension3D(getRequiredBits(dimension.x - 1), getRequiredBits(dimension.y - 1), getRequiredBits(dimension.z - 1));
     }*/
 
-	   public static float getAxisValue(Controller con, String name) {
-		   if (name == null) return 0;
-		   for (int i = 0; i < con.getAxisCount(); i++) {
-			   if (name.equals(con.getAxisName(i))) return con.getAxisValue(i);
-		   }
-		   return 0;
-	   }
+	public static float getAxisValue(Controller con, String name) {
+		if (name == null) return 0;
+		for (int i = 0; i < con.getAxisCount(); i++) {
+			if (name.equals(con.getAxisName(i))) return con.getAxisValue(i);
+		}
+		return 0;
+	}
 
-	   public static <T> List<T> arrayAsListCopy(T... array) {
-		   List<T> list = new ArrayList<>();
-		   list.addAll(Arrays.asList(array));
-		   return list;
-	   }
+	public static <T> List<T> arrayAsListCopy(T... array) {
+		List<T> list = new ArrayList<>();
+		list.addAll(Arrays.asList(array));
+		return list;
+	}
 
-	   public static void shuffleArray(Object[] array, Random random) {
-		   for (int i = array.length - 1; i > 0; i--) {
-			   int index = random.nextInt(i + 1);
-			   Object obj = array[index];
-			   array[index] = array[i];
-			   array[i] = obj;
-		   }
-	   }
+	public static void shuffleArray(Object[] array, Random random) {
+		for (int i = array.length - 1; i > 0; i--) {
+			int index = random.nextInt(i + 1);
+			Object obj = array[index];
+			array[index] = array[i];
+			array[i] = obj;
+		}
+	}
 
-	   public static void shuffleArray(int[] array, Random random) {
-		   for (int i = array.length - 1; i > 0; i--) {
-			   int index = random.nextInt(i + 1);
-			   int obj = array[index];
-			   array[index] = array[i];
-			   array[i] = obj;
-		   }
-	   }
+	public static void shuffleArray(int[] array, Random random) {
+		for (int i = array.length - 1; i > 0; i--) {
+			int index = random.nextInt(i + 1);
+			int obj = array[index];
+			array[index] = array[i];
+			array[i] = obj;
+		}
+	}
 
-	   public static void shuffleArray(Object[] array) {
-		   shuffleArray(array, new Random());
-	   }
+	public static void shuffleArray(Object[] array) {
+		shuffleArray(array, new Random());
+	}
 
-	   public static int getMouseX() {
-		   //return (int)(Mouse.getX() / ((double)canvas.getWidth() / (double)displayMode.getWidth()));
-		   return Mouse.getX();
-	   }
+	public static int getMouseX() {
+		//return (int)(Mouse.getX() / ((double)canvas.getWidth() / (double)displayMode.getWidth()));
+		return Mouse.getX();
+	}
 
-	   public static int getMouseY() {
-		   //return (int)((canvas.getHeight() - Mouse.getY()) / ((double)canvas.getHeight() / (double)displayMode.getHeight()));
-		   return (int)(LEDCubeManager.getHeight() - Mouse.getY() - 1);
-	   }
+	public static int getMouseY() {
+		//return (int)((canvas.getHeight() - Mouse.getY()) / ((double)canvas.getHeight() / (double)displayMode.getHeight()));
+		return (int)(LEDCubeManager.getHeight() - Mouse.getY() - 1);
+	}
 
-	   public static Vector2 getMousePos() {
-		   return new Vector2(getMouseX(), getMouseY());
-	   }
+	public static Vector2 getMousePos() {
+		return new Vector2(getMouseX(), getMouseY());
+	}
 
-	   public static Vector2 getMouseCenterOffset() {
-		   return new Vector2(getMouseX() - LEDCubeManager.getWidth() / 2, getMouseY() - LEDCubeManager.getHeight() / 2 + 1);
-	   }
+	public static Vector2 getMouseCenterOffset() {
+		return new Vector2(getMouseX() - LEDCubeManager.getWidth() / 2, getMouseY() - LEDCubeManager.getHeight() / 2 + 1);
+	}
 
-	   public static Shape getMouseHitbox() {
-		   return new Rectangle(getMouseX(), getMouseY(), 1, 1);
-	   }
+	public static Shape getMouseHitbox() {
+		return new Rectangle(getMouseX(), getMouseY(), 1, 1);
+	}
 
-	   public static String[] parseArgumentString(String argStr) {
-		   boolean quote = false;
-		   List<String> params = new ArrayList<>();
-		   List<String> temp = new ArrayList<>();
-		   String[] split = argStr.split(" ");
-		   for (int i = 0; i < split.length; i++) {
-			   String str = split[i];
-			   char first = str.isEmpty() ? '\u0000' : str.charAt(0);
-			   char last = str.isEmpty() ? '\u0000' : str.charAt(str.length() - 1);
-			   char beforeLast = str.length() < 2 ? '\u0000' : str.charAt(str.length() - 2);
-			   if (first == '"' && last == '"' && beforeLast != '\\') {
-				   if (quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
-				   params.add(str.replaceFirst("^\"(.*)\"$", "$1"));
-			   } else if (first == '"') {
-				   if (quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
-				   quote = true;
-				   temp.add(str.replaceFirst("^\"", ""));
-			   } else if (last == '"' && beforeLast != '\\') {
-				   if (!quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
-				   quote = false;
-				   temp.add(str.replaceFirst("\"$", ""));
-				   StringBuilder sb = new StringBuilder();
-				   for (int j = 0; j < temp.size(); j++) {
-					   sb.append(temp.get(j));
-					   if (j < temp.size() - 1) sb.append(' ');
-				   }
-				   params.add(sb.toString());
-				   temp.clear();
-			   } else if (quote) {
-				   temp.add(str);
-			   } else {
-				   params.add(str);
-			   }
-		   }
-		   if (quote) throw new IllegalArgumentException("Unclosed quotes in string: " + argStr);
-		   List<String> params2 = new ArrayList<>();
-		   for (String param : params) {
-			   if (!param.isEmpty()) params2.add(param.replaceAll("\\\\\"", "\""));
-		   }
-		   return params2.toArray(new String[params2.size()]);
-	   }
+	public static String[] parseArgumentString(String argStr) {
+		boolean quote = false;
+		List<String> params = new ArrayList<>();
+		List<String> temp = new ArrayList<>();
+		String[] split = argStr.split(" ");
+		for (int i = 0; i < split.length; i++) {
+			String str = split[i];
+			char first = str.isEmpty() ? '\u0000' : str.charAt(0);
+			char last = str.isEmpty() ? '\u0000' : str.charAt(str.length() - 1);
+			char beforeLast = str.length() < 2 ? '\u0000' : str.charAt(str.length() - 2);
+			if (first == '"' && last == '"' && beforeLast != '\\') {
+				if (quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
+				params.add(str.replaceFirst("^\"(.*)\"$", "$1"));
+			} else if (first == '"') {
+				if (quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
+				quote = true;
+				temp.add(str.replaceFirst("^\"", ""));
+			} else if (last == '"' && beforeLast != '\\') {
+				if (!quote) throw new IllegalArgumentException("Erroneous quote in word " + i + ": " + str);
+				quote = false;
+				temp.add(str.replaceFirst("\"$", ""));
+				StringBuilder sb = new StringBuilder();
+				for (int j = 0; j < temp.size(); j++) {
+					sb.append(temp.get(j));
+					if (j < temp.size() - 1) sb.append(' ');
+				}
+				params.add(sb.toString());
+				temp.clear();
+			} else if (quote) {
+				temp.add(str);
+			} else {
+				params.add(str);
+			}
+		}
+		if (quote) throw new IllegalArgumentException("Unclosed quotes in string: " + argStr);
+		List<String> params2 = new ArrayList<>();
+		for (String param : params) {
+			if (!param.isEmpty()) params2.add(param.replaceAll("\\\\\"", "\""));
+		}
+		return params2.toArray(new String[params2.size()]);
+	}
 
-	   /**
-	    * Will parse a valid IPv4/IPv6 address and port, may return garbage for invalid address formats. If no port was parsed it will be -1.
-	    */
-	   public static IPInfo parseIPAddress(String str) throws UnknownHostException {
-		   String ip;
-		   int port = -1;
-		   boolean ipv6 = false;
-		   if (str.indexOf(':') != -1) {
-			   if (str.indexOf('[') != -1 && str.indexOf(']') != -1) {
-				   ip = str.substring(1, str.indexOf(']'));
-				   port = Integer.parseInt(str.substring(str.indexOf(']') + 2));
-				   ipv6 = true;
-			   } else if (str.indexOf(':') == str.lastIndexOf(':')) {
-				   ip = str.substring(0, str.indexOf(':'));
-				   port = Integer.parseInt(str.substring(str.indexOf(':') + 1));
-			   } else ip = str;
-		   } else ip = str;
-		   return new IPInfo(InetAddress.getByName(ip), port, ipv6);
-	   }
+	/**
+	 * Will parse a valid IPv4/IPv6 address and port, may return garbage for invalid address formats. If no port was parsed it will be -1.
+	 */
+	public static IPInfo parseIPAddress(String str) throws UnknownHostException {
+		String ip;
+		int port = -1;
+		boolean ipv6 = false;
+		if (str.indexOf(':') != -1) {
+			if (str.indexOf('[') != -1 && str.indexOf(']') != -1) {
+				ip = str.substring(1, str.indexOf(']'));
+				port = Integer.parseInt(str.substring(str.indexOf(']') + 2));
+				ipv6 = true;
+			} else if (str.indexOf(':') == str.lastIndexOf(':')) {
+				ip = str.substring(0, str.indexOf(':'));
+				port = Integer.parseInt(str.substring(str.indexOf(':') + 1));
+			} else ip = str;
+		} else ip = str;
+		return new IPInfo(InetAddress.getByName(ip), port, ipv6);
+	}
 
-	   public static String getChecksum(String method, byte[] bytes) throws IOException, NoSuchAlgorithmException {
-		   MessageDigest md = MessageDigest.getInstance("MD5");
-		   md.update(bytes);
-		   byte[] digest = md.digest();
-		   StringBuilder sb = new StringBuilder();
-		   for (int i = 0; i < digest.length; i++) {
-			   sb.append(String.format("%02x", digest[i] & 0xFF));
-		   }
-		   return sb.toString();
-	   }
+	public static String getChecksum(String method, byte[] bytes) throws IOException, NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.update(bytes);
+		byte[] digest = md.digest();
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < digest.length; i++) {
+			sb.append(String.format("%02x", digest[i] & 0xFF));
+		}
+		return sb.toString();
+	}
 
-	   public static String getChecksum(String method, String str) throws IOException, NoSuchAlgorithmException {
-		   return getChecksum(method, str.getBytes("UTF-8"));
-	   }
+	public static String getChecksum(String method, String str) throws IOException, NoSuchAlgorithmException {
+		return getChecksum(method, str.getBytes("UTF-8"));
+	}
 
-	   public static String getFileChecksum(String method, File file) throws IOException, NoSuchAlgorithmException {
-		   try (FileInputStream fis = new FileInputStream(file)) {
-			   byte[] bytes = new byte[(int)file.length()];
-			   fis.read(bytes);
-			   return getChecksum(method, bytes);
-		   }
-	   }
+	public static String getFileChecksum(String method, File file) throws IOException, NoSuchAlgorithmException {
+		try (FileInputStream fis = new FileInputStream(file)) {
+			byte[] bytes = new byte[(int)file.length()];
+			fis.read(bytes);
+			return getChecksum(method, bytes);
+		}
+	}
 
-	   @SneakyThrows(FileNotFoundException.class)
-	   public static Shape loadShape(String file) {
-		   ShapeInfo info = shapeCache.get(file);
-		   if (info == null) {
-			   info = Util.GSON.fromJson(new FileReader(new File("resources/shapes/" + file + ".shape")), ShapeInfo.class);
-			   shapeCache.put(file, info);
-		   }
+	@SneakyThrows(FileNotFoundException.class)
+	public static Shape loadShape(String file) {
+		ShapeInfo info = shapeCache.get(file);
+		if (info == null) {
+			info = Util.GSON.fromJson(new FileReader(new File("resources/shapes/" + file + ".shape")), ShapeInfo.class);
+			shapeCache.put(file, info);
+		}
 
-		   switch (info.type.toLowerCase()) {
-			   case "circle":
-				   return new Circle(0, 0, info.radius);
-			   case "ellipse":
-				   return new Ellipse(0, 0, info.radius1, info.radius2);
-			   case "polygon":
-				   if (info.points.length % 2 != 0) throw new IllegalArgumentException("Invalid point array, must have even number of elements");
-				   float[] points = new float[info.points.length];
-				   for (int i = 0; i < points.length; i += 2) {
-					   points[i] = info.points[i] + info.pointOffsetX;
-					   points[i + 1] = info.points[i + 1] + info.pointOffsetY;
-				   }
-				   Vector2 pos = findMinimumPoint(points);
-				   Polygon poly = new Polygon(points);
-				   poly.setX(pos.getX());
-				   poly.setY(pos.getY());
-				   return poly;
-			   case "rectangle":
-				   Rectangle rect = new Rectangle(0, 0, info.width, info.height);
-				   rect.setCenterX(0);
-				   rect.setCenterY(0);
-				   return rect;
-			   case "roundedrectangle":
-				   if (info.cornerFlags != null) {
-					   int flags = 0;
-					   for (String flag : info.cornerFlags) {
-						   switch (flag.toUpperCase()) {
-							   case "TOP_LEFT":
-								   flags |= RoundedRectangle.TOP_LEFT;
-								   break;
-							   case "TOP_RIGHT":
-								   flags |= RoundedRectangle.TOP_RIGHT;
-								   break;
-							   case "BOTTOM_LEFT":
-								   flags |= RoundedRectangle.BOTTOM_LEFT;
-								   break;
-							   case "BOTTOM_RIGHT":
-								   flags |= RoundedRectangle.BOTTOM_RIGHT;
-								   break;
-							   case "ALL":
-								   flags = RoundedRectangle.ALL;
-								   break;
-							   default:
-								   throw new IllegalArgumentException("Invalid corner flag: " + flag);
-						   }
-					   }
-					   rect = new RoundedRectangle(0, 0, info.width, info.height, info.cornerRadius, 25, flags);
-				   } else {
-					   rect = new RoundedRectangle(0, 0, info.width, info.height, info.cornerRadius);
-				   }
-				   rect.setCenterX(0);
-				   rect.setCenterY(0);
-				   return rect;
-			   default:
-				   throw new IllegalArgumentException("Invalid shape type: " + info.type);
-		   }
-	   }
+		switch (info.type.toLowerCase()) {
+			case "circle":
+				return new Circle(0, 0, info.radius);
+			case "ellipse":
+				return new Ellipse(0, 0, info.radius1, info.radius2);
+			case "polygon":
+				if (info.points.length % 2 != 0) throw new IllegalArgumentException("Invalid point array, must have even number of elements");
+				float[] points = new float[info.points.length];
+				for (int i = 0; i < points.length; i += 2) {
+					points[i] = info.points[i] + info.pointOffsetX;
+					points[i + 1] = info.points[i + 1] + info.pointOffsetY;
+				}
+				Vector2 pos = findMinimumPoint(points);
+				Polygon poly = new Polygon(points);
+				poly.setX(pos.getX());
+				poly.setY(pos.getY());
+				return poly;
+			case "rectangle":
+				Rectangle rect = new Rectangle(0, 0, info.width, info.height);
+				rect.setCenterX(0);
+				rect.setCenterY(0);
+				return rect;
+			case "roundedrectangle":
+				if (info.cornerFlags != null) {
+					int flags = 0;
+					for (String flag : info.cornerFlags) {
+						switch (flag.toUpperCase()) {
+							case "TOP_LEFT":
+								flags |= RoundedRectangle.TOP_LEFT;
+								break;
+							case "TOP_RIGHT":
+								flags |= RoundedRectangle.TOP_RIGHT;
+								break;
+							case "BOTTOM_LEFT":
+								flags |= RoundedRectangle.BOTTOM_LEFT;
+								break;
+							case "BOTTOM_RIGHT":
+								flags |= RoundedRectangle.BOTTOM_RIGHT;
+								break;
+							case "ALL":
+								flags = RoundedRectangle.ALL;
+								break;
+							default:
+								throw new IllegalArgumentException("Invalid corner flag: " + flag);
+						}
+					}
+					rect = new RoundedRectangle(0, 0, info.width, info.height, info.cornerRadius, 25, flags);
+				} else {
+					rect = new RoundedRectangle(0, 0, info.width, info.height, info.cornerRadius);
+				}
+				rect.setCenterX(0);
+				rect.setCenterY(0);
+				return rect;
+			default:
+				throw new IllegalArgumentException("Invalid shape type: " + info.type);
+		}
+	}
 
-	   private static Vector2 findMinimumPoint(float[] points) {
-		   if (points.length == 0) return new Vector2();
-		   float minX = points[0];
-		   float minY = points[1];
-		   for (int i = 0; i < points.length; i += 2) {
-			   minX = Math.min(points[i], minX);
-			   minY = Math.min(points[i + 1], minY);
-		   }
-		   return new Vector2(minX, minY);
-	   }
+	private static Vector2 findMinimumPoint(float[] points) {
+		if (points.length == 0) return new Vector2();
+		float minX = points[0];
+		float minY = points[1];
+		for (int i = 0; i < points.length; i += 2) {
+			minX = Math.min(points[i], minX);
+			minY = Math.min(points[i + 1], minY);
+		}
+		return new Vector2(minX, minY);
+	}
 
-	   /**
-	    * Compresses the byte array using deflate algorithm.
-	    */
-	   public static byte[] compresssBytes(byte[] bytes) throws IOException {
-		   ByteArrayOutputStream out = new ByteArrayOutputStream();
-		   try (DeflaterOutputStream dos = new DeflaterOutputStream(out)) {
-			   dos.write(bytes);
-		   }
-		   return out.toByteArray();
-	   }
+	/**
+	 * Compresses the byte array using deflate algorithm.
+	 */
+	public static byte[] compresssBytes(byte[] bytes) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (DeflaterOutputStream dos = new DeflaterOutputStream(out)) {
+			dos.write(bytes);
+		}
+		return out.toByteArray();
+	}
 
-	   /**
-	    * Decompresses the byte array using deflate algorithm.
-	    */
-	   public static byte[] decompresssBytes(byte[] bytes) throws IOException {
-		   ByteArrayOutputStream out = new ByteArrayOutputStream();
-		   try (InflaterOutputStream dos = new InflaterOutputStream(out)) {
-			   dos.write(bytes);
-		   }
-		   return out.toByteArray();
-	   }
+	/**
+	 * Decompresses the byte array using deflate algorithm.
+	 */
+	public static byte[] decompresssBytes(byte[] bytes) throws IOException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		try (InflaterOutputStream dos = new InflaterOutputStream(out)) {
+			dos.write(bytes);
+		}
+		return out.toByteArray();
+	}
 
-	   public static float[] floatListToArray(List<Float> list) {
-		   float[] array = new float[list.size()];
-		   for (int i = 0; i < array.length; i++) {
-			   array[i] = list.get(i);
-		   }
-		   return array;
-	   }
+	public static float[] floatListToArray(List<Float> list) {
+		float[] array = new float[list.size()];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = list.get(i);
+		}
+		return array;
+	}
 
-	   public static short floatToShortBits(float fval) {
-		   int fbits = Float.floatToIntBits(fval);
-		   int sign = fbits >>> 16 & 0x8000;
-		   int val = (fbits & 0x7fffffff) + 0x1000;
+	public static short floatToShortBits(float fval) {
+		int fbits = Float.floatToIntBits(fval);
+		int sign = fbits >>> 16 & 0x8000;
+		int val = (fbits & 0x7fffffff) + 0x1000;
 
-		   if(val >= 0x47800000) {
-			   if((fbits & 0x7fffffff) >= 0x47800000) {
-				   if(val < 0x7f800000) return (short)(sign | 0x7c00);
-				   return (short)(sign | 0x7c00 | (fbits & 0x007fffff) >>> 13);
-			   }
-			   return (short)(sign | 0x7bff);
-		   }
-		   if(val >= 0x38800000) return (short)(sign | val - 0x38000000 >>> 13);
-		   if(val < 0x33000000) return (short)(sign);
-		   val = (fbits & 0x7fffffff) >>> 23;
-		   return (short)(sign | ((fbits & 0x7fffff | 0x800000) + (0x800000 >>> val - 102) >>> 126 - val));
-	   }
+		if(val >= 0x47800000) {
+			if((fbits & 0x7fffffff) >= 0x47800000) {
+				if(val < 0x7f800000) return (short)(sign | 0x7c00);
+				return (short)(sign | 0x7c00 | (fbits & 0x007fffff) >>> 13);
+			}
+			return (short)(sign | 0x7bff);
+		}
+		if(val >= 0x38800000) return (short)(sign | val - 0x38000000 >>> 13);
+		if(val < 0x33000000) return (short)(sign);
+		val = (fbits & 0x7fffffff) >>> 23;
+		return (short)(sign | ((fbits & 0x7fffff | 0x800000) + (0x800000 >>> val - 102) >>> 126 - val));
+	}
 
-	   public static float shortBitsToFloat(short hbits) {
-		   int mant = hbits & 0x03ff;
-		   int exp =  hbits & 0x7c00;
-		   if(exp == 0x7c00) exp = 0x3fc00;
-		   else if(exp != 0) {
-			   exp += 0x1c000;
-			   if(mant == 0 && exp > 0x1c400) return Float.intBitsToFloat((hbits & 0x8000) << 16 | exp << 13 | 0x3ff);
-		   }
-		   else if(mant != 0) {
-			   exp = 0x1c400;
-			   do {
-				   mant <<= 1;
-				   exp -= 0x400;
-			   } while((mant & 0x400) == 0);
-			   mant &= 0x3ff;
-		   }
-		   return Float.intBitsToFloat((hbits & 0x8000) << 16 | (exp | mant) << 13);
-	   }
+	public static float shortBitsToFloat(short hbits) {
+		int mant = hbits & 0x03ff;
+		int exp =  hbits & 0x7c00;
+		if(exp == 0x7c00) exp = 0x3fc00;
+		else if(exp != 0) {
+			exp += 0x1c000;
+			if(mant == 0 && exp > 0x1c400) return Float.intBitsToFloat((hbits & 0x8000) << 16 | exp << 13 | 0x3ff);
+		}
+		else if(mant != 0) {
+			exp = 0x1c400;
+			do {
+				mant <<= 1;
+				exp -= 0x400;
+			} while((mant & 0x400) == 0);
+			mant &= 0x3ff;
+		}
+		return Float.intBitsToFloat((hbits & 0x8000) << 16 | (exp | mant) << 13);
+	}
 
-	   public static byte[] readFully(InputStream in) throws IOException {
-		   @Cleanup ByteArrayOutputStream out = new ByteArrayOutputStream();
-		   byte[] bytes = new byte[4096]; int count;
-		   while ((count = in.read(bytes, 0, bytes.length)) != -1) {
-			   out.write(bytes, 0, count);
-		   }
-		   return out.toByteArray();
-	   }
+	public static byte[] readFully(InputStream in) throws IOException {
+		@Cleanup ByteArrayOutputStream out = new ByteArrayOutputStream();
+		byte[] bytes = new byte[4096]; int count;
+		while ((count = in.read(bytes, 0, bytes.length)) != -1) {
+			out.write(bytes, 0, count);
+		}
+		return out.toByteArray();
+	}
 
-	   public static String readFile(File file) throws FileNotFoundException, IOException {
-		   @Cleanup FileInputStream in = new FileInputStream(file);
-		   byte[] bytes = readFully(in);
-		   return new String(bytes, "UTF-8");
-	   }
+	public static String readFile(File file) throws FileNotFoundException, IOException {
+		@Cleanup FileInputStream in = new FileInputStream(file);
+		byte[] bytes = readFully(in);
+		return new String(bytes, "UTF-8");
+	}
 
-	   public static long microTime() {
-		   return System.nanoTime() / 1000L;
-	   }
+	public static long microTime() {
+		return System.nanoTime() / 1000L;
+	}
 
-	   public static long milliTime() {
-		   return System.nanoTime() / 1000000L;
-	   }
+	public static long milliTime() {
+		return System.nanoTime() / 1000000L;
+	}
 
-	   public static Rectangle clipRectangle(Rectangle toClip, Rectangle clipTo) {
-		   if (!toClip.intersects(clipTo)) return new Rectangle(0, 0, 0, 0);
-		   float newX = MathHelper.clamp(toClip.getX(), clipTo.getX(), clipTo.getMaxX());
-		   float newY = MathHelper.clamp(toClip.getY(), clipTo.getY(), clipTo.getMaxY());
-		   float newWidth = MathHelper.clamp(toClip.getWidth(), 0, clipTo.getWidth() - (newX - clipTo.getX()));
-		   float newHeight = MathHelper.clamp(toClip.getHeight(), 0, clipTo.getHeight() - (newY - clipTo.getY()));
-		   return new Rectangle(newX, newY, newWidth, newHeight);
-	   }
+	public static Rectangle clipRectangle(Rectangle toClip, Rectangle clipTo) {
+		if (!toClip.intersects(clipTo)) return new Rectangle(0, 0, 0, 0);
+		float newX = MathHelper.clamp(toClip.getX(), clipTo.getX(), clipTo.getMaxX());
+		float newY = MathHelper.clamp(toClip.getY(), clipTo.getY(), clipTo.getMaxY());
+		float newWidth = MathHelper.clamp(toClip.getWidth(), 0, clipTo.getWidth() - (newX - clipTo.getX()));
+		float newHeight = MathHelper.clamp(toClip.getHeight(), 0, clipTo.getHeight() - (newY - clipTo.getY()));
+		return new Rectangle(newX, newY, newWidth, newHeight);
+	}
 
-	   public static long bytesToMB(long bytes) {
-		   return bytes / 1048576;
-	   }
+	public static long bytesToMB(long bytes) {
+		return bytes / 1048576;
+	}
 
-	   public static String bytesToMBString(long bytes) {
-		   return bytesToMB(bytes) + " MB";
-	   }
+	public static String bytesToMBString(long bytes) {
+		return bytesToMB(bytes) + " MB";
+	}
 
-	   public static String colorToString(ReadableColor color, boolean alpha) {
-		   return color.getRed() + "," + color.getGreen() + "," + color.getBlue() + (alpha ? "," + color.getAlpha() : "");
-	   }
+	public static String colorToString(ReadableColor color, boolean alpha) {
+		return color.getRed() + "," + color.getGreen() + "," + color.getBlue() + (alpha ? "," + color.getAlpha() : "");
+	}
 
-	   public static Color stringToColor(String str) {
-		   String[] split = str.split(",");
-		   if (split.length < 3) throw new IllegalArgumentException("Too few color components or wrong delimiter");
-		   Color color = new Color(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-		   if (split.length >= 4) color.setAlpha(Integer.parseInt(split[3]));
-		   return color;
-	   }
+	public static Color stringToColor(String str) {
+		String[] split = str.split(",");
+		if (split.length < 3) throw new IllegalArgumentException("Too few color components or wrong delimiter");
+		Color color = new Color(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+		if (split.length >= 4) color.setAlpha(Integer.parseInt(split[3]));
+		return color;
+	}
 
-	   public static int getNextPowerOfTwo(int number) {
-		   int ret = Integer.highestOneBit(number);
-		   return ret < number ? ret << 1 : ret;
-	   }
+	public static int getNextPowerOfTwo(int number) {
+		int ret = Integer.highestOneBit(number);
+		return ret < number ? ret << 1 : ret;
+	}
 
-	   public static boolean isPowerOfTwo(int number) {
-		   return (number != 0) && (number & (number - 1)) == 0;
-	   }
+	public static boolean isPowerOfTwo(int number) {
+		return (number != 0) && (number & (number - 1)) == 0;
+	}
 
-	   public static final class IPInfo {
-		   private InetAddress address;
-		   private int port;
-		   private boolean ipv6;
+	public static final class IPInfo {
+		private InetAddress address;
+		private int port;
+		private boolean ipv6;
 
-		   private IPInfo(InetAddress address, int port, boolean ipv6) {
-			   this.address = address;
-			   this.port = port;
-			   this.ipv6 = ipv6;
-		   }
+		private IPInfo(InetAddress address, int port, boolean ipv6) {
+			this.address = address;
+			this.port = port;
+			this.ipv6 = ipv6;
+		}
 
-		   public InetAddress getAddress() {
-			   return address;
-		   }
+		public InetAddress getAddress() {
+			return address;
+		}
 
-		   public int getPort() {
-			   return port;
-		   }
+		public int getPort() {
+			return port;
+		}
 
-		   public boolean isIPv6() {
-			   return ipv6;
-		   }
+		public boolean isIPv6() {
+			return ipv6;
+		}
 
-		   @Override
-		   public boolean equals(Object obj) {
-			   if (obj == null) {
-				   return false;
-			   }
-			   if (getClass() != obj.getClass()) {
-				   return false;
-			   }
-			   final IPInfo other = (IPInfo)obj;
-			   if (this.address != other.address && (this.address == null || !this.address.equals(other.address))) {
-				   return false;
-			   }
-			   if (this.port != other.port) {
-				   return false;
-			   }
-			   return true;
-		   }
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final IPInfo other = (IPInfo)obj;
+			if (this.address != other.address && (this.address == null || !this.address.equals(other.address))) {
+				return false;
+			}
+			if (this.port != other.port) {
+				return false;
+			}
+			return true;
+		}
 
-		   @Override
-		   public int hashCode() {
-			   int hash = 5;
-			   hash = 67 * hash + (this.address != null ? this.address.hashCode() : 0);
-			   hash = 67 * hash + this.port;
-			   return hash;
-		   }
+		@Override
+		public int hashCode() {
+			int hash = 5;
+			hash = 67 * hash + (this.address != null ? this.address.hashCode() : 0);
+			hash = 67 * hash + this.port;
+			return hash;
+		}
 
-		   @Override
-		   public String toString() {
-			   return port < 0 ? address.getHostAddress() : ipv6 ? '[' + address.getHostAddress() + "]:" + port : address.getHostAddress() + ':' + port;
-		   }
-	   }
+		@Override
+		public String toString() {
+			return port < 0 ? address.getHostAddress() : ipv6 ? '[' + address.getHostAddress() + "]:" + port : address.getHostAddress() + ':' + port;
+		}
+	}
 }
