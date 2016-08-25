@@ -26,52 +26,52 @@ import java.util.List;
  * @author Techjar
  */
 public class PacketSetAnimationOption extends Packet {
-    private String optionId;
-    private String value;
+	private String optionId;
+	private String value;
 
-    public PacketSetAnimationOption() {
-    }
+	public PacketSetAnimationOption() {
+	}
 
-    public PacketSetAnimationOption(String optionId, String value) {
-        this.optionId = optionId;
-        this.value = value;
-    }
+	public PacketSetAnimationOption(String optionId, String value) {
+		this.optionId = optionId;
+		this.value = value;
+	}
 
-    @Override
-    public void readData(DataInputStream stream) throws IOException {
-        optionId = stream.readUTF();
-        value = stream.readUTF();
-    }
+	@Override
+	public void readData(DataInputStream stream) throws IOException {
+		optionId = stream.readUTF();
+		value = stream.readUTF();
+	}
 
-    @Override
-    public void writeData(DataOutputStream stream) throws IOException {
-        stream.writeUTF(optionId);
-        stream.writeUTF(value);
-    }
+	@Override
+	public void writeData(DataOutputStream stream) throws IOException {
+		stream.writeUTF(optionId);
+		stream.writeUTF(value);
+	}
 
-    @Override
-    public int getRequiredCapabilities() {
-        return Capabilities.CONTROL_DATA;
-    }
+	@Override
+	public int getRequiredCapabilities() {
+		return Capabilities.CONTROL_DATA;
+	}
 
-    @Override
-    public void process() {
-        Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
-        if (anim != null) {
-            for (AnimationOption option : anim.getOptions()) {
-                if (option.getId().equals(optionId)) {
-                    Util.setOptionInGUI(option, value);
-                    break;
-                }
-            }
-        }
-    }
+	@Override
+	public void process() {
+		Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
+		if (anim != null) {
+			for (AnimationOption option : anim.getOptions()) {
+				if (option.getId().equals(optionId)) {
+					Util.setOptionInGUI(option, value);
+					break;
+				}
+			}
+		}
+	}
 
-    public String getOptionId() {
-        return optionId;
-    }
+	public String getOptionId() {
+		return optionId;
+	}
 
-    public String getValue() {
-        return value;
-    }
+	public String getValue() {
+		return value;
+	}
 }

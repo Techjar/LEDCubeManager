@@ -7,18 +7,18 @@ package com.techjar.ledcm.hardware.animation.sequence;
  * @author Techjar
  */
 public class SequenceCommandMusicSync extends SequenceCommand {
-    public SequenceCommandMusicSync(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandMusicSync(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        return true;
-    }
+	@Override
+	public boolean execute(String[] args) {
+		return true;
+	}
 
-    @Override
-    public boolean onSequenceLoad(String[] args) {
-        sequence.setMusicSynced(true);
-        return false;
-    }
+	@Override
+	public boolean onSequenceLoad(String[] args) {
+		sequence.setMusicSynced(true);
+		return false;
+	}
 }

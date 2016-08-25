@@ -9,13 +9,13 @@ import com.techjar.ledcm.LEDCubeManager;
  * @author Techjar
  */
 public class SequenceCommandResetTransform extends SequenceCommand {
-    public SequenceCommandResetTransform(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandResetTransform(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        LEDCubeManager.getLEDCube().resetTransform();
-        return true;
-    }
+	@Override
+	public boolean execute(String[] args) {
+		LEDCubeManager.getLEDCube().resetTransform();
+		return true;
+	}
 }

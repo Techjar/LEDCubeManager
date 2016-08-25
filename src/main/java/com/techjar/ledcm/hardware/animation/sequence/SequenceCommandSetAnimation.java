@@ -16,30 +16,30 @@ import java.util.List;
  * @author Techjar
  */
 public class SequenceCommandSetAnimation extends SequenceCommand {
-    public SequenceCommandSetAnimation(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandSetAnimation(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        Animation anim = LEDCubeManager.getLEDCube().getAnimationByClassName("Animation" + args[0]);
-        LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(anim);
-        LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setSelectedItem(anim.getName());
-        List<GUI> components = LEDCubeManager.getInstance().getScreenMainControl().animOptionsScrollBox.findComponentsByName("resetdefaults_button");
-        if (components.size() > 0) {
-            GUI component = components.get(0);
-            if (component instanceof GUIButton) {
-                ((GUIButton)component).click();
-            }
-        }
-        for (int i = 1; i < args.length; i += 2) {
-            for (AnimationOption option : anim.getOptions()) {
-                if (option.getId().equals(args[i])) {
-                    Util.setOptionInGUI(option, args[i + 1]);
-                    break;
-                }
-            }
-        }
-        return true;
-    }
+	@Override
+	public boolean execute(String[] args) {
+		Animation anim = LEDCubeManager.getLEDCube().getAnimationByClassName("Animation" + args[0]);
+		LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(anim);
+		LEDCubeManager.getInstance().getScreenMainControl().animComboBox.setSelectedItem(anim.getName());
+		List<GUI> components = LEDCubeManager.getInstance().getScreenMainControl().animOptionsScrollBox.findComponentsByName("resetdefaults_button");
+		if (components.size() > 0) {
+			GUI component = components.get(0);
+			if (component instanceof GUIButton) {
+				((GUIButton)component).click();
+			}
+		}
+		for (int i = 1; i < args.length; i += 2) {
+			for (AnimationOption option : anim.getOptions()) {
+				if (option.getId().equals(args[i])) {
+					Util.setOptionInGUI(option, args[i + 1]);
+					break;
+				}
+			}
+		}
+		return true;
+	}
 }

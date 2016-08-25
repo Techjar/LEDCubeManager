@@ -9,21 +9,21 @@ import com.techjar.ledcm.hardware.LEDUtil;
  * @author Techjar
  */
 public class AnimationStaticFill extends Animation {
-    public AnimationStaticFill() {
-        super();
-    }
+	public AnimationStaticFill() {
+		super();
+	}
 
-    @Override
-    public String getName() {
-        return "Static Fill";
-    }
+	@Override
+	public String getName() {
+		return "Static Fill";
+	}
 
-    @Override
-    public synchronized void refresh() {
-        LEDUtil.fill(ledManager, LEDCubeManager.getPaintColor());
-    }
+	@Override
+	public synchronized void refresh() {
+		LEDUtil.fill(ledManager, LEDCubeManager.getPaintColor());
+	}
 
-    @Override
-    public synchronized void reset() {
-    }
+	@Override
+	public synchronized void reset() {
+	}
 }

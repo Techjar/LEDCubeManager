@@ -10,13 +10,13 @@ import com.techjar.ledcm.LEDCubeManager;
  * @author Techjar
  */
 public class SequenceCommandSetReflection extends SequenceCommand {
-    public SequenceCommandSetReflection(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandSetReflection(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        LEDCubeManager.getLEDCube().setReflection(Boolean.parseBoolean(args[0]), Boolean.parseBoolean(args[1]), Boolean.parseBoolean(args[2]));
-        return true;
-    }
+	@Override
+	public boolean execute(String[] args) {
+		LEDCubeManager.getLEDCube().setReflection(Boolean.parseBoolean(args[0]), Boolean.parseBoolean(args[1]), Boolean.parseBoolean(args[2]));
+		return true;
+	}
 }

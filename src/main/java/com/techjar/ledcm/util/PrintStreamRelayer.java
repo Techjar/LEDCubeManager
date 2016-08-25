@@ -16,27 +16,27 @@ import java.io.PrintStream;
  * @author Techjar
  */
 public class PrintStreamRelayer extends Thread {
-    private InputStream inputStream;
-    private PrintStream[] printStreams;
+	private InputStream inputStream;
+	private PrintStream[] printStreams;
 
-    public PrintStreamRelayer(InputStream inputStream, PrintStream... printStreams) {
-        super("Print Stream Relayer");
-        this.inputStream = inputStream;
-        this.printStreams = printStreams;
-    }
+	public PrintStreamRelayer(InputStream inputStream, PrintStream... printStreams) {
+		super("Print Stream Relayer");
+		this.inputStream = inputStream;
+		this.printStreams = printStreams;
+	}
 
-    @Override
-    public void run() {
-        try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = br.readLine()) != null) {
-                for (PrintStream printStream : printStreams) {
-                    printStream.println(line);
-                }
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+	@Override
+	public void run() {
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			String line;
+			while ((line = br.readLine()) != null) {
+				for (PrintStream printStream : printStreams) {
+					printStream.println(line);
+				}
+			}
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
 }

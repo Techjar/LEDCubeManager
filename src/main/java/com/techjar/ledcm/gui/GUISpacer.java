@@ -5,8 +5,8 @@ package com.techjar.ledcm.gui;
  * @author Techjar
  */
 public class GUISpacer extends GUI {
-    public GUISpacer() {
-    }
+	public GUISpacer() {
+	}
 
 	@Override
 	protected boolean keyboardEvent(int key, boolean state, char character) {
@@ -18,11 +18,11 @@ public class GUISpacer extends GUI {
 		return true;
 	}
 
-    @Override
-    public void update(float delta) {
-    }
+	@Override
+	public void update(float delta) {
+	}
 
-    @Override
-    public void render() {
-    }
+	@Override
+	public void render() {
+	}
 }

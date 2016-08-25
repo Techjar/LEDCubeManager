@@ -22,42 +22,42 @@ import lombok.SneakyThrows;
  * @author Techjar
  */
 public class FrameServer {
-    private Thread sendThread;
-    public volatile int numClients;
-    private Queue<BufferedImage> sendQueue = new ConcurrentLinkedQueue<>();
+	private Thread sendThread;
+	public volatile int numClients;
+	private Queue<BufferedImage> sendQueue = new ConcurrentLinkedQueue<>();
 
-    public FrameServer() throws IOException {
-        sendThread = new Thread("Frame Send Thread") {
-            @Override
-            @SneakyThrows(InterruptedException.class)
-            public void run() {
-                BufferedImage image;
-                while (true) {
-                    while ((image = sendQueue.poll()) != null) {
-                        try {
-                            byte[] imageBytes;
-                            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                                ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
-                                ImageWriteParam param = writer.getDefaultWriteParam();
-                                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                                param.setCompressionQuality(0.5F);
-                                writer.setOutput(new MemoryCacheImageOutputStream(baos));
-                                writer.write(null, new IIOImage(image, null, null), param);
-                                writer.dispose();
-                                imageBytes = baos.toByteArray();
-                            }
-                            LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketVisualFrame(imageBytes));
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-                    Thread.sleep(1);
-                }
-            }
-        };
-    }
+	public FrameServer() throws IOException {
+		sendThread = new Thread("Frame Send Thread") {
+			@Override
+			@SneakyThrows(InterruptedException.class)
+			public void run() {
+				BufferedImage image;
+				while (true) {
+					while ((image = sendQueue.poll()) != null) {
+						try {
+							byte[] imageBytes;
+							try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+								ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+								ImageWriteParam param = writer.getDefaultWriteParam();
+								param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+								param.setCompressionQuality(0.5F);
+								writer.setOutput(new MemoryCacheImageOutputStream(baos));
+								writer.write(null, new IIOImage(image, null, null), param);
+								writer.dispose();
+								imageBytes = baos.toByteArray();
+							}
+							LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketVisualFrame(imageBytes));
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+					}
+					Thread.sleep(1);
+				}
+			}
+		};
+	}
 
-    public void queueFrame(BufferedImage image) {
-        sendQueue.add(image);
-    }
+	public void queueFrame(BufferedImage image) {
+		sendQueue.add(image);
+	}
 }

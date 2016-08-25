@@ -10,29 +10,29 @@ import java.io.File;
  * @author Techjar
  */
 public class SequenceCommandLoadMusic extends SequenceCommand {
-    private boolean loaded;
+	private boolean loaded;
 
-    public SequenceCommandLoadMusic(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandLoadMusic(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        if (!loaded) {
-            LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
-            LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(new File(args[0]));
-            loaded = true;
-        }
-        return LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying();
-    }
+	@Override
+	public boolean execute(String[] args) {
+		if (!loaded) {
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(new File(args[0]));
+			loaded = true;
+		}
+		return LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying();
+	}
 
-    @Override
-    public boolean onSequenceLoad(String[] args) {
-        try {
-            LEDCubeManager.getLEDCube().getSpectrumAnalyzer().convertFile(new File(args[0]), false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return true;
-    }
+	@Override
+	public boolean onSequenceLoad(String[] args) {
+		try {
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().convertFile(new File(args[0]), false);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return true;
+	}
 }

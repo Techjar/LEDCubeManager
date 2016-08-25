@@ -10,15 +10,15 @@ import org.newdawn.slick.UnicodeFont;
  * @author Techjar
  */
 public abstract class GUIText extends GUI {
-    protected UnicodeFont font;
-    protected Color color;
-    protected StringBuilder text;
+	protected UnicodeFont font;
+	protected Color color;
+	protected StringBuilder text;
 
-    public GUIText(UnicodeFont font, Color color, String text) {
-        this.font = font;
-        this.color = color;
-        this.text = new StringBuilder(text);
-    }
+	public GUIText(UnicodeFont font, Color color, String text) {
+		this.font = font;
+		this.color = color;
+		this.text = new StringBuilder(text);
+	}
 
 	@Override
 	protected boolean keyboardEvent(int key, boolean state, char character) {
@@ -29,37 +29,37 @@ public abstract class GUIText extends GUI {
 	protected boolean mouseEvent(int button, boolean state, int dwheel) {
 		return true;
 	}
-    
-    @Override
-    public void update(float delta) {
-    }
 
-    @Override
-    public void render() {
-        font.drawString(getPosition().getX(), getPosition().getY(), text.toString(), Util.convertColor(color));
-    }
-    
-    public String getText() {
-        return text.toString();
-    }
+	@Override
+	public void update(float delta) {
+	}
 
-    public void setText(String text) {
-        this.text = new StringBuilder(text);
-    }
+	@Override
+	public void render() {
+		font.drawString(getPosition().getX(), getPosition().getY(), text.toString(), Util.convertColor(color));
+	}
 
-    public Color getColor() {
-        return color;
-    }
+	public String getText() {
+		return text.toString();
+	}
 
-    public void setColor(Color color) {
-        this.color = color;
-    }
+	public void setText(String text) {
+		this.text = new StringBuilder(text);
+	}
 
-    public UnicodeFont getFont() {
-        return font;
-    }
+	public Color getColor() {
+		return color;
+	}
 
-    public void setFont(UnicodeFont font) {
-        this.font = font;
-    }
+	public void setColor(Color color) {
+		this.color = color;
+	}
+
+	public UnicodeFont getFont() {
+		return font;
+	}
+
+	public void setFont(UnicodeFont font) {
+		this.font = font;
+	}
 }

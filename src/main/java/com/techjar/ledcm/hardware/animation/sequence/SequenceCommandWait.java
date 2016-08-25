@@ -11,18 +11,18 @@ import com.techjar.ledcm.util.Timer;
  * @author Techjar
  */
 public class SequenceCommandWait extends SequenceCommand {
-    private Timer timer = new Timer();
+	private Timer timer = new Timer();
 
-    public SequenceCommandWait(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandWait(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        if (sequence.isMusicSynced()) {
-            return LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getPositionMillis() >= Integer.parseInt(args[0]);
-        } else {
-            return timer.getMilliseconds() >= Integer.parseInt(args[0]);
-        }
-    }
+	@Override
+	public boolean execute(String[] args) {
+		if (sequence.isMusicSynced()) {
+			return LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getPositionMillis() >= Integer.parseInt(args[0]);
+		} else {
+			return timer.getMilliseconds() >= Integer.parseInt(args[0]);
+		}
+	}
 }

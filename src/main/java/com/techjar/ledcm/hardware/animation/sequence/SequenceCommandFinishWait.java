@@ -9,12 +9,12 @@ import com.techjar.ledcm.LEDCubeManager;
  * @author Techjar
  */
 public class SequenceCommandFinishWait extends SequenceCommand {
-    public SequenceCommandFinishWait(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandFinishWait(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        return LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().isFinished();
-    }
+	@Override
+	public boolean execute(String[] args) {
+		return LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().isFinished();
+	}
 }

@@ -9,13 +9,13 @@ import com.techjar.ledcm.LEDCubeManager;
  * @author Techjar
  */
 public class SequenceCommandResetAnimation extends SequenceCommand {
-    public SequenceCommandResetAnimation(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandResetAnimation(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().reset();
-        return true;
-    }
+	@Override
+	public boolean execute(String[] args) {
+		LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation().reset();
+		return true;
+	}
 }

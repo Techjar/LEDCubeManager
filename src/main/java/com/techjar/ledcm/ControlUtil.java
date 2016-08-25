@@ -30,50 +30,50 @@ import lombok.Getter;
  * @author Techjar
  */
 public class ControlUtil {
-    private ControlUtil() {
-    }
+	private ControlUtil() {
+	}
 
-    public static Packet getAnimationOptionsPacket() {
-        Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
-        AnimationOption[] options = anim.getOptions();
-        String[] optionValues = new String[options.length];
-        for (int i = 0; i < options.length; i++) {
-            optionValues[i] = fetchOptionValue(options[i].getId());
-        }
-        return new PacketAnimationOptionList(options, optionValues);
-    }
+	public static Packet getAnimationOptionsPacket() {
+		Animation anim = LEDCubeManager.getLEDCube().getCommThread().getCurrentAnimation();
+		AnimationOption[] options = anim.getOptions();
+		String[] optionValues = new String[options.length];
+		for (int i = 0; i < options.length; i++) {
+			optionValues[i] = fetchOptionValue(options[i].getId());
+		}
+		return new PacketAnimationOptionList(options, optionValues);
+	}
 
-    private static String fetchOptionValue(String optionId) {
-        ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
-        List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);
-        if (components.size() > 0) {
-            GUI component = components.get(0);
-            if (component instanceof GUITextField) {
-                return ((GUITextField)component).getText();
-            } else if (component instanceof GUISlider) {
-                return Float.toString(((GUISlider)component).getValue());
-            } else if (component instanceof GUIComboBox) {
-                return ((GUIComboBox)component).getSelectedItem().toString();
-            } else if (component instanceof GUIComboButton) {
-                return ((GUIComboButton)component).getSelectedItem().toString();
-            } else if (component instanceof GUIBox) {
-                GUIBox box = (GUIBox)component;
-                for (GUI gui : box.getAllComponents()) {
-                    if (gui instanceof GUIRadioButton) {
-                        GUIRadioButton radioButton = (GUIRadioButton)gui;
-                        if (radioButton.isSelected()) {
-                            return radioButton.getLabel().getText();
-                        }
-                    }
-                }
-            } else if (component instanceof GUICheckBox) {
-                return Boolean.toString(((GUICheckBox)component).isChecked());
-            } else if (component instanceof GUISpinner) {
-                return Float.toString(((GUISpinner)component).getValue());
-            } else if (component instanceof GUIColorPicker) {
-                return Util.colorToString(((GUIColorPicker)component).getValue(), false);
-            }
-        }
-        return "";
-    }
+	private static String fetchOptionValue(String optionId) {
+		ScreenMainControl screen = LEDCubeManager.getInstance().getScreenMainControl();
+		List<GUI> components = screen.animOptionsScrollBox.findComponentsByName(optionId);
+		if (components.size() > 0) {
+			GUI component = components.get(0);
+			if (component instanceof GUITextField) {
+				return ((GUITextField)component).getText();
+			} else if (component instanceof GUISlider) {
+				return Float.toString(((GUISlider)component).getValue());
+			} else if (component instanceof GUIComboBox) {
+				return ((GUIComboBox)component).getSelectedItem().toString();
+			} else if (component instanceof GUIComboButton) {
+				return ((GUIComboButton)component).getSelectedItem().toString();
+			} else if (component instanceof GUIBox) {
+				GUIBox box = (GUIBox)component;
+				for (GUI gui : box.getAllComponents()) {
+					if (gui instanceof GUIRadioButton) {
+						GUIRadioButton radioButton = (GUIRadioButton)gui;
+						if (radioButton.isSelected()) {
+							return radioButton.getLabel().getText();
+						}
+					}
+				}
+			} else if (component instanceof GUICheckBox) {
+				return Boolean.toString(((GUICheckBox)component).isChecked());
+			} else if (component instanceof GUISpinner) {
+				return Float.toString(((GUISpinner)component).getValue());
+			} else if (component instanceof GUIColorPicker) {
+				return Util.colorToString(((GUIColorPicker)component).getValue(), false);
+			}
+		}
+		return "";
+	}
 }

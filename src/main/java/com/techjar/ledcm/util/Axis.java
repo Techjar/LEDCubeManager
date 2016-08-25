@@ -6,18 +6,18 @@ package com.techjar.ledcm.util;
  * @author Techjar
  */
 public enum Axis {
-    PITCH(-1, 0, 0),
-    YAW(0, -1, 0),
-    ROLL(0, 0, -1),
-    UNKNOWN(0, 0, 0);
-    
-    private Vector3 vector;
+	PITCH(-1, 0, 0),
+	YAW(0, -1, 0),
+	ROLL(0, 0, -1),
+	UNKNOWN(0, 0, 0);
 
-    private Axis(float x, float y, float z) {
-        this.vector = new Vector3(x, y, z);
-    }
+	private Vector3 vector;
 
-    public Vector3 getVector() {
-        return vector.copy();
-    }
+	private Axis(float x, float y, float z) {
+		this.vector = new Vector3(x, y, z);
+	}
+
+	public Vector3 getVector() {
+		return vector.copy();
+	}
 }

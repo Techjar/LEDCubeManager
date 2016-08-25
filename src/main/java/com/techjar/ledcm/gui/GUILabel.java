@@ -8,7 +8,7 @@ import org.newdawn.slick.UnicodeFont;
  * @author Techjar
  */
 public class GUILabel extends GUIText {
-    public GUILabel(UnicodeFont font, Color color, String text) {
-        super(font, color, text);
-    }
+	public GUILabel(UnicodeFont font, Color color, String text) {
+		super(font, color, text);
+	}
 }

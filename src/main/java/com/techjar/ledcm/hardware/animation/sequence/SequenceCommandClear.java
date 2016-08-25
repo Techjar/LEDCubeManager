@@ -10,13 +10,13 @@ import com.techjar.ledcm.hardware.LEDUtil;
  * @author Techjar
  */
 public class SequenceCommandClear extends SequenceCommand {
-    public SequenceCommandClear(AnimationSequence sequence) {
-        super(sequence);
-    }
+	public SequenceCommandClear(AnimationSequence sequence) {
+		super(sequence);
+	}
 
-    @Override
-    public boolean execute(String[] args) {
-        LEDUtil.clear(LEDCubeManager.getLEDCube().getLEDManager());
-        return true;
-    }
+	@Override
+	public boolean execute(String[] args) {
+		LEDUtil.clear(LEDCubeManager.getLEDCube().getLEDManager());
+		return true;
+	}
 }

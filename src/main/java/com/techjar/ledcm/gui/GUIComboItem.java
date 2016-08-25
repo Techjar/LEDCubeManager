@@ -15,49 +15,49 @@ import org.newdawn.slick.geom.Shape;
  * @author Techjar
  */
 public class GUIComboItem extends GUIText {
-    protected Object value;
-    protected Color hoverBgColor;
-    protected Color selectedBgColor;
-    protected GUIComboBox comboBox;
+	protected Object value;
+	protected Color hoverBgColor;
+	protected Color selectedBgColor;
+	protected GUIComboBox comboBox;
 
-    protected boolean pressed;
+	protected boolean pressed;
 
-    public GUIComboItem(GUIComboBox comboBox, UnicodeFont font, Color color, Color hoverBgColor, Color selectedBgColor, Object value) {
-        super(font, color, value.toString());
-        this.value = value;
-        this.comboBox = comboBox;
-        this.hoverBgColor = hoverBgColor;
-        this.selectedBgColor = selectedBgColor;
-    }
+	public GUIComboItem(GUIComboBox comboBox, UnicodeFont font, Color color, Color hoverBgColor, Color selectedBgColor, Object value) {
+		super(font, color, value.toString());
+		this.value = value;
+		this.comboBox = comboBox;
+		this.hoverBgColor = hoverBgColor;
+		this.selectedBgColor = selectedBgColor;
+	}
 
 	@Override
 	protected boolean mouseEvent(int button, boolean state, int dwheel) {
-        if (button == 0) {
-            if (state) {
-                Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
-                if (checkMouseIntersect(box)) {
-                    pressed = true;
-                    comboBox.setOpened(false);
-                    comboBox.setSelectedItem(this);
-                    return false;
-                }
-            }
-            else pressed = false;
-        }
-        return true;
+		if (button == 0) {
+			if (state) {
+				Rectangle box = new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight());
+				if (checkMouseIntersect(box)) {
+					pressed = true;
+					comboBox.setOpened(false);
+					comboBox.setSelectedItem(this);
+					return false;
+				}
+			}
+			else pressed = false;
+		}
+		return true;
 	}
 
-    @Override
-    public void render() {
-        Shape box = getComponentBox();
-        if (checkMouseIntersect(box)) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), hoverBgColor);
-        else if (comboBox.getSelectedItem() == this.getValue()) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), selectedBgColor);
-        glTranslatef(3, 0, 0);
-        super.render();
-        glTranslatef(-3, 0, 0);
-    }
+	@Override
+	public void render() {
+		Shape box = getComponentBox();
+		if (checkMouseIntersect(box)) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), hoverBgColor);
+		else if (comboBox.getSelectedItem() == this.getValue()) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), selectedBgColor);
+		glTranslatef(3, 0, 0);
+		super.render();
+		glTranslatef(-3, 0, 0);
+	}
 
-    public Object getValue() {
-        return value;
-    }
+	public Object getValue() {
+		return value;
+	}
 }
