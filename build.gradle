@@ -62,7 +62,7 @@ task unpackNatives2(type: Copy) {
 	into 'build/natives'
 }
 
-task zip(type: Zip) {
+task zip(dependsOn: jar, type: Zip) {
 	from([configurations.runtime.allArtifacts.files, 'start.bat', 'start.sh']) {
 		into '/'
 	}
@@ -81,5 +81,5 @@ task zip(type: Zip) {
 	archiveName project.name + '-build' + System.getenv().BUILD_NUMBER + '.zip'
 }
 
-unpackNatives.finalizedBy 'unpackNatives2'
-build.finalizedBy 'zip'
+unpackNatives.dependsOn 'unpackNatives2'
+build.dependsOn 'zip'
