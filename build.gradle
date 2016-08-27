@@ -50,16 +50,19 @@ natives {
 
 jar {
 	manifest {
-		attributes ('Main-Class': 'com.techjar.ledcm.Main', 'Class-Path': configurations.compile.findAll { !it.getName().contains('lombok') && !it.getName().contains('natives') }.collect { 'build/libs/' + it.getName() }.join(' '))
+		attributes (
+			'Main-Class': 'com.techjar.ledcm.Main',
+			'Class-Path': configurations.compile.findAll { !it.getName().contains('lombok') && !it.getName().contains('natives') }.collect { 'build/libs/' + it.getName() }.join(' ')
+		)
 	}
 }
 
-task unpackNatives2(dependsOn: unpackNatives, type: Copy) {
+task unpackNatives2(type: Copy) {
 	from 'lib/natives'
 	into 'build/natives'
 }
 
-task zip(dependsOn: [jar, unpackNatives2], type: Zip) {
+task zip(type: Zip) {
 	from([configurations.runtime.allArtifacts.files, 'start.bat', 'start.sh']) {
 		into '/'
 	}
@@ -77,3 +80,6 @@ task zip(dependsOn: [jar, unpackNatives2], type: Zip) {
 	}
 	archiveName project.name + '-build' + System.getenv().BUILD_NUMBER + '.zip'
 }
+
+unpackNatives.finalizedBy 'unpackNatives2'
+build.finalizedBy 'zip'
