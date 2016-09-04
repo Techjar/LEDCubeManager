@@ -200,7 +200,7 @@ public final class MathHelper {
 		float y = xyz[1];
 		float z = xyz[2];
 
-		// (Observer = 2°, Illuminant = D65)
+		// (Observer = 2 degrees, Illuminant = D65)
 		float r = pivotRgbInverse(x * 3.2404542F + y * -1.5371385F + z * -0.4985314F);
 		float g = pivotRgbInverse(x * -0.969266F + y * 1.8760108F + z * 0.041556F);
 		float b = pivotRgbInverse(x * 0.0556434F + y * -0.2040259F + z * 1.0572252F);
@@ -214,7 +214,7 @@ public final class MathHelper {
 		float g = pivotRgb(color.getGreen() / 255F);
 		float b = pivotRgb(color.getBlue() / 255F);
 
-		// (Observer = 2°, Illuminant = D65)
+		// (Observer = 2 degrees, Illuminant = D65)
 		xyz[0] = r * 0.4124564F + g * 0.3575761F + b * 0.1804375F;
 		xyz[1] = r * 0.2126729F + g * 0.7151522F + b * 0.072175F;
 		xyz[2] = r * 0.0193339F + g * 0.119192F + b * 0.9503041F;
