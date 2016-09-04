@@ -157,10 +157,6 @@ public class AnimationRain extends Animation {
 		}
 	}
 
-	private boolean checkBit(long number, int bit) {
-		return (number & (1L << bit)) != 0;
-	}
-
 	private boolean checkLightning(int value) {
 		return value > 0 ? random.nextInt(value) == 0 : false;
 	}

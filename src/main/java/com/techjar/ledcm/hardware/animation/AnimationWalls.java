@@ -57,6 +57,8 @@ public class AnimationWalls  extends Animation {
 				case WEST:
 					endX = 1;
 					break;
+				default:
+					break;
 			}
 			for (int x = startX; x < endX; x++) {
 				for (int y = startY; y < endY; y++) {

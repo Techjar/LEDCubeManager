@@ -21,7 +21,7 @@ public final class LogHandler extends Handler {
 	private PrintStream systemOut;
 
 
-	public LogHandler(File file) throws FileNotFoundException {
+	public LogHandler(File file) {
 		super();
 		this.file = file;
 		this.setFormatter(new LogFormatter());

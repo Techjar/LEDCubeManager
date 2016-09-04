@@ -32,6 +32,13 @@ public class Quaternion {
 		this.z = other.z;
 	}
 
+	public Quaternion(org.lwjgl.util.vector.Quaternion other) {
+		this.w = other.w;
+		this.x = other.x;
+		this.y = other.y;
+		this.z = other.z;
+	}
+
 	public Quaternion(Vector3 vector, float rotation) {
 		rotation = (float)Math.toRadians(rotation);
 		float sinRot = (float)Math.sin(rotation / 2);
@@ -202,6 +209,22 @@ public class Quaternion {
 		return new Quaternion(newW, newX, newY, newZ);
 	}
 
+	public float norm() {
+		return w * w + x * x + y * y + z * z;
+	}
+
+	public Quaternion scale(float scale) {
+		return new Quaternion(w * scale, x * scale, y * scale, z * scale);
+	}
+
+	public Quaternion conjugate() {
+		return new Quaternion(w, -x, -y, -z);
+	}
+
+	public Quaternion inverse() {
+		return conjugate().scale(1 / norm());
+	}
+
 	public Matrix4f getMatrix() {
 		Matrix4f matrix = new Matrix4f();
 		float sqw = w * w;
@@ -231,6 +254,18 @@ public class Quaternion {
 		matrix.m12 = 2 * (tmp1 - tmp2) * invs;
 
 		return matrix;
+	}
+
+	public Vector3 forward() {
+		return new Vector3(0, 0, -1).multiply(getMatrix());
+	}
+
+	public Vector3 up() {
+		return new Vector3(0, 1, 0).multiply(getMatrix());
+	}
+
+	public Vector3 right() {
+		return new Vector3(1, 0, 0).multiply(getMatrix());
 	}
 
 	@Override

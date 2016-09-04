@@ -69,9 +69,10 @@ public class ModelMesh {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	public boolean isInFrustum(Vector3 position) {
+	public boolean isInFrustum(Vector3 position, Vector3 scale) {
 		Vector3 pos = center.add(position);
-		return LEDCubeManager.getFrustum().sphereInFrustum(pos.getX(), pos.getY(), pos.getZ(), radius) > 0;
+		float scaleMax = Math.max(Math.max(scale.getX(), scale.getY()), scale.getZ());
+		return LEDCubeManager.getFrustum().sphereInFrustum(pos.getX(), pos.getY(), pos.getZ(), radius * scaleMax) > 0;
 	}
 
 	public int getVBO() {

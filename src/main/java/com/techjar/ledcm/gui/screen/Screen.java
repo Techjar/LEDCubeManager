@@ -4,6 +4,8 @@ package com.techjar.ledcm.gui.screen;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUICallback;
+import com.techjar.ledcm.vr.VRInputEvent;
+
 import org.lwjgl.input.Controller;
 
 /**
@@ -47,6 +49,10 @@ public abstract class Screen {
 
 	public boolean processControllerEvent(Controller controller) {
 		return container.processControllerEvent(controller);
+	}
+
+	public boolean processVRInputEvent(VRInputEvent event) {
+		return container.processVRInputEvent(event);
 	}
 
 	public void update(float delta) {

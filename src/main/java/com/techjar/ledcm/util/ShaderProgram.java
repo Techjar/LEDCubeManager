@@ -107,7 +107,7 @@ public class ShaderProgram {
 				shaderIds.add(shaderId);
 				if (!shaderCache.containsKey(name)) shaderCache.put(name, new ArrayList<Integer>());
 				shaderCache.get(name).add(id);
-				LogHelper.fine("Loaded shader: %s", fileName);
+				LogHelper.info("Loaded shader: %s", fileName);
 			}
 		}
 		if (!found) throw new FileNotFoundException("Shader \"" + name + "\" does not exist");
@@ -147,6 +147,7 @@ public class ShaderProgram {
 	public void release() {
 		if (activeProgram == this) useNone();
 		glDeleteProgram(id);
+		LogHelper.fine("Deleted shader program: %d", id);
 	}
 
 	public static void useNone() {
@@ -159,6 +160,7 @@ public class ShaderProgram {
 	}
 
 	public static void cleanup() {
+		if (programCache.isEmpty() && shaderCache.isEmpty()) return;
 		for (ShaderProgram program : programCache) {
 			program.release();
 		}
@@ -169,6 +171,7 @@ public class ShaderProgram {
 		}
 		shaderCache.clear();
 		programCache.clear();
+		LogHelper.info("Shader cache cleaned up!");
 	}
 
 	private void checkLinked(boolean errorCondition) {

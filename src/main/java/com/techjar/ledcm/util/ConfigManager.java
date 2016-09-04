@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -56,6 +57,7 @@ public class ConfigManager {
 	 * Creates a new ConfigManager using the specified {@link String} as the file. Auto-saving is determined by the specified boolean value.
 	 * @param data Raw Yaml data to load.
 	 */
+	@SuppressWarnings("unchecked")
 	public ConfigManager(String data) {
 		DumperOptions dumper = new DumperOptions();
 		dumper.setLineBreak(DumperOptions.LineBreak.getPlatformLineBreak());
@@ -65,7 +67,7 @@ public class ConfigManager {
 
 		this.autoSave = false;
 		this.file = null;
-		this.config = new ConfigMap(this, (Map)yaml.load(data));
+		this.config = new ConfigMap(this, (Map<String, Object>)yaml.load(data));
 	}
 
 	/**
@@ -101,7 +103,7 @@ public class ConfigManager {
 	/**
 	 * See {@link ConfigMap#getList}
 	 */
-	public List getList(String name) {
+	public List<Object> getList(String name) {
 		return config.getList(name);
 	}
 
@@ -185,6 +187,7 @@ public class ConfigManager {
 	/**
 	 * Load the Yaml file.
 	 */
+	@SuppressWarnings("unchecked")
 	public void load() {
 		if (file == null) throw new UnsupportedOperationException("ConfigManager does not have a file");
 		try {
@@ -193,7 +196,7 @@ public class ConfigManager {
 				return;
 			}
 			FileReader fr = new FileReader(file);
-			Map<String, Object> map = (Map)yaml.load(fr);
+			Map<String, Object> map = (Map<String, Object>)yaml.load(fr);
 			if (map == null) map = new HashMap<>();
 			config = new ConfigMap(this, map);
 			fr.close();
@@ -261,9 +264,10 @@ public class ConfigManager {
 		 * @param name The property key.
 		 * @return {@link List} value of the property or <tt>null</tt> if it's not a list.
 		 */
-		public List getList(String name) {
+		@SuppressWarnings("unchecked")
+		public List<Object> getList(String name) {
 			Object obj = getProperty(name, null);
-			return obj instanceof List ? (List)obj : null;
+			return obj instanceof List ? (List<Object>)obj : null;
 		}
 
 		/**
@@ -271,13 +275,14 @@ public class ConfigManager {
 		 * @param name The property key.
 		 * @return The {@link List} or <tt>null</tt> if it's not a list.
 		 */
+		@SuppressWarnings("unchecked")
 		public List<ConfigMap> getMapList(String name) {
 			Object obj = getProperty(name, null);
 			if (obj instanceof List) {
 				List<ConfigMap> list = new ArrayList<>();
-				for (Object item : (List)obj) {
+				for (Object item : (List<Object>)obj) {
 					if (item instanceof Map) {
-						list.add(new ConfigMap(manager, (Map)item));
+						list.add(new ConfigMap(manager, (Map<String, Object>)item));
 					}
 				}
 				return Collections.unmodifiableList(list);
@@ -380,6 +385,7 @@ public class ConfigManager {
 			return containsYamlKey(map, name);
 		}
 
+		@SuppressWarnings("unchecked")
 		private Object getYamlKey(Map<String, Object> map, String key) {
 			if (key.indexOf('.') == -1) {
 				return map.get(key);
@@ -392,11 +398,12 @@ public class ConfigManager {
 				if (!(curmap.get(subkey) instanceof Map)) {
 					throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
 				}
-				curmap = (Map)curmap.get(subkey);
+				curmap = (Map<String, Object>)curmap.get(subkey);
 			}
 			return curmap.get(key);
 		}
 
+		@SuppressWarnings("unchecked")
 		private Object putYamlKey(Map<String, Object> map, String key, Object value) {
 			if (key.indexOf('.') == -1) {
 				manager.changed = true;
@@ -410,12 +417,13 @@ public class ConfigManager {
 				if (!(curmap.get(subkey) instanceof Map)) {
 					throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
 				}
-				curmap = (Map)curmap.get(subkey);
+				curmap = (Map<String, Object>)curmap.get(subkey);
 			}
 			manager.changed = true;
 			return curmap.put(key, value);
 		}
 
+		@SuppressWarnings("unchecked")
 		private Object removeYamlKey(Map<String, Object> map, String key) {
 			if (key.indexOf('.') == -1) {
 				manager.changed = true;
@@ -429,12 +437,13 @@ public class ConfigManager {
 				if (!(curmap.get(subkey) instanceof Map)) {
 					throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
 				}
-				curmap = (Map)curmap.get(subkey);
+				curmap = (Map<String, Object>)curmap.get(subkey);
 			}
 			manager.changed = true;
 			return curmap.remove(key);
 		}
 
+		@SuppressWarnings("unchecked")
 		private boolean containsYamlKey(Map<String, Object> map, String key) {
 			if (key.indexOf('.') == -1) {
 				return map.containsKey(key);
@@ -447,7 +456,7 @@ public class ConfigManager {
 				if (!(curmap.get(subkey) instanceof Map)) {
 					throw new IllegalArgumentException("Key '" + subkey + "' is not a key group!");
 				}
-				curmap = (Map)curmap.get(subkey);
+				curmap = (Map<String, Object>)curmap.get(subkey);
 			}
 			return curmap.containsKey(key);
 		}

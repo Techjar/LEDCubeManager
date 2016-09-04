@@ -18,6 +18,7 @@ import com.techjar.ledcm.gui.GUITextField;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.animation.AnimationOption;
 import com.techjar.ledcm.util.json.ShapeInfo;
+
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -44,10 +45,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
-import lombok.Cleanup;
+
 import lombok.SneakyThrows;
-import org.lwjgl.BufferUtils;
+
 import org.lwjgl.input.Controller;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
@@ -93,9 +95,9 @@ public final class Util {
 			field.set(null, tmp);
 			System.setProperty("java.library.path", System.getProperty("java.library.path") + File.pathSeparator + path);
 		} catch (IllegalAccessException e) {
-			throw new IOException("Failed to get permissions to set library path");
+			throw new IOException("Failed to get permissions to set library path", e);
 		} catch (NoSuchFieldException e) {
-			throw new IOException("Failed to get field handle to set library path");
+			throw new IOException("Failed to get field handle to set library path", e);
 		}
 	}
 
@@ -132,6 +134,10 @@ public final class Util {
 
 	public static Vector3 convertVector(Vector3f vector) {
 		return new Vector3(vector.getX(), vector.getY(), vector.getZ());
+	}
+
+	public static org.lwjgl.util.vector.Quaternion convertQuaternion(Quaternion quat) {
+		return new org.lwjgl.util.vector.Quaternion(quat.getX(), quat.getY(), quat.getZ(), quat.getW());
 	}
 
 	public static Matrix3f convertMatrix(Mat3 matrix) {
@@ -315,7 +321,7 @@ public final class Util {
 	/**
 	 * Sets an animation option using the GUI component rather than directly.
 	 *
-	 * @param optionId The ID of the option
+	 * @param option The ID of the option
 	 * @param value The value to set (internal or display value)
 	 */
 	public static void setOptionInGUI(AnimationOption option, String value) {
@@ -413,12 +419,16 @@ public final class Util {
 
 	public static int getMouseX() {
 		//return (int)(Mouse.getX() / ((double)canvas.getWidth() / (double)displayMode.getWidth()));
+		if (LEDCubeManager.getInstance().getMouseOverride() != null)
+			return (int)LEDCubeManager.getInstance().getMouseOverride().getX();
 		return Mouse.getX();
 	}
 
 	public static int getMouseY() {
 		//return (int)((canvas.getHeight() - Mouse.getY()) / ((double)canvas.getHeight() / (double)displayMode.getHeight()));
-		return (int)(LEDCubeManager.getHeight() - Mouse.getY() - 1);
+		if (LEDCubeManager.getInstance().getMouseOverride() != null)
+			return (int)LEDCubeManager.getInstance().getMouseOverride().getY();
+		return LEDCubeManager.getHeight() - Mouse.getY() - 1;
 	}
 
 	public static Vector2 getMousePos() {
@@ -430,6 +440,8 @@ public final class Util {
 	}
 
 	public static Shape getMouseHitbox() {
+		if (LEDCubeManager.getInstance().getMouseOverride() != null && LEDCubeManager.getInstance().isVrMode())
+			return new Rectangle(getMouseX() - 5, getMouseY() - 5, 10, 10);
 		return new Rectangle(getMouseX(), getMouseY(), 1, 1);
 	}
 
@@ -495,8 +507,8 @@ public final class Util {
 		return new IPInfo(InetAddress.getByName(ip), port, ipv6);
 	}
 
-	public static String getChecksum(String method, byte[] bytes) throws IOException, NoSuchAlgorithmException {
-		MessageDigest md = MessageDigest.getInstance("MD5");
+	public static String getChecksum(String method, byte[] bytes) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance(method);
 		md.update(bytes);
 		byte[] digest = md.digest();
 		StringBuilder sb = new StringBuilder();
@@ -506,11 +518,11 @@ public final class Util {
 		return sb.toString();
 	}
 
-	public static String getChecksum(String method, String str) throws IOException, NoSuchAlgorithmException {
+	public static String getChecksum(String method, String str) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		return getChecksum(method, str.getBytes("UTF-8"));
 	}
 
-	public static String getFileChecksum(String method, File file) throws IOException, NoSuchAlgorithmException {
+	public static String getFileChecksum(String method, File file) throws NoSuchAlgorithmException, IOException {
 		try (FileInputStream fis = new FileInputStream(file)) {
 			byte[] bytes = new byte[(int)file.length()];
 			fis.read(bytes);
@@ -663,18 +675,150 @@ public final class Util {
 	}
 
 	public static byte[] readFully(InputStream in) throws IOException {
-		@Cleanup ByteArrayOutputStream out = new ByteArrayOutputStream();
-		byte[] bytes = new byte[4096]; int count;
-		while ((count = in.read(bytes, 0, bytes.length)) != -1) {
-			out.write(bytes, 0, count);
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			byte[] bytes = new byte[4096]; int count;
+			while ((count = in.read(bytes, 0, bytes.length)) != -1) {
+				out.write(bytes, 0, count);
+			}
+			return out.toByteArray();
 		}
-		return out.toByteArray();
 	}
 
 	public static String readFile(File file) throws FileNotFoundException, IOException {
-		@Cleanup FileInputStream in = new FileInputStream(file);
-		byte[] bytes = readFully(in);
-		return new String(bytes, "UTF-8");
+		try (FileInputStream in = new FileInputStream(file)) {
+			byte[] bytes = readFully(in);
+			return new String(bytes, "UTF-8");
+		}
+	}
+
+	public static int characterToLWJGLKeyCode(char ch) {
+		switch (ch) {
+			case 'a':
+			case 'A':
+				return Keyboard.KEY_A;
+			case 'b':
+			case 'B':
+				return Keyboard.KEY_B;
+			case 'c':
+			case 'C':
+				return Keyboard.KEY_C;
+			case 'd':
+			case 'D':
+				return Keyboard.KEY_D;
+			case 'e':
+			case 'E':
+				return Keyboard.KEY_E;
+			case 'f':
+			case 'F':
+				return Keyboard.KEY_F;
+			case 'g':
+			case 'G':
+				return Keyboard.KEY_G;
+			case 'h':
+			case 'H':
+				return Keyboard.KEY_H;
+			case 'i':
+			case 'I':
+				return Keyboard.KEY_I;
+			case 'j':
+			case 'J':
+				return Keyboard.KEY_J;
+			case 'k':
+			case 'K':
+				return Keyboard.KEY_K;
+			case 'l':
+			case 'L':
+				return Keyboard.KEY_L;
+			case 'm':
+			case 'M':
+				return Keyboard.KEY_M;
+			case 'n':
+			case 'N':
+				return Keyboard.KEY_N;
+			case 'o':
+			case 'O':
+				return Keyboard.KEY_O;
+			case 'p':
+			case 'P':
+				return Keyboard.KEY_P;
+			case 'q':
+			case 'Q':
+				return Keyboard.KEY_Q;
+			case 'r':
+			case 'R':
+				return Keyboard.KEY_R;
+			case 's':
+			case 'S':
+				return Keyboard.KEY_S;
+			case 't':
+			case 'T':
+				return Keyboard.KEY_T;
+			case 'u':
+			case 'U':
+				return Keyboard.KEY_U;
+			case 'v':
+			case 'V':
+				return Keyboard.KEY_V;
+			case 'w':
+			case 'W':
+				return Keyboard.KEY_W;
+			case 'x':
+			case 'X':
+				return Keyboard.KEY_X;
+			case 'y':
+			case 'Y':
+				return Keyboard.KEY_Y;
+			case 'z':
+			case 'Z':
+				return Keyboard.KEY_Z;
+			case '0':
+				return Keyboard.KEY_0;
+			case '1':
+				return Keyboard.KEY_1;
+			case '2':
+				return Keyboard.KEY_2;
+			case '3':
+				return Keyboard.KEY_3;
+			case '4':
+				return Keyboard.KEY_4;
+			case '5':
+				return Keyboard.KEY_5;
+			case '6':
+				return Keyboard.KEY_6;
+			case '7':
+				return Keyboard.KEY_7;
+			case '8':
+				return Keyboard.KEY_8;
+			case '9':
+				return Keyboard.KEY_9;
+			case '`':
+				return Keyboard.KEY_GRAVE;
+			case '-':
+				return Keyboard.KEY_MINUS;
+			case '=':
+				return Keyboard.KEY_EQUALS;
+			case '\b':
+				return Keyboard.KEY_BACK;
+			case '[':
+				return Keyboard.KEY_LBRACKET;
+			case ']':
+				return Keyboard.KEY_RBRACKET;
+			case ';':
+				return Keyboard.KEY_SEMICOLON;
+			case '\'':
+				return Keyboard.KEY_APOSTROPHE;
+			case ',':
+				return Keyboard.KEY_COMMA;
+			case '.':
+				return Keyboard.KEY_PERIOD;
+			case '/':
+				return Keyboard.KEY_SLASH;
+			case '*':
+				return Keyboard.KEY_MULTIPLY;
+			case '+':
+				return Keyboard.KEY_ADD;
+		}
+		return 0;
 	}
 
 	public static long microTime() {

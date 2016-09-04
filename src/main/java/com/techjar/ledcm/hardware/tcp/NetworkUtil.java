@@ -57,7 +57,7 @@ public final class NetworkUtil {
 	}
 
 	@SneakyThrows(Exception.class)
-	public static Object unmarshalObject(DataInputStream stream) throws IOException {
+	public static Object unmarshalObject(DataInputStream stream) {
 		int valueType = stream.readUnsignedByte();
 		if (valueType == 0) {
 			return stream.readUnsignedByte();

@@ -261,9 +261,9 @@ public class GUIComboBox extends GUI {
 	public boolean removeItem(Object o) {
 		if (o == null) return false;
 		boolean ret = false;
-		Iterator it = items.iterator();
+		Iterator<GUIComboItem> it = items.iterator();
 		for (int i = 0; it.hasNext(); i++) {
-			GUIComboItem item = (GUIComboItem)it.next();
+			GUIComboItem item = it.next();
 			if (o.equals(item.getValue())) {
 				it.remove();
 				if (i < selectedItem) selectedItem--;

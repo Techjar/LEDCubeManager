@@ -27,102 +27,104 @@ public class Camera {
 	private boolean pForward, pBack, pLeft, pRight, pDown, pUp, pTurbo;
 
 	public Camera() {
-		this.moveSpeed = 20;
+		this.moveSpeed = 0.2F;
 		this.rotateMultiplier = 0.2F;
 		this.position = new Vector3();
 		this.angle = new Angle(Angle.Order.YXZ);
 
-		InputBindingManager.addBinding(new InputBinding("camforward", "Forward", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_W)) {
-			@Override
-			public boolean onPressed() {
-				pForward = true;
-				return false;
-			}
+		if (!LEDCubeManager.getInstance().isVrMode()) {
+			InputBindingManager.addBinding(new InputBinding("camforward", "Forward", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_W)) {
+				@Override
+				public boolean onPressed() {
+					pForward = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pForward = false;
-				return false;
-			}
-		});
-		InputBindingManager.addBinding(new InputBinding("camback", "Back", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_S)) {
-			@Override
-			public boolean onPressed() {
-				pBack = true;
-				return false;
-			}
+				@Override
+				public boolean onReleased() {
+					pForward = false;
+					return false;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("camback", "Back", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_S)) {
+				@Override
+				public boolean onPressed() {
+					pBack = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pBack = false;
-				return false;
-			}
-		});
-		InputBindingManager.addBinding(new InputBinding("camleft", "Left", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_A)) {
-			@Override
-			public boolean onPressed() {
-				pLeft = true;
-				return false;
-			}
+				@Override
+				public boolean onReleased() {
+					pBack = false;
+					return false;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("camleft", "Left", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_A)) {
+				@Override
+				public boolean onPressed() {
+					pLeft = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pLeft = false;
-				return false;
-			}
-		});
-		InputBindingManager.addBinding(new InputBinding("camright", "Right", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_D)) {
-			@Override
-			public boolean onPressed() {
-				pRight = true;
-				return false;
-			}
+				@Override
+				public boolean onReleased() {
+					pLeft = false;
+					return false;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("camright", "Right", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_D)) {
+				@Override
+				public boolean onPressed() {
+					pRight = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pRight = false;
-				return false;
-			}
-		});
-		InputBindingManager.addBinding(new InputBinding("camdown", "Down", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Q)) {
-			@Override
-			public boolean onPressed() {
-				pDown = true;
-				return false;
-			}
+				@Override
+				public boolean onReleased() {
+					pRight = false;
+					return false;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("camdown", "Down", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Q)) {
+				@Override
+				public boolean onPressed() {
+					pDown = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pDown = false;
-				return false;
-			}
-		});
-		InputBindingManager.addBinding(new InputBinding("camup", "Up", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_E)) {
-			@Override
-			public boolean onPressed() {
-				pUp = true;
-				return false;
-			}
+				@Override
+				public boolean onReleased() {
+					pDown = false;
+					return false;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("camup", "Up", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_E)) {
+				@Override
+				public boolean onPressed() {
+					pUp = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pUp = false;
-				return false;
-			}
-		});
-		InputBindingManager.addBinding(new InputBinding("camturbo", "Turbo", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_LSHIFT)) {
-			@Override
-			public boolean onPressed() {
-				pTurbo = true;
-				return false;
-			}
+				@Override
+				public boolean onReleased() {
+					pUp = false;
+					return false;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("camturbo", "Turbo", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_LSHIFT)) {
+				@Override
+				public boolean onPressed() {
+					pTurbo = true;
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				pTurbo = false;
-				return false;
-			}
-		});
+				@Override
+				public boolean onReleased() {
+					pTurbo = false;
+					return false;
+				}
+			});
+		}
 	}
 
 	public void update(float delta) {

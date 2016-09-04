@@ -3,7 +3,6 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 
-import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
 import org.newdawn.slick.UnicodeFont;

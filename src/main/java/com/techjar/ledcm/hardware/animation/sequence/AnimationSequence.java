@@ -3,6 +3,8 @@ package com.techjar.ledcm.hardware.animation.sequence;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
+import com.techjar.ledcm.util.logging.LogHelper;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,6 +14,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
@@ -80,7 +83,10 @@ public class AnimationSequence {
 				}
 				String[] split = line.split(" ", 2);
 				Class<? extends SequenceCommand> clazz = SequenceCommand.getCommandClassByID(split[0]);
-				if (clazz == null) throw new IllegalArgumentException("Unknown command: " + split[0]);
+				if (clazz == null) {
+					LogHelper.warning("Unknown command: %s", split[0]);
+					continue;
+				}
 				String[] args = split.length > 1 ? Util.parseArgumentString(split[1]) : new String[0];
 				SequenceCommand command = clazz.getConstructor(AnimationSequence.class).newInstance(sequence);
 				if (command.onSequenceLoad(args)) sequence.items.add(new SequenceItem(clazz, args, immediate));

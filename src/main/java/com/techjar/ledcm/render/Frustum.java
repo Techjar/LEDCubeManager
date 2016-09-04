@@ -147,9 +147,9 @@ public class Frustum {
 		int c = 0;
 		for (int p = 0; p < 6; p++) {
 			float d = frustum[p][0] * x + frustum[p][1] * y + frustum[p][2] * z + frustum[p][3];
-			if(d <= -radius) return 0;
-			if(d > radius) c++;
+			if (d <= -radius) return 0;
+			if (d > radius) c++;
 		}
-		return (c == 6) ? 2 : 1;
+		return c == 6 ? 2 : 1;
 	}
 }

@@ -102,7 +102,7 @@ public final class InstancedRenderer {
 			LinkedList<InstanceItem> list = itemsNormal.get(key);
 			LinkedList<InstanceItem> list2 = new LinkedList<>();
 			for (InstanceItem item : list) {
-				if (item.getMesh().isInFrustum(item.getPosition())) {
+				if (item.getMesh().isInFrustum(item.getPosition(), item.getScale())) {
 					list2.add(item);
 				}
 			}
@@ -110,7 +110,7 @@ public final class InstancedRenderer {
 		}
 		List<InstanceItem> itemsAlpha2 = new ArrayList<>();
 		for (InstanceItem item : itemsAlpha) {
-			if (item.getMesh().isInFrustum(item.getPosition())) {
+			if (item.getMesh().isInFrustum(item.getPosition(), item.getScale())) {
 				itemsAlpha2.add(item);
 			}
 		}
@@ -192,14 +192,17 @@ public final class InstancedRenderer {
 						Util.storeColorInBuffer(item.getColor(), buffer);
 						Matrix4f matrix = new Matrix4f();
 						matrix.translate(Util.convertVector(item.getPosition()));
-						matrix.scale(Util.convertVector(item.getScale()));
 						Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
+						matrix.scale(Util.convertVector(item.getScale()));
 						Util.storeMatrixInBuffer(matrix, buffer);
 
 						glActiveTexture(GL_TEXTURE0);
 						mesh.getModel().getTexture().bind();
 						//glActiveTexture(GL_TEXTURE1);
 						//mesh.getModel().getNormalMap().bind();
+						glActiveTexture(GL_TEXTURE2);
+						mesh.getModel().getSpecularMap().bind();
+						glActiveTexture(GL_TEXTURE0);
 						mesh.getModel().getMaterial().sendToShader(0);
 						buffer.rewind();
 						Tuple<Integer, Integer> vbo = getVBO(-1);
@@ -229,14 +232,17 @@ public final class InstancedRenderer {
 					Util.storeColorInBuffer(item.getColor(), buffer);
 					Matrix4f matrix = new Matrix4f();
 					matrix.translate(Util.convertVector(item.getPosition()));
-					matrix.scale(Util.convertVector(item.getScale()));
 					Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
+					matrix.scale(Util.convertVector(item.getScale()));
 					Util.storeMatrixInBuffer(matrix, buffer);
 				}
 				glActiveTexture(GL_TEXTURE0);
 				mesh.getModel().getTexture().bind();
 				//glActiveTexture(GL_TEXTURE1);
 				//mesh.getModel().getNormalMap().bind();
+				glActiveTexture(GL_TEXTURE2);
+				mesh.getModel().getSpecularMap().bind();
+				glActiveTexture(GL_TEXTURE0);
 				mesh.getModel().getMaterial().sendToShader(0);
 				buffer.rewind();
 				Tuple<Integer, Integer> vbo = getNextVBO();
@@ -260,7 +266,7 @@ public final class InstancedRenderer {
 	/**
 	 * Draws a single non-instanced mesh
 	 */
-	public static int draw(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
+	public static int draw(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale, int textureID) {
 		int dataSize = 80;
 		if (buffer == null || buffer.capacity() < dataSize) {
 			buffer = BufferUtils.createByteBuffer(dataSize);
@@ -272,14 +278,18 @@ public final class InstancedRenderer {
 		Util.storeColorInBuffer(color, buffer);
 		Matrix4f matrix = new Matrix4f();
 		matrix.translate(Util.convertVector(position));
-		matrix.scale(Util.convertVector(scale));
 		Matrix4f.mul(matrix, rotation.getMatrix(), matrix);
+		matrix.scale(Util.convertVector(scale));
 		Util.storeMatrixInBuffer(matrix, buffer);
 
 		glActiveTexture(GL_TEXTURE0);
-		mesh.getModel().getTexture().bind();
+		if (textureID != 0) glBindTexture(GL_TEXTURE_2D, textureID);
+		else mesh.getModel().getTexture().bind();
 		//glActiveTexture(GL_TEXTURE1);
 		//mesh.getModel().getNormalMap().bind();
+		glActiveTexture(GL_TEXTURE2);
+		mesh.getModel().getSpecularMap().bind();
+		glActiveTexture(GL_TEXTURE0);
 		mesh.getModel().getMaterial().sendToShader(0);
 		buffer.rewind();
 		Tuple<Integer, Integer> vbo = getVBO(-1);

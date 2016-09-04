@@ -41,6 +41,7 @@ archive/
 resampled/
 config.yml
 /.apt_generated
+*.blend1
 
 # Keep This Shit
 !/lib/*.jar

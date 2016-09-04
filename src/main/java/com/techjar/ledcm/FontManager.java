@@ -2,12 +2,16 @@ package com.techjar.ledcm;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.techjar.ledcm.util.logging.LogHelper;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import lombok.SneakyThrows;
 import lombok.Value;
+
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.font.effects.ColorEffect;
@@ -36,6 +40,7 @@ public class FontManager {
 	}
 
 	@SneakyThrows(SlickException.class)
+	@SuppressWarnings("unchecked")
 	public UnicodeFont getFont(FontInfo info) {
 		if (fonts.containsKey(info)) return fonts.get(info);
 		UnicodeFont unicodeFont = new UnicodeFont(new File(fontPath, info.getFont() + ".ttf").getPath(), info.getSize(), info.isBold(), info.isItalic());
@@ -45,6 +50,7 @@ public class FontManager {
 		unicodeFont.addAsciiGlyphs();
 		unicodeFont.loadGlyphs();
 		fonts.put(info, unicodeFont);
+		LogHelper.info("Loaded font: %s, size %d, %s, %s", info.getFont(), info.getSize(), info.isBold() ? (info.isItalic() ? "bold italics" : "bold") : (info.isItalic() ? "italics" : "regular"), info.getEffects() != null && !info.getEffects().isEmpty() ? "effects: " + info.getEffects() : "no effects");
 		return unicodeFont;
 	}
 
@@ -53,13 +59,17 @@ public class FontManager {
 	}
 
 	public void unloadFont(FontInfo info) {
-		if (fonts.containsKey(info)) fonts.remove(info).destroy();
+		if (fonts.containsKey(info)) {
+			fonts.remove(info).destroy();
+			LogHelper.info("Unloaded font: %s", info.toString());
+		}
 	}
 
 	public void cleanup() {
 		for (UnicodeFont font : fonts.values())
 			font.destroy();
 		fonts.clear();
+		LogHelper.info("FontManager cleaned up!");
 	}
 
 	@Value public static class FontInfo {

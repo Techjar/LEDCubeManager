@@ -12,7 +12,6 @@ public class ArgumentParser {
 	}
 
 	public static void parse(String[] args, Argument... objects) {
-		List<Argument> used = new ArrayList<>();
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].equalsIgnoreCase("--help")) {
 				for (Argument obj : objects) {

@@ -90,6 +90,10 @@ public class Vector3 {
 		return new Vector3(this.x - number, this.y - number, this.z - number);
 	}
 
+	public Vector3 multiply(Vector3 other) {
+		return new Vector3(this.x * other.x, this.y * other.y, this.z * other.z);
+	}
+
 	public Vector3 multiply(float number) {
 		return new Vector3(this.x * number, this.y * number, this.z * number);
 	}
@@ -106,6 +110,10 @@ public class Vector3 {
 		float newY = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13;
 		float newZ = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23;
 		return new Vector3(newX, newY, newZ);
+	}
+
+	public Vector3 divide(Vector3 other) {
+		return new Vector3(this.x / other.x, this.y / other.y, this.z / other.z);
 	}
 
 	public Vector3 divide(float number) {

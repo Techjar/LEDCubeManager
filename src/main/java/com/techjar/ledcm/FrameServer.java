@@ -26,7 +26,7 @@ public class FrameServer {
 	public volatile int numClients;
 	private Queue<BufferedImage> sendQueue = new ConcurrentLinkedQueue<>();
 
-	public FrameServer() throws IOException {
+	public FrameServer() {
 		sendThread = new Thread("Frame Send Thread") {
 			@Override
 			@SneakyThrows(InterruptedException.class)

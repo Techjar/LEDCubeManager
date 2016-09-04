@@ -14,12 +14,12 @@ import com.techjar.ledcm.util.Util;
 public class RenderPipelineStandard implements RenderPipeline {
 	private ShaderProgram mainShader;
 
-	public RenderPipelineStandard() {
+	@Override
+	public void init() {
 	}
 
 	@Override
-	public void update() {
-
+	public void update(float delta) {
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class RenderPipelineStandard implements RenderPipeline {
 		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 
 		// Setup projection matrix
-		ledcm.setupView(Util.convertMatrix(Matrices.perspective(ledcm.getFieldOfView(), (float)LEDCubeManager.getDisplayMode().getWidth() / (float)LEDCubeManager.getDisplayMode().getHeight(), 0.1F, ledcm.getViewDistance())), LEDCubeManager.getCamera().getPosition(), LEDCubeManager.getCamera().getAngle());
+		ledcm.setupView(Util.convertMatrix(Matrices.perspective(ledcm.getFieldOfView(), (float)LEDCubeManager.getDisplayMode().getWidth() / (float)LEDCubeManager.getDisplayMode().getHeight(), ledcm.getNearClip(), ledcm.getViewDistance())), LEDCubeManager.getCamera().getPosition(), LEDCubeManager.getCamera().getAngle());
 
 		mainShader.use();
 		ledcm.sendMatrixToProgram();

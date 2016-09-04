@@ -71,42 +71,6 @@ public final class MathHelper {
 	}
 
 	/**
-	 * Returns a number indicating the sign (+/-) of a number, as either -1, 0, or 1.
-	 * @param i input number
-	 * @return sign of number
-	 */
-	public static int sign(int i) {
-		return clamp(i, -1, 1);
-	}
-
-	/**
-	 * Returns a number indicating the sign (+/-) of a number, as either -1, 0, or 1.
-	 * @param i input number
-	 * @return sign of number
-	 */
-	public static long sign(long i) {
-		return clamp(i, -1, 1);
-	}
-
-	/**
-	 * Returns a number indicating the sign (+/-) of a number, as either -1, 0, or 1.
-	 * @param i input number
-	 * @return sign of number
-	 */
-	public static double sign(double i) {
-		return clamp(i < 0 ? Math.floor(i) : Math.ceil(i), -1, 1);
-	}
-
-	/**
-	 * Returns a number indicating the sign (+/-) of a number, as either -1, 0, or 1.
-	 * @param i input number
-	 * @return sign of number
-	 */
-	public static float sign(float i) {
-		return clamp(i < 0 ? (float)Math.floor(i) : (float)Math.ceil(i), -1, 1);
-	}
-
-	/**
 	 * Performs a linear interpolation between <em>start</em> and <em>end</em> using <em>fraction</em>.
 	 * @param start starting value
 	 * @param end ending value

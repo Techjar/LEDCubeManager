@@ -160,7 +160,7 @@ public class GUIWindow extends GUIContainer {
         		else mouseLockY = true;
         	}
         }
-        if (!Mouse.isButtonDown(0) || startResize) {
+        if (!mouseState[0] || startResize) {
         	startResize = false;
         	Rectangle[] boxes = getBoxes();
         	if (canResizeY && checkMouseIntersect(boxes[0])) {
@@ -237,7 +237,7 @@ public class GUIWindow extends GUIContainer {
 
 	protected boolean checkMouseButtons() {
 		for (int i = 0; i < Mouse.getButtonCount(); i++) {
-			if (Mouse.isButtonDown(i)) return true;
+			if (mouseState[i]) return true;
 		}
 		return false;
 	}

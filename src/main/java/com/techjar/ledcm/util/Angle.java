@@ -138,8 +138,8 @@ public class Angle {
 			case PITCH: return new Angle(pitch + degrees, yaw, roll);
 			case YAW: return new Angle(pitch, yaw + degrees, roll);
 			case ROLL: return new Angle(pitch, yaw, roll + degrees);
+			default: return new Angle(this);
 		}
-		return new Angle(this);
 	}
 
 	public Angle add(Angle other) {
@@ -174,8 +174,7 @@ public class Angle {
         matrix.m21 = sinPitch;
         matrix.m22 = cosPitch * cosRoll;
         return matrix;*/
-		//return new Quaternion(this).getMatrix(); // lol this is easier
-		return new Quaternion(this).getMatrix();
+		return new Quaternion(this).getMatrix(); // lol this is easier
 	}
 
 	public Vector3 forward() {

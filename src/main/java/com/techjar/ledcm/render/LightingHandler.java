@@ -21,7 +21,6 @@ public class LightingHandler {
 	@Getter @Setter private Vector3f sceneAmbient = new Vector3f(0.2F, 0.2F, 0.2F);
 
 	public void sendToShader() {
-		ShaderProgram program = ShaderProgram.getCurrent();
 		glUniform3f(4, sceneAmbient.x, sceneAmbient.y, sceneAmbient.z);
 		glUniform1i(5, lights.size());
 		for (int i = 0; i < lights.size(); i++) {
@@ -35,7 +34,7 @@ public class LightingHandler {
 	}
 
 	public void addLight(LightSource light) {
-		if (lights.size() >= MAX_LIGHTS) throw new IllegalStateException("Maximum light count reached: " + MAX_LIGHTS);
+		if (lights.size() >= MAX_LIGHTS) throw new RuntimeException("Maximum light count reached: " + MAX_LIGHTS);
 		lights.add(light);
 	}
 

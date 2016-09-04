@@ -37,10 +37,15 @@ public final class LogHelper {
 			logger.setUseParentHandlers(false);
 			System.setOut(new PrintStream(new LogOutputStream(logger, Level.INFO), true));
 			System.setErr(new PrintStream(new LogOutputStream(logger, Level.SEVERE), true));
-		} catch (IOException ex) {
+		} catch (Exception ex) {
 			ex.printStackTrace();
 			System.exit(-1);
 		}
+	}
+
+	public static LogOutputStream getLogOutputStream(Level level) {
+		if (logger== null) throw new IllegalStateException("Not yet initialized!");
+		return new LogOutputStream(logger, level);
 	}
 
 	public static Level getLevel() {

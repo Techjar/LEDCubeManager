@@ -6,51 +6,28 @@ import com.techjar.ledcm.render.InstancedRenderer;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
-import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL14.*;
-import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL31.*;
 import static org.lwjgl.opengl.GL32.*;
-import static org.lwjgl.opengl.GL33.*;
-import static org.lwjgl.opengl.GL40.*;
 import static org.lwjgl.util.glu.GLU.*;
 
-import com.hackoeur.jglm.Mat3;
-import com.hackoeur.jglm.Mat4;
-import com.hackoeur.jglm.Matrices;
-import com.hackoeur.jglm.Vec3;
-import com.obj.WavefrontObject;
+import com.techjar.ledcm.gui.GUI;
 import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.screen.Screen;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.manager.LEDManager;
-import com.techjar.ledcm.hardware.manager.ArduinoLEDManager;
-import com.techjar.ledcm.hardware.CommThread;
-import com.techjar.ledcm.hardware.LEDUtil;
-import com.techjar.ledcm.hardware.SpectrumAnalyzer;
-import com.techjar.ledcm.hardware.manager.TLC5940LEDManager;
-import com.techjar.ledcm.hardware.manager.TestLEDManager;
-import com.techjar.ledcm.hardware.animation.*;
-import com.techjar.ledcm.hardware.tcp.TCPServer;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.render.pipeline.RenderPipeline;
 import com.techjar.ledcm.render.pipeline.RenderPipelineGUI;
 import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
+import com.techjar.ledcm.render.pipeline.RenderPipelineVR;
 import com.techjar.ledcm.util.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
-import com.techjar.ledcm.util.Axis;
-import com.techjar.ledcm.util.AxisAlignedBB;
 import com.techjar.ledcm.util.ConfigManager;
 import com.techjar.ledcm.util.Constants;
-import com.techjar.ledcm.util.Dimension3D;
-import com.techjar.ledcm.util.Direction;
-import com.techjar.ledcm.util.LEDCubeOctreeNode;
+import com.techjar.ledcm.util.KeyPress;
 import com.techjar.ledcm.util.LightSource;
-import com.techjar.ledcm.util.MathHelper;
-import com.techjar.ledcm.util.Model;
-import com.techjar.ledcm.util.ModelMesh;
 import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
@@ -63,6 +40,12 @@ import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;
 import com.techjar.ledcm.util.logging.LogHelper;
+import com.techjar.ledcm.vr.VRInputEvent;
+import com.techjar.ledcm.vr.VRProvider;
+import com.techjar.ledcm.vr.VRProvider.ControllerType;
+import com.techjar.ledcm.vr.VRTrackedController;
+import com.techjar.ledcm.vr.VRTrackedController.AxisType;
+import com.techjar.ledcm.vr.VRTrackedController.ButtonType;
 
 import java.awt.AWTException;
 import java.awt.BorderLayout;
@@ -84,7 +67,6 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -98,20 +80,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import lombok.Getter;
@@ -135,15 +109,12 @@ import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
-import org.newdawn.slick.UnicodeFont;
 
 /**
  *
  * @author Techjar
  */
 public class LEDCubeManager {
-	//public static final int SCREEN_WIDTH = 1024;
-	//public static final int SCREEN_HEIGHT = 768;
 	@Getter private static LEDCubeManager instance;
 	@Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledcubemanager");
 	@Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
@@ -179,6 +150,8 @@ public class LEDCubeManager {
 	private List<Screen> screenList = new ArrayList<>();
 	private List<ScreenHolder> screensToAdd = new ArrayList<>();
 	private List<GUICallback> resizeHandlers = new ArrayList<>();
+	private Queue<KeyPress> virtualKeyPresses = new LinkedList<>();
+	private Queue<VRInputEvent> vrInputEvents = new LinkedList<>();
 	private Map<String, Integer> validControllers = new HashMap<>();
 	private List<Tuple<RenderPipeline, Integer>> pipelines = new ArrayList<>();
 	private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
@@ -189,6 +162,7 @@ public class LEDCubeManager {
 	@Getter private int fpsRender;
 	private long timeCounter;
 	private long deltaTime;
+	@Getter private float frameDelta;
 	private long renderStart;
 	public long faceCount;
 	private boolean screenshot;
@@ -197,13 +171,18 @@ public class LEDCubeManager {
 	public boolean debugMode;
 	public boolean debugGL;
 	public boolean wireframe;
+	@Getter private boolean vrMode;
+	@Getter @Setter private boolean showingVRGUI;
+	@Getter @Setter private boolean showingGUI = true;
+	@Getter @Setter private Vector2 mouseOverride;
 	public final boolean antiAliasingSupported;
 	public final int antiAliasingMaxSamples;
 	@Getter private boolean antiAliasing = true;
 	@Getter private int antiAliasingSamples = 4;
 	@Getter @Setter private float fieldOfView;
+	@Getter private float nearClip = 0.001F;
 	@Getter @Setter private float viewDistance;
-	private int multisampleFBO;
+	@Getter private int multisampleFBO;
 	private int multisampleTexture;
 	private int multisampleDepthTexture;
 	private int shadowMapSize = 1024;
@@ -211,6 +190,7 @@ public class LEDCubeManager {
 	private int depthTexture;
 	private final Timer frameServeTimer = new Timer();
 	private final Timer rateCapTimer = new Timer();
+	private final Timer vrScrollTimer = new Timer();
 
 	// Screens
 	@Getter private ScreenMainControl screenMainControl;
@@ -249,6 +229,11 @@ public class LEDCubeManager {
 			@Override
 			public void runAction(String parameter) {
 				wireframe = true;
+			}
+		}, new ArgumentParser.Argument(false, "\nEnable virtual reality render mode", "--vr") {
+			@Override
+			public void runAction(String parameter) {
+				vrMode = true;
 			}
 		}, new ArgumentParser.Argument(true, "<name>\nSpecify serial port name", "--serialport") {
 			@Override
@@ -337,8 +322,9 @@ public class LEDCubeManager {
 		else if (!validControllers.containsKey(config.getString("controls.controller"))) config.setProperty("controls.controller", defaultController);
 		if (config.hasChanged()) config.save();
 
-		addRenderPipeline(new RenderPipelineStandard(), 10);
-		addRenderPipeline(new RenderPipelineGUI(), 20);
+		if (vrMode) { // Kick all this shit off...
+			VRProvider.init();
+		}
 
 		textureManager = new TextureManager();
 		modelManager = new ModelManager(textureManager);
@@ -351,6 +337,15 @@ public class LEDCubeManager {
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac, *.m4a, *.aac)", "wav", "mp3", "ogg", "flac", "m4a", "aac"));
 		fileChooser.setMultiSelectionEnabled(false);
 		if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
+
+		if (vrMode) {
+			addRenderPipeline(new RenderPipelineVR(), 10);
+			addRenderPipeline(new RenderPipelineGUI(), 20);
+		} else {
+			addRenderPipeline(new RenderPipelineStandard(), 10);
+			addRenderPipeline(new RenderPipelineGUI(), 20);
+		}
+
 		init();
 		InstancedRenderer.init();
 
@@ -368,6 +363,10 @@ public class LEDCubeManager {
 		screenList.add(screenMainControl = new ScreenMainControl());
 		InputBindingManager.setupSettings();
 		ledCube.loadAnimations();
+
+		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+			tuple.getA().init();
+		}
 
 		run();
 	}
@@ -472,18 +471,19 @@ public class LEDCubeManager {
 		closeRequested = true;
 	}
 
-	private void shutdownInternal() throws LWJGLException {
+	void shutdownInternal() {
 		running = false;
 		if (config != null && config.hasChanged()) config.save();
 		if (soundManager != null) soundManager.getSoundSystem().cleanup();
 		if (textureManager != null) textureManager.cleanup();
 		if (fontManager != null) fontManager.cleanup();
 		if (modelManager != null) modelManager.cleanup();
+		if (ledCube != null) ledCube.cleanup();
+		if (VRProvider.isInitialized()) VRProvider.destroy();
 		ShaderProgram.cleanup();
 		Keyboard.destroy();
 		Mouse.destroy();
 		Display.destroy();
-		ledCube.getSpectrumAnalyzer().close();
 		File musicDir = new File("resampled");
 		for (File file : musicDir.listFiles()) {
 			file.delete();
@@ -494,17 +494,17 @@ public class LEDCubeManager {
 		return (Sys.getTime() * 1000) / Sys.getTimerResolution();
 	}
 
-	private float getDelta() {
+	private void updateFrameDelta() {
 		long time = System.nanoTime();
 		float delta = (time - deltaTime) / 1000000000F;
 		deltaTime = time;
-		return delta;
+		frameDelta = delta;
 	}
 
-	public void run() throws LWJGLException {
+	public void run() {
 		while (!Display.isCloseRequested() && !closeRequested) {
 			try {
-				if (rateCapTimer.getMilliseconds() >= 1000D / 300D) {
+				if (vrMode || rateCapTimer.getMilliseconds() >= 1000D / 300D) {
 					rateCapTimer.restart();
 					runGameLoop();
 				} else if (1000D / 300D - rateCapTimer.getMilliseconds() > 1) {
@@ -518,7 +518,7 @@ public class LEDCubeManager {
 		shutdownInternal();
 	}
 
-	private void runGameLoop() throws LWJGLException, InterruptedException {
+	private void runGameLoop() throws InterruptedException {
 		//if (fullscreen && !frame.isFocused()) setFullscreen(false);
 		if (newDisplayMode != null || newFullscreen != fullscreen) {
 			fullscreen = newFullscreen;
@@ -543,14 +543,17 @@ public class LEDCubeManager {
 		}
 		fpsCounter++;
 
-
+		updateFrameDelta();
+		float delta = getFrameDelta();
 		soundManager.update();
+		if (vrMode) VRProvider.poll(delta);
 		this.preProcess();
 		this.processKeyboard();
 		this.processMouse();
 		this.processController();
-		this.update();
-		if (Display.isActive() || (frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
+		this.processVRInput();
+		this.update(delta);
+		if (vrMode || Display.isActive() || (frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
 		else Thread.sleep(20);
 		Display.update();
 	}
@@ -673,7 +676,7 @@ public class LEDCubeManager {
 		config.defaultProperty("display.height", displayMode.getHeight());
 		config.defaultProperty("display.fullscreen", false);
 		config.defaultProperty("display.fieldofview", 45F);
-		config.defaultProperty("display.viewdistance", 1000F);
+		config.defaultProperty("display.viewdistance", 100F);
 		config.defaultProperty("display.antialiasing", true);
 		config.defaultProperty("display.antialiasingsamples", 4);
 		config.defaultProperty("sound.effectvolume", 1.0F);
@@ -714,6 +717,18 @@ public class LEDCubeManager {
 	}
 
 	private void initBindings() {
+		InputBindingManager.addBinding(new InputBinding("togglegui", "Toggle GUI", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F1)) {
+			@Override
+			public boolean onPressed() {
+				showingGUI = !showingGUI;
+				return false;
+			}
+
+			@Override
+			public boolean onReleased() {
+				return true;
+			}
+		});
 		InputBindingManager.addBinding(new InputBinding("screenshot", "Screenshot", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F2)) {
 			@Override
 			public boolean onPressed() {
@@ -751,19 +766,22 @@ public class LEDCubeManager {
 				return true;
 			}
 		});
-		InputBindingManager.addBinding(new InputBinding("movecamera", "Toggle Movement", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
-			@Override
-			public boolean onPressed() {
-				Mouse.setGrabbed(!Mouse.isGrabbed());
-				if (Mouse.isGrabbed()) Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
-				return false;
-			}
+		if (!vrMode) {
+			InputBindingManager.addBinding(new InputBinding("movecamera", "Toggle Movement", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
+				@Override
+				public boolean onPressed() {
+					Mouse.setGrabbed(!Mouse.isGrabbed());
+					if (Mouse.isGrabbed())
+						Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
+					return false;
+				}
 
-			@Override
-			public boolean onReleased() {
-				return true;
-			}
-		});
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+		}
 	}
 
 	private void init() {
@@ -772,7 +790,6 @@ public class LEDCubeManager {
 		setupAntiAliasing();
 	}
 
-	@SneakyThrows(LWJGLException.class)
 	private void initGL() {
 		// 3D Initialization
 		glClearColor(0.08F, 0.08F, 0.08F, 1);
@@ -818,13 +835,13 @@ public class LEDCubeManager {
 		currentCursor = null;
 		debugText.clear();
 		ledCube.preProcess();
+		computeVRMouseAim();
 	}
 
 	private void processKeyboard() {
 		toploop: while (Keyboard.next()) {
 			for (Screen screen : screenList)
 				if (screen.isVisible() && screen.isEnabled() && !screen.processKeyboardEvent()) continue toploop;
-			//if (world != null && !world.processKeyboardEvent()) continue;
 			for (InputBinding binding : InputBindingManager.getBindings()) {
 				if (binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.KEYBOARD && binding.getBind().getButton() == Keyboard.getEventKey()) {
 					if (Keyboard.getEventKeyState()) {
@@ -835,15 +852,15 @@ public class LEDCubeManager {
 				}
 			}
 			if (!ledCube.processKeyboardEvent()) continue;
-			/*float moveSpeed = 0.01F;
-            if (Keyboard.getEventKey() == Keyboard.KEY_W) {
-                if (Keyboard.getEventKeyState()) camera.setVelocity(camera.getVelocity().add(camera.getAngle().forward().multiply(moveSpeed)));
-                else camera.setVelocity(camera.getVelocity().subtract(camera.getAngle().forward().multiply(moveSpeed)));
-            }
-            if (Keyboard.getEventKey() == Keyboard.KEY_S) {
-                if (Keyboard.getEventKeyState()) camera.setVelocity(camera.getVelocity().subtract(camera.getAngle().forward().multiply(moveSpeed)));
-                else camera.setVelocity(camera.getVelocity().add(camera.getAngle().forward().multiply(moveSpeed)));
-            }*/
+		}
+		toploop: while (!virtualKeyPresses.isEmpty()) {
+			KeyPress keyPress = virtualKeyPresses.poll();
+			for (Screen screen : screenList) {
+				if (!screen.isVisible() || !screen.isEnabled()) continue;
+				boolean cont = GUI.doKeyboardEvent(screen.getContainer(), keyPress.key, true, keyPress.character);
+				boolean cont2 = GUI.doKeyboardEvent(screen.getContainer(), keyPress.key, false, keyPress.character);
+				if (!cont || !cont2) continue toploop;
+			}
 		}
 	}
 
@@ -878,10 +895,71 @@ public class LEDCubeManager {
 		}
 	}
 
-	public void update() {
-		long time = System.nanoTime();
-		float delta = getDelta();
+	private void processVRInput() {
+		toploop: while(!vrInputEvents.isEmpty()) {
+			VRInputEvent event = vrInputEvents.poll();
+			//System.out.println(event);
+			for (Screen screen : screenList)
+				if (screen.isVisible() && screen.isEnabled() && !screen.processVRInputEvent(event)) continue toploop;
+			if (event.getController().getType() == ControllerType.RIGHT && showingVRGUI && mouseOverride != null) {
+				if (event.isButtonPressEvent() && event.getButton() == ButtonType.TRIGGER) {
+					if (event.getButtonState()) event.getController().triggerHapticPulse(2000);
+					for (Screen screen : screenList)
+						if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), 0, event.getButtonState(), 0)) continue toploop;
+				}
+				if (event.isAxisEvent() && event.getAxis() == AxisType.TOUCHPAD) {
+					if (vrScrollTimer.getMilliseconds() > 40 && Math.abs(event.getAxisDelta().getY()) > 4.0F) {
+						vrScrollTimer.restart();
+						event.getController().triggerHapticPulse(500);
+						for (Screen screen : screenList)
+							if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), -1, false, (int)(event.getAxisDelta().getY() * 10))) continue toploop;
+					}
+				}
+			}
+			if (!ledCube.processVRInputEvent(event)) continue;
+		}
+	}
 
+	private void computeVRMouseAim() {
+		if (vrMode && showingVRGUI) {
+			VRTrackedController leftController = VRProvider.getController(ControllerType.LEFT);
+			VRTrackedController rightController = VRProvider.getController(ControllerType.RIGHT);
+			Quaternion leftControllerRot = leftController.getRotation().inverse();
+			Vector3 rightControllerDir = rightController.getRotation().inverse().forward();
+			Vector3 guiNormal = leftControllerRot.up();
+			Vector3 guiRight = leftControllerRot.right();
+			Vector3 guiUp = leftControllerRot.forward().negate();
+
+			float guiRatio = (float)displayMode.getHeight() / (float)displayMode.getWidth();
+			float guiScale = 0.75F;
+			float guiWidth = guiScale;
+			float guiWidthHalf = guiWidth / 2;
+			float guiHeight = guiScale * guiRatio;
+			float guiHeightHalf = guiHeight / 2;
+
+			Vector3 guiPos = leftController.getPosition().add(leftControllerRot.forward().multiply(0.5F * guiScale * guiRatio + 0.05F));
+			Vector3 guiTopLeft = guiPos.subtract(guiUp.multiply(guiHeightHalf)).subtract(guiRight.multiply(guiWidthHalf));
+
+			float guiControllerDot = guiNormal.dot(rightControllerDir);
+			if (Math.abs(guiControllerDot) > 0.00001F) {
+				float intersectDist = -guiNormal.dot(rightController.getPosition().subtract(guiTopLeft)) / guiControllerDot;
+				if (intersectDist > 0) {
+					Vector3 pointOnPlane = rightController.getPosition().add(rightControllerDir.multiply(intersectDist));
+					Vector3 relativePoint = pointOnPlane.subtract(guiTopLeft);
+					float mouseX = relativePoint.dot(guiRight.divide(guiWidth));
+					float mouseY = relativePoint.dot(guiUp.divide(guiHeight));
+
+					if (mouseX >= 0 && mouseY >= 0 && mouseX <= 1 && mouseY <= 1) {
+						setMouseOverride(new Vector2(Math.round(mouseX * displayMode.getWidth()), Math.round(mouseY * displayMode.getHeight())));
+						return;
+					}
+				}
+			}
+			setMouseOverride(null);
+		}
+	}
+
+	public void update(float delta) {
 		if (!packetProcessQueue.isEmpty()) {
 			Packet packet;
 			while ((packet = packetProcessQueue.poll()) != null) {
@@ -893,7 +971,12 @@ public class LEDCubeManager {
 		textureManager.update(delta);
 		ledCube.update(delta);
 
-		lightingHandler.getLight(0).position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
+		if (!vrMode)
+			lightingHandler.getLight(0).position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
+
+		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+			tuple.getA().update(delta);
+		}
 
 		Iterator<Screen> it = screenList.iterator();
 		while (it.hasNext()) {
@@ -946,7 +1029,7 @@ public class LEDCubeManager {
 		// Setup and render 3D
 		/*glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        gluPerspective(45, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1F, 1000);
+        gluPerspective(45, (float)displayMode.getWidth() / (float)displayMode.getHeight(), nearClip, 1000);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();*/
 		//glMatrixMode(GL_PROJECTION);
@@ -1088,7 +1171,6 @@ public class LEDCubeManager {
 	}
 
 	public Vector3[] getCursorRay() {
-		float nearClip = 0.1F;
 		Vector3 look = camera.getAngle().forward();
 		Vector3 lookH = camera.getAngle().right();
 		Vector3 lookV = camera.getAngle().up().negate();
@@ -1134,7 +1216,7 @@ public class LEDCubeManager {
 		return null;
 	}
 
-	public void useDisplayMode() throws LWJGLException {
+	public void useDisplayMode() {
 		try {
 			regrab = Mouse.isGrabbed();
 			Mouse.setGrabbed(false);
@@ -1291,6 +1373,14 @@ public class LEDCubeManager {
 
 	 public static void queuePacketForProcessing(Packet packet) {
 		 instance.packetProcessQueue.add(packet);
+	 }
+
+	 public static void queueVirtualKeyPress(int key, char character) {
+		 instance.virtualKeyPresses.add(new KeyPress(key, character));
+	 }
+
+	 public static void queueVRInputEvent(VRTrackedController controller, ButtonType button, AxisType axis, boolean buttonState, boolean buttonPress, Vector2 axisDelta) {
+		 instance.vrInputEvents.add(new VRInputEvent(controller, button, axis, buttonState, buttonPress, axisDelta));
 	 }
 
 	 @Value private class ScreenHolder {

@@ -1,6 +1,7 @@
 package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.render.RenderHelper;
+import com.techjar.ledcm.vr.VRInputEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.lwjgl.input.Controller;
+import org.lwjgl.util.Color;
 import org.newdawn.slick.geom.Rectangle;
 
 /**
@@ -23,27 +25,38 @@ public abstract class GUIContainer extends GUI {
 
 	@Override
 	protected boolean keyboardEvent(int key, boolean state, char character) {
-		for (GUI gui : components)
+		for (GUI gui : components) {
 			if (gui.isVisible() && gui.isEnabled() && !gui.keyboardEvent(key, state, character)) return false;
+		}
 		return true;
 	}
 
 	@Override
 	protected boolean mouseEvent(int button, boolean state, int dwheel) {
-		for (GUI gui : components)
+		for (GUI gui : components) {
 			if (gui.isVisible() && gui.isEnabled() && !gui.mouseEvent(button, state, dwheel)) {
 				closeComboBoxesRecursive(this, gui);
 				return false;
 			}
+		}
 		return true;
 	}
 
-	/*@Override
+	@Override
     public boolean processControllerEvent(Controller controller) {
-        for (GUI gui : components)
+        for (GUI gui : components) {
             if (gui.isVisible() && gui.isEnabled() && !gui.processControllerEvent(controller)) return false;
+        }
         return true;
-    }*/
+    }
+
+	@Override
+    public boolean processVRInputEvent(VRInputEvent event) {
+        for (GUI gui : components) {
+            if (gui.isVisible() && gui.isEnabled() && !gui.processVRInputEvent(event)) return false;
+        }
+        return true;
+    }
 
 	@Override
 	public void update(float delta) {
@@ -86,7 +99,11 @@ public abstract class GUIContainer extends GUI {
 		RenderHelper.beginScissor(getScissorBox());
 		Rectangle containerBox = getContainerBox();
 		for (GUI gui : components) {
-			if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) gui.render();
+			if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) {
+				gui.render();
+				if (!gui.isEnabled())
+					RenderHelper.drawSquare(gui.getX(), gui.getY(), gui.getWidth(), gui.getHeight(), new Color(40, 40, 40, 150));
+			}
 		}
 		RenderHelper.endScissor();
 	}
@@ -146,9 +163,9 @@ public abstract class GUIContainer extends GUI {
 	}
 
 	public void removeAllComponents() {
-		Iterator it = components.iterator();
+		Iterator<GUI> it = components.iterator();
 		while (it.hasNext()) {
-			GUI gui = (GUI)it.next();
+			GUI gui = it.next();
 			gui.setParent(null);
 			it.remove();
 		}

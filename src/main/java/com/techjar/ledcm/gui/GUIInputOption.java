@@ -5,6 +5,7 @@ import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputInfo;
+import com.techjar.ledcm.vr.VRInputEvent;
 
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Controllers;
@@ -59,7 +60,7 @@ public class GUIInputOption extends GUI {
 	protected boolean mouseEvent(int button, boolean state, int dwheel) {
 		if (state) {
 			if (assign) {
-				binding.setBind(new InputInfo(InputInfo.Type.MOUSE, Mouse.getEventButton()));
+				binding.setBind(new InputInfo(InputInfo.Type.MOUSE, button));
 				if (changeHandler != null) {
 					changeHandler.setComponent(this);
 					changeHandler.run();
@@ -91,7 +92,7 @@ public class GUIInputOption extends GUI {
 		return true;
 	}
 
-	/*@Override
+	@Override
     public boolean processControllerEvent(Controller controller) { // TODO n' stuff
         if (assign && Controllers.isEventButton()) {
             binding.setBind(new InputInfo(InputInfo.Type.CONTROLLER, Controllers.getEventControlIndex()));
@@ -103,7 +104,21 @@ public class GUIInputOption extends GUI {
             return false;
         }
         return true;
-    }*/
+    }
+
+	@Override
+    public boolean processVRInputEvent(VRInputEvent event) { // TODO n' stuff
+        if (assign && event.isButtonPressEvent()) {
+            binding.setBind(new InputInfo(InputInfo.Type.VR, event.getButton().ordinal()));
+            if (changeHandler != null) {
+                changeHandler.setComponent(this);
+                changeHandler.run();
+            }
+            assign = false;
+            return false;
+        }
+        return true;
+    }
 
     @Override
     public void update(float delta) {

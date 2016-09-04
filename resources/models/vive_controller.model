@@ -1,2 +1,3 @@
 render vive_controller.obj
 texture vive_controller.png
+specularmap vive_controller_specular.png

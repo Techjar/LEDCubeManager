@@ -4,12 +4,14 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.vr.VRInputEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.lwjgl.input.Controller;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -61,6 +63,20 @@ public class GUITabbed extends GUI {
 		}
 		return true;
 	}
+
+	@Override
+    public boolean processControllerEvent(Controller controller) {
+		TabInfo tab = getSelectedTab();
+		if (tab != null && !tab.getContainer().processControllerEvent(controller)) return false;
+		return true;
+    }
+
+	@Override
+    public boolean processVRInputEvent(VRInputEvent event) {
+		TabInfo tab = getSelectedTab();
+		if (tab != null && !tab.getContainer().processVRInputEvent(event)) return false;
+		return true;
+    }
 
 	@Override
 	public void update(float delta) {
@@ -182,9 +198,9 @@ public class GUITabbed extends GUI {
 
 	public boolean removeTab(String name) {
 		if (name == null) return false;
-		Iterator it = tabs.iterator();
+		Iterator<TabInfo> it = tabs.iterator();
 		for (int i = 0; it.hasNext(); i++) {
-			TabInfo tab = (TabInfo)it.next();
+			TabInfo tab = it.next();
 			if (name.equals(tab.getName())) {
 				if (i == selectedTab) setSelectedTab(-1);
 				tab.getContainer().setParent(null);

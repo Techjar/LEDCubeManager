@@ -3,6 +3,7 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 
+import com.techjar.ledcm.vr.VRProvider;
 import org.lwjgl.util.Color;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -105,7 +106,7 @@ public class GUITextField extends GUIText {
 				repeatLastChar = character;
 				repeatStartTimer.restart();
 			}
-			else if (Keyboard.getEventKey() == repeatLastKey || Keyboard.getEventCharacter() == repeatLastChar) {
+			else if (key == repeatLastKey || character == repeatLastChar) {
 				repeatState = false;
 			}
 			return false;
@@ -148,8 +149,14 @@ public class GUITextField extends GUIText {
 				focused = true;
 				cursorState = true;
 				cursorTimer.restart();
+				if (LEDCubeManager.getInstance().isVrMode()) {
+					VRProvider.setKeyboardShowing(true);
+				}
 			} else if(focused && canLoseFocus) {
 				focused = false;
+				if (LEDCubeManager.getInstance().isVrMode()) {
+					VRProvider.setKeyboardShowing(false);
+				}
 			}
 		} else if (mouse0Pressed && !mouseState[0]) {
 			mouse0Pressed = false;

@@ -22,7 +22,7 @@ public class LightSource {
 	public float brightness = 1.0F;
 
 	public void sendToShader(int index, int arrayIndex) {
-		index += arrayIndex * 10;
+		index += arrayIndex * 6;
 		brightness = Math.max(brightness, Float.MIN_VALUE);
 		glUniform3f(index++, diffuse.x, diffuse.y, diffuse.z);
 		glUniform3f(index++, specular.x, specular.y, specular.z);

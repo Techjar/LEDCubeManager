@@ -41,7 +41,6 @@ import org.newdawn.slick.UnicodeFont;
  * @author Techjar
  */
 public class ScreenMainControl extends Screen {
-	private GUICallback resizeHandler2;
 	public final UnicodeFont font;
 	public final UnicodeFont fontTabbed;
 	public final GUISlider progressSlider;

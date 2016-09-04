@@ -101,6 +101,7 @@ public final class RenderHelper {
 	}
 
 	public static void beginScissor(Rectangle rect, boolean clipToPrevious) {
+		if (scissorStack.size() >= 100) throw new IllegalStateException("Scissor stack overflow!");
 		if (scissorStack.isEmpty()) glEnable(GL_SCISSOR_TEST);
 		else if (clipToPrevious) rect = Util.clipRectangle(rect, scissorStack.peek());
 		scissorStack.push(rect);
@@ -112,11 +113,10 @@ public final class RenderHelper {
 	}
 
 	public static void endScissor() {
-		if (!scissorStack.isEmpty()) {
-			scissorStack.pop();
-			if (scissorStack.isEmpty()) glDisable(GL_SCISSOR_TEST);
-			else performScissor(scissorStack.peek());
-		}
+		if (scissorStack.isEmpty()) throw new IllegalStateException("Scissor stack underflow!");
+		scissorStack.pop();
+		if (scissorStack.isEmpty()) glDisable(GL_SCISSOR_TEST);
+		else performScissor(scissorStack.peek());
 	}
 
 	public static Rectangle getPreviousScissor() {

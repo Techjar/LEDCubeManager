@@ -4,20 +4,20 @@ package com.techjar.ledcm.hardware;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.AnimationSpectrumAnalyzer;
-import com.techjar.ledcm.hardware.tcp.packet.Packet;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioData;
 import com.techjar.ledcm.hardware.tcp.packet.PacketAudioInit;
-import com.techjar.ledcm.util.BufferHelper;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.PrintStreamRelayer;
 import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.util.logging.LogHelper;
+
 import ddf.minim.AudioListener;
 import ddf.minim.AudioPlayer;
 import ddf.minim.Minim;
 import ddf.minim.analysis.BeatDetect;
 import ddf.minim.analysis.FFT;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -37,9 +38,11 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.TargetDataLine;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
+
 import org.lwjgl.util.Color;
 
 /**

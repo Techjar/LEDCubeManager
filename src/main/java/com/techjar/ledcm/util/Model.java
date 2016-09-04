@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL15.*;
 
 import com.obj.WavefrontObject;
 import com.techjar.ledcm.render.InstancedRenderer;
+import com.techjar.ledcm.util.logging.LogHelper;
 import com.techjar.ledcm.LEDCubeManager;
 
 import lombok.Getter;
@@ -21,15 +22,19 @@ public class Model {
 	private boolean mutable = true;
 	private ModelMesh[] meshes;
 	@Getter private final Texture texture;
+	//@Getter private final Texture normalMap;
+	@Getter private final Texture specularMap;
 	@Getter private final Material material;
 	@Getter private final boolean translucent;
 	@Getter private WavefrontObject collisionMesh;
 	@Getter private float mass;
 	private AxisAlignedBB aabb;
 
-	public Model(int meshCount, Texture texture, Material material, boolean translucent) {
+	public Model(int meshCount, Texture texture, /*Texture normalMap,*/ Texture specularMap, Material material, boolean translucent) {
 		this.meshes = new ModelMesh[meshCount];
 		this.texture = texture;
+		//this.normalMap = normalMap;
+		this.specularMap = specularMap;
 		this.material = material;
 		this.translucent = translucent;
 	}
@@ -39,19 +44,24 @@ public class Model {
 	 *
 	 * @return Number of faces in the chosen mesh.
 	 */
-	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced) {
+	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced, int textureID) {
+		if (instanced && textureID != 0) throw new IllegalArgumentException("textureID cannot be set for instanced render, use non-instanced render instead");
 		float distance = LEDCubeManager.getCamera().getPosition().distance(position);
 		ModelMesh mesh = lod ? getMeshByDistance(distance - meshes[0].getRadius()) : meshes[0];
 		if (instanced) InstancedRenderer.addItem(mesh, position, rotation, color, scale);
-		else InstancedRenderer.draw(mesh, position, rotation, color, scale);
+		else InstancedRenderer.draw(mesh, position, rotation, color, scale, textureID);
+	}
+
+	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced) {
+		render(position, rotation, color, scale, lod, instanced, 0);
 	}
 
 	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
-		render(position, rotation, color, scale, true, true);
+		render(position, rotation, color, scale, true, true, 0);
 	}
 
 	public void render(Vector3 position, Quaternion rotation, Color color) {
-		render(position, rotation, color, new Vector3(1, 1, 1), true, true);
+		render(position, rotation, color, new Vector3(1, 1, 1), true, true, 0);
 	}
 
 	public void loadMesh(int lod, float lodDistance, int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {
@@ -99,6 +109,7 @@ public class Model {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		for (ModelMesh mesh : meshes) {
 			glDeleteBuffers(mesh.getVBO());
+			LogHelper.fine("Deleted model VBO: %d", mesh.getVBO());
 		}
 		meshes = new ModelMesh[meshes.length];
 	}

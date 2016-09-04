@@ -70,8 +70,4 @@ public class AnimationMatrix extends Animation {
 		states = new boolean[dimension.x * dimension.y * dimension.z];
 		LEDUtil.clear(ledManager);
 	}
-
-	private boolean checkBit(long number, int bit) {
-		return (number & (1L << bit)) != 0;
-	}
 }

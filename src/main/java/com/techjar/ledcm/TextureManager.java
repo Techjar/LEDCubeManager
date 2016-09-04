@@ -2,10 +2,13 @@ package com.techjar.ledcm;
 
 
 import com.techjar.ledcm.util.Util;
+
 import static org.lwjgl.opengl.GL11.*;
 
 import com.techjar.ledcm.util.json.TextureMeta;
 import com.techjar.ledcm.util.json.TextureMeta.Animation.Frame;
+import com.techjar.ledcm.util.logging.LogHelper;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,14 +21,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Cleanup;
+
 import lombok.SneakyThrows;
+
 import org.lwjgl.BufferUtils;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.opengl.PNGDecoder;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureImpl;
-import org.newdawn.slick.opengl.TextureLoader;
 
 /**
  *
@@ -66,24 +69,27 @@ public class TextureManager {
 		if (cached != null) return cached;
 		Texture tex;
 		String fileSub = file.substring(file.lastIndexOf('.') + 1).toLowerCase();
-		@Cleanup FileInputStream inputStream = new FileInputStream(new File(texturePath, file));
-		File metaFile = new File(texturePath, file + ".meta");
-		if (metaFile.exists()) {
-			@Cleanup FileReader fr = new FileReader(metaFile);
-			TextureMeta meta = Util.GSON.fromJson(fr, TextureMeta.class);
-			if (meta.animation != null) {
-				if (meta.animation.frametime <= 0) {
-					throw new IllegalArgumentException("Frame time must be greater than zero.");
+		try (FileInputStream inputStream = new FileInputStream(new File(texturePath, file))) {
+			File metaFile = new File(texturePath, file + ".meta");
+			if (metaFile.exists()) {
+				try (FileReader fr = new FileReader(metaFile)) {
+					TextureMeta meta = Util.GSON.fromJson(fr, TextureMeta.class);
+					if (meta.animation != null) {
+						if (meta.animation.frametime <= 0) {
+							throw new IllegalArgumentException("Frame time must be greater than zero.");
+						}
+						tex = loadAnimatedTexture(fileSub, inputStream, filter, meta);
+						animated.put(file, (TextureAnimated)tex);
+					} else {
+						tex = loadTexture(fileSub, inputStream, filter);
+					}
 				}
-				tex = loadAnimatedTexture(fileSub, inputStream, filter, meta);
-				animated.put(file, (TextureAnimated)tex);
 			} else {
-				tex = TextureLoader.getTexture(fileSub, inputStream, filter);
+				tex = loadTexture(fileSub, inputStream, filter);
 			}
-		} else {
-			tex = TextureLoader.getTexture(fileSub, inputStream, filter);
 		}
 		cache.put(file, tex);
+		LogHelper.info("Loaded texture: %s", file);
 		return tex;
 	}
 
@@ -103,6 +109,54 @@ public class TextureManager {
 
 	public Image getImage(String file) {
 		return getImage(file, GL_LINEAR);
+	}
+
+	private TextureFixed loadTexture(String ref, InputStream in, int filter) throws IOException {
+		PNGDecoder decoder = new PNGDecoder(new BufferedInputStream(in));
+		if (!decoder.isRGB()) throw new IOException("Only RGB formatted images are supported by the PNGDecoder");
+
+		boolean hasAlpha = decoder.hasAlpha();
+		int componentCount = hasAlpha ? 4 : 3;
+		//int pixelFormat = hasAlpha ? GL_RGBA : GL_RGB;
+		int width = decoder.getWidth();
+		int height = decoder.getHeight();
+		int texWidth = Util.getNextPowerOfTwo(width);
+		int texHeight = Util.getNextPowerOfTwo(height);
+
+		ByteBuffer buffer = ByteBuffer.allocate(decoder.getWidth() * decoder.getHeight() * componentCount);
+		decoder.decode(buffer, decoder.getWidth() * componentCount, hasAlpha ? PNGDecoder.RGBA : PNGDecoder.RGB);
+
+		int max = glGetInteger(GL_MAX_TEXTURE_SIZE);
+		if (texWidth > max || texHeight > max) {
+			throw new IOException("Attempted to allocate a texture too big for the current hardware.");
+		}
+
+		byte[] bytes = new byte[texWidth * texHeight * componentCount];
+		for (int y = 0; y < decoder.getHeight(); y++) {
+			for (int x = 0; x < decoder.getWidth(); x += width) {
+				buffer.position((y * decoder.getWidth() + x) * componentCount);
+				buffer.get(bytes, texWidth * y * componentCount, width * componentCount);
+			}
+		}
+
+		ByteBuffer texBuffer = BufferUtils.createByteBuffer(texWidth * texHeight * componentCount);
+		texBuffer.put(bytes);
+		texBuffer.rewind();
+
+		int textureID = glGenTextures();
+		TextureFixed texture = new TextureFixed(ref, GL_TEXTURE_2D, textureID);
+		texture.setTextureWidth(texWidth);
+		texture.setTextureHeight(texHeight);
+		texture.setWidth(width);
+		texture.setHeight(height);
+		texture.setAlpha(hasAlpha);
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, texHeight, 0, hasAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, texBuffer);
+
+		return texture;
 	}
 
 	private TextureAnimated loadAnimatedTexture(String ref, InputStream in, int filter, TextureMeta meta) throws IOException {
@@ -159,6 +213,7 @@ public class TextureManager {
 			cache.remove(file).release();
 			animated.remove(file);
 			imageCache.remove(file);
+			LogHelper.info("Unloaded texture: %s", file);
 		}
 	}
 
@@ -168,9 +223,23 @@ public class TextureManager {
 		cache.clear();
 		animated.clear();
 		imageCache.clear();
+		LogHelper.info("TextureManager cleaned up!");
 	}
 
-	public class TextureAnimated extends TextureImpl {
+	public static class TextureFixed extends TextureImpl {
+		static Texture lastBind;
+
+		public TextureFixed(String ref, int target, int textureID) {
+			super(ref, target, textureID);
+		}
+
+		@Override
+		public void bind() {
+			glBindTexture(GL_TEXTURE_2D, getTextureID());
+		}
+	}
+
+	public static class TextureAnimated extends TextureFixed {
 		private ByteBuffer buffer;
 		private List<byte[]> textureData;
 		private Frame[] frameInfo;

@@ -1,7 +1,10 @@
 package com.techjar.ledcm.util.input;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.vr.VRTrackedController.ButtonType;
+
 import lombok.Value;
+
 import org.lwjgl.input.Controller;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -27,6 +30,11 @@ public class InputInfo {
                 Controller con = LEDCubeManager.getInstance().getController(LEDCubeManager.getConfig().getString("controls.controller"));
                 if (con == null || con.getButtonName(button) == null) return "";
                 return con.getButtonName(button);*/
+			case CONTROLLER:
+				return "";
+			case VR:
+				if (button < 0 && button >= ButtonType.values().length) return "";
+				return ButtonType.values()[button].name();
 		}
 		return "";
 	}
@@ -50,6 +58,11 @@ public class InputInfo {
                 else {
 
                 }*/
+			case CONTROLLER:
+				return null;
+			case VR:
+				if (code >= 0 && code < ButtonType.values().length)
+					return new InputInfo(type, code);
 		}
 		return null;
 	}
@@ -62,7 +75,8 @@ public class InputInfo {
 	public static enum Type {
 		KEYBOARD,
 		MOUSE,
-		CONTROLLER;
+		CONTROLLER,
+		VR;
 
 		@Override
 		public String toString() {
@@ -70,6 +84,7 @@ public class InputInfo {
 				case KEYBOARD: return "K";
 				case MOUSE: return "M";
 				case CONTROLLER: return "C";
+				case VR: return "V";
 			}
 			return "";
 		}
@@ -80,6 +95,7 @@ public class InputInfo {
 				case 'K': return KEYBOARD;
 				case 'M': return MOUSE;
 				case 'C': return CONTROLLER;
+				case 'V': return VR;
 			}
 			return null;
 		}

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Cleanup;
 import lombok.SneakyThrows;
 import org.lwjgl.util.vector.Vector3f;
 import org.newdawn.slick.opengl.Texture;
@@ -47,78 +46,90 @@ public class ModelManager {
 		ArrayList<Float> objectLODDists = new ArrayList<>();
 		File collisionFile = null;
 		Texture texture = textureManager.getTexture("white.png");
+		//Texture normalMap = textureManager.getTexture("white_normal.png");
+		Texture specularMap = textureManager.getTexture("white.png");
 		Material material = new Material();
 		boolean translucent = false;
 		float mass = 0;
 		Vector3 scale = new Vector3(1, 1, 1);
 		File modelFile = new File(modelPath, file);
-		@Cleanup BufferedReader br = new BufferedReader(new FileReader(modelFile));
-		String line;
-		while ((line = br.readLine()) != null) {
-			String[] split = line.split(" ", 2);
-			String[] subsplit = split[1].split(" ");
-			switch (split[0].toLowerCase()) {
-				case "render":
-					if (objectFiles != null) throw new IOException("Duplicate \"render\" entry in model file");
-					else objectFiles = new ArrayList<>();
-					for (int i = 0; i < subsplit.length; i++) {
-						objectFiles.add(new File(modelFile.getParent(), subsplit[i]));
-						if (i + 1 < subsplit.length) {
-							objectLODDists.add(Float.parseFloat(subsplit[i++ + 1]));
+		try (BufferedReader br = new BufferedReader(new FileReader(modelFile))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				String[] split = line.split(" ", 2);
+				String[] subsplit = split.length > 1 ? split[1].split(" ") : new String[0];
+				switch (split[0].toLowerCase()) {
+					case "render":
+						if (objectFiles != null) throw new IOException("Duplicate \"render\" entry in model file");
+						else objectFiles = new ArrayList<>();
+						for (int i = 0; i < subsplit.length; i++) {
+							objectFiles.add(new File(modelFile.getParent(), subsplit[i]));
+							if (i + 1 < subsplit.length) {
+								objectLODDists.add(Float.parseFloat(subsplit[i++ + 1]));
+							} else {
+								objectLODDists.add(Float.MAX_VALUE);
+							}
+						}
+						break;
+					case "texture":
+						texture = textureManager.getTexture(split[1]);
+						break;
+					/*case "normalmap":
+						normalMap = textureManager.getTexture(split[1]);
+						break;*/
+					case "specularmap":
+						specularMap = textureManager.getTexture(split[1]);
+						break;
+					case "material":
+						for (int i = 0; i < Math.min(subsplit.length, 4); i++) {
+							if ("default".equalsIgnoreCase(subsplit[i])) continue;
+							String[] subsubsplit = subsplit[i].split(",", 3);
+							switch (i) {
+								case 0:
+									material = new Material(new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.diffuse, material.specular, material.shininess);
+									break;
+								case 1:
+									material = new Material(material.ambient, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.specular, material.shininess);
+									break;
+								case 2:
+									material = new Material(material.ambient, material.diffuse, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.shininess);
+									break;
+								case 3:
+									material = new Material(material.ambient, material.diffuse, material.specular, Float.parseFloat(subsplit[i]));
+									break;
+							}
+						}
+						break;
+					case "translucent":
+						translucent = true;
+						break;
+					case "scale":
+						if (subsplit.length == 1) {
+							scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]));
+						} else if (subsplit.length >= 3) {
+							scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[1]), Float.parseFloat(subsplit[2]));
 						} else {
-							objectLODDists.add(Float.MAX_VALUE);
+							throw new IOException("Illegal arguments to scale: " + split[1]);
 						}
-					}
-					break;
-				case "texture":
-					texture = textureManager.getTexture(split[1]);
-					break;
-				case "material":
-					for (int i = 0; i < Math.min(subsplit.length, 4); i++) {
-						if ("default".equalsIgnoreCase(subsplit[i])) continue;
-						String[] subsubsplit = subsplit[i].split(",", 3);
-						switch (i) {
-							case 0:
-								material = new Material(new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.diffuse, material.specular, material.shininess);
-								break;
-							case 1:
-								material = new Material(material.ambient, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.specular, material.shininess);
-								break;
-							case 2:
-								material = new Material(material.ambient, material.diffuse, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.shininess);
-								break;
-							case 3:
-								material = new Material(material.ambient, material.diffuse, material.specular, Float.parseFloat(subsplit[i]));
+						break;
+					case "collision":
+						switch (subsplit[1].toLowerCase()) {
+							case "mesh":
+								collisionFile = new File(modelPath, subsplit[2]);
 								break;
 						}
-					}
-					break;
-				case "translucent":
-					translucent = true;
-					break;
-				case "scale":
-					if (subsplit.length == 1) {
-						scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[0]));
-					} else if (subsplit.length >= 3) {
-						scale = new Vector3(Float.parseFloat(subsplit[0]), Float.parseFloat(subsplit[1]), Float.parseFloat(subsplit[2]));
-					} else {
-						throw new IOException("Illegal arguments to scale: " + split[1]);
-					}
-					break;
-				case "collision":
-					switch (subsplit[1].toLowerCase()) {
-						case "mesh":
-							collisionFile = new File(modelPath, subsplit[2]);
-							break;
-					}
-					break;
-				case "mass":
-					mass = Float.parseFloat(split[1]);
-					break;
+						break;
+					case "mass":
+						mass = Float.parseFloat(split[1]);
+						break;
+					default:
+						LogHelper.warning("Unrecognized model parameter: %s", line);
+						break;
+				}
 			}
 		}
 		if (objectFiles == null || objectFiles.size() < 1) throw new IOException("Missing or empty \"render\" entry in model file");
-		Model model = new Model(objectFiles.size(), texture, material, translucent);
+		Model model = new Model(objectFiles.size(), texture, specularMap, material, translucent);
 		for (int i = 0; i < objectFiles.size(); i++) {
 			File objectFile = objectFiles.get(i);
 			WavefrontObject object = new WavefrontObject(objectFile.getAbsolutePath(), scale.getX(), scale.getY(), scale.getZ());
@@ -176,5 +187,6 @@ public class ModelManager {
 		for (Model model : cache.values())
 			model.release();
 		cache.clear();
+		LogHelper.info("ModelManager cleaned up!");
 	}
 }
