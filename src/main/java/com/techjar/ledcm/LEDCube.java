@@ -191,11 +191,39 @@ public class LEDCube {
 		if (event.getController().getType() == ControllerType.LEFT) {
 			if (event.isButtonPressEvent() && event.getButtonState() && event.getButton() == ButtonType.MENU) {
 				LEDCubeManager.getInstance().setShowingVRGUI(!LEDCubeManager.getInstance().isShowingVRGUI());
+				return false;
 			}
 		}
 		if (event.getController().getType() == ControllerType.RIGHT) {
-			if (event.isButtonPressEvent() && event.getButtonState() && event.getButton() == ButtonType.MENU) {
-				LEDUtil.clear(ledManager);
+			if (event.isButtonPressEvent() && event.getButtonState()) {
+				if (event.getButton() == ButtonType.TOUCHPAD) {
+					if (event.getController().getAxis(AxisType.TOUCHPAD).getY() > 0.1F) {
+						LEDUtil.clear(ledManager);
+						return false;
+					} else if (event.getController().getAxis(AxisType.TOUCHPAD).getY() < 0.1F) {
+						for (LEDSelection selection : ledSelections) {
+							if (selection.selector == event.getController()) {
+								floodFill(selection);
+								return false;
+							}
+						}
+					}
+				} else if (event.getButton() == ButtonType.MENU) {
+					if (event.getController().isButtonPressed(ButtonType.GRIP)) {
+						commThread.setFrozen(!commThread.isFrozen());
+						return false;
+					} else if (commThread.getCurrentSequence() == null) {
+						Animation anim = commThread.getCurrentAnimation();
+						try {
+							animations.put(anim.getName(), anim.getClass().newInstance());
+							animations.get(anim.getName()).postLoadInitOptions();
+							commThread.setCurrentAnimation(animations.get(anim.getName()));
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+						return false;
+					}
+				}
 			}
 		}
 		return true;
@@ -243,7 +271,7 @@ public class LEDCube {
 				StringBuilder sb = new StringBuilder("Hovered LED: ");
 				Vector3 vector = selection.position;
 				Color color = ledManager.getLEDColor((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
-				sb.append(vector.getX()).append(", ").append(vector.getY()).append(", ").append(vector.getZ());
+				sb.append((int)vector.getX()).append(", ").append((int)vector.getY()).append(", ").append((int)vector.getZ());
 				sb.append(" (").append(color.getRed()).append(", ").append(color.getGreen()).append(", ").append(color.getBlue()).append(')');
 				LEDCubeManager.addInfoText(sb.toString(), 900);
 			}
@@ -454,32 +482,11 @@ public class LEDCube {
 			@Override
 			public boolean onPressed() {
 				if (!Mouse.isGrabbed()) {
-					Dimension3D dim = ledManager.getDimensions();
-					LEDArray ledArray = ledManager.getLEDArray();
 					for (LEDSelection selection : ledSelections) {
-						Vector3 vector = selection.position;
-						Color targetColor = ledArray.getLEDColor((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
-						if (!targetColor.equals(paintColor)) {
-							boolean[] processed = new boolean[ledManager.getLEDCount()];
-							LinkedList<Vector3> stack = new LinkedList<>();
-							stack.push(vector);
-							while (!stack.isEmpty()) {
-								Vector3 current = stack.pop();
-								Color color = ledArray.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
-								if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
-									ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
-									processed[ledManager.encodeVector(current)] = true;
-									for (int i = 0; i < 6; i++) {
-										Vector3 offset = Direction.values()[i].getVector();
-										Vector3 node = current.add(offset);
-										if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[ledManager.encodeVector(node)]) {
-											stack.push(node);
-										}
-									}
-								}
-							}
+						if (selection.selector == null) {
+							floodFill(selection);
+							return false;
 						}
-						return false;
 					}
 				}
 				return true;
@@ -668,6 +675,33 @@ public class LEDCube {
 			}
 		}
 		return null;
+	}
+
+	private void floodFill(LEDSelection selection) {
+		Dimension3D dim = ledManager.getDimensions();
+		LEDArray ledArray = ledManager.getLEDArray();
+		Vector3 vector = selection.position;
+		Color targetColor = ledArray.getLEDColor((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
+		if (!targetColor.equals(paintColor)) {
+			boolean[] processed = new boolean[ledManager.getLEDCount()];
+			LinkedList<Vector3> stack = new LinkedList<>();
+			stack.push(vector);
+			while (!stack.isEmpty()) {
+				Vector3 current = stack.pop();
+				Color color = ledArray.getLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ());
+				if (color.equals(targetColor) && isLEDWithinIsolation(current)) {
+					ledManager.setLEDColor((int)current.getX(), (int)current.getY(), (int)current.getZ(), paintColor);
+					processed[ledManager.encodeVector(current)] = true;
+					for (int i = 0; i < 6; i++) {
+						Vector3 offset = Direction.values()[i].getVector();
+						Vector3 node = current.add(offset);
+						if (node.getX() >= 0 && node.getX() < dim.x && node.getY() >= 0 && node.getY() < dim.y && node.getZ() >= 0 && node.getZ() < dim.z && !processed[ledManager.encodeVector(node)]) {
+							stack.push(node);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public boolean isLEDWithinIsolation(int x, int y, int z) {
