@@ -162,7 +162,7 @@ public class LEDCubeManager {
 	@Getter private int fpsRender;
 	private long timeCounter;
 	private long deltaTime;
-	@Getter private float frameDelta;
+	@Getter private static float frameDelta;
 	private long renderStart;
 	public long faceCount;
 	private boolean screenshot;
@@ -725,6 +725,10 @@ public class LEDCubeManager {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
@@ -734,6 +738,10 @@ public class LEDCubeManager {
 			public boolean onPressed() {
 				screenshot = true;
 				return false;
+			}
+
+			@Override
+			public void whilePressed() {
 			}
 
 			@Override
@@ -750,6 +758,10 @@ public class LEDCubeManager {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
@@ -759,6 +771,10 @@ public class LEDCubeManager {
 			public boolean onPressed() {
 				wireframe = !wireframe;
 				return false;
+			}
+
+			@Override
+			public void whilePressed() {
 			}
 
 			@Override
@@ -774,6 +790,10 @@ public class LEDCubeManager {
 					if (Mouse.isGrabbed())
 						Mouse.setCursorPosition(displayMode.getWidth() / 2, displayMode.getHeight() / 2);
 					return false;
+				}
+
+				@Override
+				public void whilePressed() {
 				}
 
 				@Override
@@ -839,18 +859,31 @@ public class LEDCubeManager {
 	}
 
 	private void processKeyboard() {
+		boolean screenEat = false;
 		toploop: while (Keyboard.next()) {
 			for (Screen screen : screenList)
-				if (screen.isVisible() && screen.isEnabled() && !screen.processKeyboardEvent()) continue toploop;
+				if (screen.isVisible() && screen.isEnabled() && !screen.processKeyboardEvent()) {
+					screenEat = true;
+					break;
+				}
 			for (InputBinding binding : InputBindingManager.getBindings()) {
 				if (binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.KEYBOARD && binding.getBind().getButton() == Keyboard.getEventKey()) {
+					if (screenEat) {
+						binding.setPressed(false);
+						continue toploop;
+					}
 					if (Keyboard.getEventKeyState()) {
-						if (!binding.onPressed()) continue toploop;
+						if (!binding.onPressed()) {
+							binding.setPressed(true);
+							continue toploop;
+						}
 					} else {
+						binding.setPressed(false);
 						if (!binding.onReleased()) continue toploop;
 					}
 				}
 			}
+			if (screenEat) continue;
 			if (!ledCube.processKeyboardEvent()) continue;
 		}
 		toploop: while (!virtualKeyPresses.isEmpty()) {
@@ -865,18 +898,31 @@ public class LEDCubeManager {
 	}
 
 	private void processMouse() {
+		boolean screenEat = false;
 		toploop: while (Mouse.next()) {
 			for (Screen screen : screenList)
-				if (screen.isVisible() && screen.isEnabled() && !screen.processMouseEvent()) continue toploop;
+				if (screen.isVisible() && screen.isEnabled() && !screen.processMouseEvent()) {
+					screenEat = true;
+					break;
+				}
 			for (InputBinding binding : InputBindingManager.getBindings()) {
 				if (binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.MOUSE && binding.getBind().getButton() == Mouse.getEventButton()) {
+					if (screenEat) {
+						binding.setPressed(false);
+						continue toploop;
+					}
 					if (Mouse.getEventButtonState()) {
-						if (!binding.onPressed()) continue toploop;
+						if (!binding.onPressed()) {
+							binding.setPressed(true);
+							continue toploop;
+						}
 					} else {
+						binding.setPressed(false);
 						if (!binding.onReleased()) continue toploop;
 					}
 				}
 			}
+			if (screenEat) continue;
 			//if (world != null && !world.processMouseEvent()) continue;
 			//if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState() && !asteroids.containsKey(getMousePos())) asteroids.put(getMousePos(), AsteroidGenerator.generate());
 			if (!ledCube.processMouseEvent()) continue;
@@ -899,23 +945,45 @@ public class LEDCubeManager {
 		toploop: while(!vrInputEvents.isEmpty()) {
 			VRInputEvent event = vrInputEvents.poll();
 			//System.out.println(event);
+			boolean screenEat = false;
 			for (Screen screen : screenList)
-				if (screen.isVisible() && screen.isEnabled() && !screen.processVRInputEvent(event)) continue toploop;
-			if (event.getController().getType() == ControllerType.RIGHT && showingVRGUI && mouseOverride != null) {
+				if (screen.isVisible() && screen.isEnabled() && !screen.processVRInputEvent(event)) {
+					screenEat = true;
+					break;
+				}
+			if (!screenEat && event.getController().getType() == ControllerType.RIGHT && showingVRGUI && mouseOverride != null) {
 				if (event.isButtonPressEvent() && event.getButton() == ButtonType.TRIGGER) {
 					if (event.getButtonState()) event.getController().triggerHapticPulse(2000);
 					for (Screen screen : screenList)
-						if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), 0, event.getButtonState(), 0)) continue toploop;
+						if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), 0, event.getButtonState(), 0)) screenEat = true;
 				}
 				if (event.isAxisEvent() && event.getAxis() == AxisType.TOUCHPAD) {
 					if (vrScrollTimer.getMilliseconds() > 40 && Math.abs(event.getAxisDelta().getY()) > 4.0F) {
 						vrScrollTimer.restart();
 						event.getController().triggerHapticPulse(500);
 						for (Screen screen : screenList)
-							if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), -1, false, (int)(event.getAxisDelta().getY() * 10))) continue toploop;
+							if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), -1, false, (int)(event.getAxisDelta().getY() * 10))) screenEat = true;
 					}
 				}
 			}
+			for (InputBinding binding : InputBindingManager.getBindings()) {
+				if (event.isButtonPressEvent() && binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.VR && binding.getBind().getVrControllerType() == event.getController().getType() && binding.getBind().getButton() == event.getButton().ordinal()) {
+					if (screenEat) {
+						binding.setPressed(false);
+						continue toploop;
+					}
+					if (event.getButtonState()) {
+						if (!binding.onPressed()) {
+							binding.setPressed(true);
+							continue toploop;
+						}
+					} else {
+						binding.setPressed(false);
+						if (!binding.onReleased()) continue toploop;
+					}
+				}
+			}
+			if (screenEat) continue;
 			if (!ledCube.processVRInputEvent(event)) continue;
 		}
 	}
@@ -966,6 +1034,12 @@ public class LEDCubeManager {
 				packet.process();
 			}
 		}
+
+		InputBindingManager.getBindings().forEach(binding -> {
+			if (binding.isPressed()) {
+				binding.whilePressed();
+			}
+		});
 
 		camera.update(delta);
 		textureManager.update(delta);

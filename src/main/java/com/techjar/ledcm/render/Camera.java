@@ -24,7 +24,7 @@ public class Camera {
 	@Getter @Setter private float rotateMultiplier;
 	@Getter @Setter private Vector3 position;
 	@Getter private Angle angle;
-	private boolean pForward, pBack, pLeft, pRight, pDown, pUp, pTurbo;
+	private float moveSpeedMult;
 
 	public Camera() {
 		this.moveSpeed = 0.2F;
@@ -36,91 +36,113 @@ public class Camera {
 			InputBindingManager.addBinding(new InputBinding("camforward", "Forward", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_W)) {
 				@Override
 				public boolean onPressed() {
-					pForward = true;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+					position = position.add(angle.forward().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+				}
+
+				@Override
 				public boolean onReleased() {
-					pForward = false;
 					return false;
 				}
 			});
 			InputBindingManager.addBinding(new InputBinding("camback", "Back", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_S)) {
 				@Override
 				public boolean onPressed() {
-					pBack = true;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+					position = position.subtract(angle.forward().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+				}
+
+				@Override
 				public boolean onReleased() {
-					pBack = false;
 					return false;
 				}
 			});
 			InputBindingManager.addBinding(new InputBinding("camleft", "Left", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_A)) {
 				@Override
 				public boolean onPressed() {
-					pLeft = true;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+					position = position.subtract(angle.right().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+				}
+
+				@Override
 				public boolean onReleased() {
-					pLeft = false;
 					return false;
 				}
 			});
 			InputBindingManager.addBinding(new InputBinding("camright", "Right", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_D)) {
 				@Override
 				public boolean onPressed() {
-					pRight = true;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+					position = position.add(angle.right().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+				}
+
+				@Override
 				public boolean onReleased() {
-					pRight = false;
 					return false;
 				}
 			});
 			InputBindingManager.addBinding(new InputBinding("camdown", "Down", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_Q)) {
 				@Override
 				public boolean onPressed() {
-					pDown = true;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+					position = position.subtract(angle.up().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+				}
+
+				@Override
 				public boolean onReleased() {
-					pDown = false;
 					return false;
 				}
 			});
 			InputBindingManager.addBinding(new InputBinding("camup", "Up", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_E)) {
 				@Override
 				public boolean onPressed() {
-					pUp = true;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+					position = position.add(angle.up().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+				}
+
+				@Override
 				public boolean onReleased() {
-					pUp = false;
 					return false;
 				}
 			});
 			InputBindingManager.addBinding(new InputBinding("camturbo", "Turbo", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_LSHIFT)) {
 				@Override
 				public boolean onPressed() {
-					pTurbo = true;
+					moveSpeedMult = 5;
 					return false;
 				}
 
 				@Override
+				public void whilePressed() {
+				}
+
+				@Override
 				public boolean onReleased() {
-					pTurbo = false;
+					moveSpeedMult = 1;
 					return false;
 				}
 			});
@@ -128,30 +150,6 @@ public class Camera {
 	}
 
 	public void update(float delta) {
-		//position = position.add(velocity);
-		//angle = angle.add(angularVelocity);
-		float moveMult = 1;
-		if (pTurbo) {
-			moveMult = 5;
-		}
-		if (pForward) {
-			position = position.add(angle.forward().multiply(moveSpeed * moveMult * delta));
-		}
-		if (pBack) {
-			position = position.subtract(angle.forward().multiply(moveSpeed * moveMult * delta));
-		}
-		if (pRight) {
-			position = position.add(angle.right().multiply(moveSpeed * moveMult * delta));
-		}
-		if (pLeft) {
-			position = position.subtract(angle.right().multiply(moveSpeed * moveMult * delta));
-		}
-		if (pDown) {
-			position = position.subtract(angle.up().multiply(moveSpeed * moveMult * delta));
-		}
-		if (pUp) {
-			position = position.add(angle.up().multiply(moveSpeed * moveMult * delta));
-		}
 		if (Mouse.isGrabbed()) {
 			Vector2 offset = Util.getMouseCenterOffset();
 			angle = angle.add(new Angle(-offset.getY() * rotateMultiplier, -offset.getX() * rotateMultiplier));

@@ -4,6 +4,7 @@ import jopenvr.*;
 import lombok.Getter;
 import lombok.NonNull;
 
+import lombok.Setter;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 
@@ -18,6 +19,7 @@ public class VRTrackedController {
 	int deviceIndex;
 	@Getter final ControllerType type;
 	@Getter boolean tracking;
+	@Getter @Setter(onParam = @__({@NonNull})) TouchpadMode touchpadMode = TouchpadMode.SINGLE;
 	final Matrix4f pose = new Matrix4f();
 	Vector3 position = new Vector3();
 	Quaternion rotation = new Quaternion();
@@ -30,6 +32,7 @@ public class VRTrackedController {
 	int touchpadSampleIndex;
 	boolean triggerClicked;
 	boolean lastTriggerClicked;
+	ButtonType lastTouchpadButton;
 
 	static final long k_buttonAppMenu = (1L << JOpenVRLibrary.EVRButtonId.EVRButtonId_k_EButton_ApplicationMenu);
 	static final long k_buttonGrip =  (1L << JOpenVRLibrary.EVRButtonId.EVRButtonId_k_EButton_Grip);
@@ -95,12 +98,16 @@ public class VRTrackedController {
 
 	void processInput(float delta) {
 		// button touch
-		if ((state.ulButtonTouched & k_buttonTouchpad) != (lastState.ulButtonTouched & k_buttonTouchpad)) {
+		if ((state.ulButtonTouched & k_buttonTouchpad) != (lastState.ulButtonTouched & k_buttonTouchpad) || ((state.ulButtonTouched & k_buttonTouchpad) > 0 && getTouchpadButton() != lastTouchpadButton)) {
 			if (state.rAxis[k_axisTouchpad] != null) {
 				lastState.rAxis[k_axisTouchpad].x = state.rAxis[k_axisTouchpad].x;
 				lastState.rAxis[k_axisTouchpad].y = state.rAxis[k_axisTouchpad].y;
 			}
-			LEDCubeManager.queueVRInputEvent(this, ButtonType.TOUCHPAD, null, (state.ulButtonTouched & k_buttonTouchpad) > 0, false, null);
+			if ((state.ulButtonTouched & k_buttonTouchpad) > 0 && (lastState.ulButtonTouched & k_buttonTouchpad) > 0 && getTouchpadButton() != lastTouchpadButton) {
+				LEDCubeManager.queueVRInputEvent(this, lastTouchpadButton, null, false, false, null);
+			}
+			lastTouchpadButton = getTouchpadButton();
+			LEDCubeManager.queueVRInputEvent(this, getTouchpadButton(), null, (state.ulButtonTouched & k_buttonTouchpad) > 0, false, null);
 		}
 
 		// button press
@@ -111,7 +118,7 @@ public class VRTrackedController {
 			LEDCubeManager.queueVRInputEvent(this, ButtonType.GRIP, null, (state.ulButtonPressed & k_buttonGrip) > 0, true, null);
 		}
 		if ((state.ulButtonPressed & k_buttonTouchpad) != (lastState.ulButtonPressed & k_buttonTouchpad)) {
-			LEDCubeManager.queueVRInputEvent(this, ButtonType.TOUCHPAD, null, (state.ulButtonPressed & k_buttonTouchpad) > 0, true, null);
+			LEDCubeManager.queueVRInputEvent(this, getTouchpadButton(), null, (state.ulButtonPressed & k_buttonTouchpad) > 0, true, null);
 		}
 		if (state.rAxis[k_axisTrigger] != null) { // ulButtonPressed returns true on partial press for some reason, but we want actual click
 			triggerClicked = state.rAxis[k_axisTrigger].x > 0.99F;
@@ -137,6 +144,41 @@ public class VRTrackedController {
 		rotationTransformed = VRProvider.transformToRoom(rotation);
 	}
 
+	ButtonType getTouchpadButton() {
+		Vector2 axis = getAxis(AxisType.TOUCHPAD);
+		switch (touchpadMode) {
+			case SINGLE:
+				return ButtonType.TOUCHPAD;
+			case SPLIT_UD:
+				if (axis.getY() > 0) return ButtonType.TOUCHPAD_U;
+				else return ButtonType.TOUCHPAD_D;
+			case SPLIT_LR:
+				if (axis.getX() > 0) return ButtonType.TOUCHPAD_R;
+				else return ButtonType.TOUCHPAD_L;
+			case SPLIT_QUAD:
+				if (axis.getX() > 0) {
+					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UR;
+					else return ButtonType.TOUCHPAD_LR;
+				} else {
+					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UL;
+					else return ButtonType.TOUCHPAD_LL;
+				}
+			case SPLIT_QUAD_CENTER:
+				if (Math.abs(axis.getX()) < 0.3F && Math.abs(axis.getY()) < 0.3F) {
+					return ButtonType.TOUCHPAD_C;
+				}
+				if (axis.getX() > 0) {
+					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UR;
+					else return ButtonType.TOUCHPAD_LR;
+				} else {
+					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UL;
+					else return ButtonType.TOUCHPAD_LL;
+				}
+			default:
+				return null;
+		}
+	}
+
 	public Vector3 getPosition() {
 		return positionTransformed.copy();
 	}
@@ -157,6 +199,16 @@ public class VRTrackedController {
 		switch (button) {
 			case TOUCHPAD:
 				return (state.ulButtonTouched & k_buttonTouchpad) > 0;
+			case TOUCHPAD_U:
+			case TOUCHPAD_D:
+			case TOUCHPAD_L:
+			case TOUCHPAD_R:
+			case TOUCHPAD_UL:
+			case TOUCHPAD_UR:
+			case TOUCHPAD_LR:
+			case TOUCHPAD_LL:
+			case TOUCHPAD_C:
+				return (state.ulButtonTouched & k_buttonTouchpad) > 0 && button == getTouchpadButton();
 			default:
 				return false;
 		}
@@ -176,6 +228,16 @@ public class VRTrackedController {
 				return (state.ulButtonPressed & k_buttonTouchpad) > 0;
 			case TRIGGER:
 				return triggerClicked;
+			case TOUCHPAD_U:
+			case TOUCHPAD_D:
+			case TOUCHPAD_L:
+			case TOUCHPAD_R:
+			case TOUCHPAD_UL:
+			case TOUCHPAD_UR:
+			case TOUCHPAD_LR:
+			case TOUCHPAD_LL:
+			case TOUCHPAD_C:
+				return (state.ulButtonPressed & k_buttonTouchpad) > 0 && button == getTouchpadButton();
 			default:
 				return false;
 		}
@@ -216,7 +278,7 @@ public class VRTrackedController {
 			delta.setX(delta.getX() + (touchpadSampleBuffer[j].x - touchpadSampleBuffer[k].x));
 			delta.setY(delta.getY() + (touchpadSampleBuffer[j].y - touchpadSampleBuffer[k].y));
 		}
-		return delta.multiply(1 / LEDCubeManager.getInstance().getFrameDelta());
+		return delta.multiply(1 / LEDCubeManager.getFrameDelta());
 	}*/
 
 	public void triggerHapticPulse(int duration) {
@@ -230,11 +292,28 @@ public class VRTrackedController {
 		MENU,
 		GRIP,
 		TOUCHPAD,
-		TRIGGER;
+		TRIGGER,
+		TOUCHPAD_U,
+		TOUCHPAD_D,
+		TOUCHPAD_L,
+		TOUCHPAD_R,
+		TOUCHPAD_UL,
+		TOUCHPAD_UR,
+		TOUCHPAD_LR,
+		TOUCHPAD_LL,
+		TOUCHPAD_C;
 	}
 
 	public static enum AxisType {
 		TOUCHPAD,
 		TRIGGER;
+	}
+
+	public static enum TouchpadMode {
+		SINGLE,
+		SPLIT_UD,
+		SPLIT_LR,
+		SPLIT_QUAD,
+		SPLIT_QUAD_CENTER;
 	}
 }

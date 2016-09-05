@@ -44,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.techjar.ledcm.vr.VRTrackedController.TouchpadMode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -67,8 +68,6 @@ public class LEDCube {
 	private LEDManager ledManager;
 	private LEDCubeOctreeNode[] octrees;
 	@Getter private float spaceMult = 0.08F;
-	private boolean drawClick;
-	private ReadableColor drawColor;
 	private boolean postInited;
 	private List<LEDSelection> ledSelections = new ArrayList<>();
 	private Matrix4f transform = new Matrix4f();
@@ -118,6 +117,9 @@ public class LEDCube {
 		commThread = new CommThread((PortHandler)Class.forName("com.techjar.ledcm.hardware.handler." + LEDCubeManager.getPortHandlerName()).newInstance());
 		commThread.start();
 		resetCameraPosition();
+		if (LEDCubeManager.getInstance().isVrMode()) {
+			VRProvider.getController(ControllerType.RIGHT).setTouchpadMode(TouchpadMode.SPLIT_UD);
+		}
 	}
 
 	public void cleanup() {
@@ -173,14 +175,7 @@ public class LEDCube {
 	}
 
 	public boolean processMouseEvent() {
-		if (!Mouse.isGrabbed() && drawClick) {
-			for (LEDSelection selection : ledSelections) {
-				if (selection.selector == null) {
-					paintLEDHighlight(selection.highlight, drawColor);
-				}
-			}
-		}
-		return !drawClick;
+		return true;
 	}
 
 	public boolean processControllerEvent(Controller controller) {
@@ -188,44 +183,6 @@ public class LEDCube {
 	}
 
 	public boolean processVRInputEvent(VRInputEvent event) {
-		if (event.getController().getType() == ControllerType.LEFT) {
-			if (event.isButtonPressEvent() && event.getButtonState() && event.getButton() == ButtonType.MENU) {
-				LEDCubeManager.getInstance().setShowingVRGUI(!LEDCubeManager.getInstance().isShowingVRGUI());
-				return false;
-			}
-		}
-		if (event.getController().getType() == ControllerType.RIGHT) {
-			if (event.isButtonPressEvent() && event.getButtonState()) {
-				if (event.getButton() == ButtonType.TOUCHPAD) {
-					if (event.getController().getAxis(AxisType.TOUCHPAD).getY() > 0.1F) {
-						LEDUtil.clear(ledManager);
-						return false;
-					} else if (event.getController().getAxis(AxisType.TOUCHPAD).getY() < 0.1F) {
-						for (LEDSelection selection : ledSelections) {
-							if (selection.selector == event.getController()) {
-								floodFill(selection);
-								return false;
-							}
-						}
-					}
-				} else if (event.getButton() == ButtonType.MENU) {
-					if (event.getController().isButtonPressed(ButtonType.GRIP)) {
-						commThread.setFrozen(!commThread.isFrozen());
-						return false;
-					} else if (commThread.getCurrentSequence() == null) {
-						Animation anim = commThread.getCurrentAnimation();
-						try {
-							animations.put(anim.getName(), anim.getClass().newInstance());
-							animations.get(anim.getName()).postLoadInitOptions();
-							commThread.setCurrentAnimation(animations.get(anim.getName()));
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
-						return false;
-					}
-				}
-			}
-		}
 		return true;
 	}
 
@@ -233,19 +190,6 @@ public class LEDCube {
 		if (LEDCubeManager.getInstance().isVrMode()) {
 			for (ControllerType type : ControllerType.values()) {
 				VRTrackedController controller = VRProvider.getController(type);
-				for (LEDSelection selection : ledSelections) {
-					if (selection.selector == controller) {
-						if (controller.isButtonPressed(ButtonType.TRIGGER)) {
-							if (paintLEDHighlight(selection.highlight, paintColor))
-								controller.triggerHapticPulse(1000);
-						}
-						if (controller.isButtonPressed(ButtonType.GRIP)) {
-							if (paintLEDHighlight(selection.highlight, new Color()))
-								controller.triggerHapticPulse(1000);
-						}
-						//controller.triggerHapticPulse(50);
-					}
-				}
 				if (controller.getType() == ControllerType.LEFT && controller.isButtonPressed(ButtonType.TOUCHPAD)) {
 					float lightBrightness = (controller.getAxis(AxisType.TOUCHPAD).getY() + 1) / 2;
 					LEDCubeManager.getInstance().getLightingHandler().getLight(1).brightness = lightBrightness * 0.75F;
@@ -352,6 +296,10 @@ public class LEDCube {
 				}
 
 				@Override
+				public void whilePressed() {
+				}
+
+				@Override
 				public boolean onReleased() {
 					return true;
 				}
@@ -375,6 +323,10 @@ public class LEDCube {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
@@ -387,6 +339,10 @@ public class LEDCube {
 					return false;
 				}
 				return true;
+			}
+
+			@Override
+			public void whilePressed() {
 			}
 
 			@Override
@@ -406,6 +362,10 @@ public class LEDCube {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
@@ -415,6 +375,10 @@ public class LEDCube {
 			public boolean onPressed() {
 				LEDUtil.clear(ledManager);
 				return false;
+			}
+
+			@Override
+			public void whilePressed() {
 			}
 
 			@Override
@@ -430,6 +394,10 @@ public class LEDCube {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
@@ -437,44 +405,40 @@ public class LEDCube {
 		InputBindingManager.addBinding(new InputBinding("paintleds", "Paint LEDs", "Cube", true, new InputInfo(InputInfo.Type.MOUSE, 0)) {
 			@Override
 			public boolean onPressed() {
-				if (!Mouse.isGrabbed()) {
-					drawColor = paintColor;
-					drawClick = true;
-					for (LEDSelection selection : ledSelections) {
-						if (selection.selector == null) {
-							paintLEDHighlight(selection.highlight, drawColor);
-						}
+				return Mouse.isGrabbed();
+			}
+
+			@Override
+			public void whilePressed() {
+				ledSelections.forEach(selection -> {
+					if (selection.selector == null) {
+						paintLEDHighlight(selection.highlight, paintColor);
 					}
-					return false;
-				}
-				return true;
+				});
 			}
 
 			@Override
 			public boolean onReleased() {
-				drawClick = false;
 				return true;
 			}
 		});
 		InputBindingManager.addBinding(new InputBinding("eraseleds", "Erase LEDs", "Cube", true, new InputInfo(InputInfo.Type.MOUSE, 2)) {
 			@Override
 			public boolean onPressed() {
-				if (!Mouse.isGrabbed()) {
-					drawColor = ReadableColor.BLACK;
-					drawClick = true;
-					for (LEDSelection selection : ledSelections) {
-						if (selection.selector == null) {
-							paintLEDHighlight(selection.highlight, drawColor);
-						}
+				return Mouse.isGrabbed();
+			}
+
+			@Override
+			public void whilePressed() {
+				ledSelections.forEach(selection -> {
+					if (selection.selector == null) {
+						paintLEDHighlight(selection.highlight, ReadableColor.BLACK);
 					}
-					return false;
-				}
-				return true;
+				});
 			}
 
 			@Override
 			public boolean onReleased() {
-				drawClick = false;
 				return true;
 			}
 		});
@@ -493,6 +457,10 @@ public class LEDCube {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
@@ -505,10 +473,183 @@ public class LEDCube {
 			}
 
 			@Override
+			public void whilePressed() {
+			}
+
+			@Override
 			public boolean onReleased() {
 				return true;
 			}
 		});
+		if (LEDCubeManager.getInstance().isVrMode()) {
+			InputBindingManager.addBinding(new InputBinding("vrreloadanimation", "Reload Animation", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.MENU.ordinal(), ControllerType.RIGHT)) {
+				@Override
+				public boolean onPressed() {
+					if (commThread.getCurrentSequence() == null) {
+						Animation anim = commThread.getCurrentAnimation();
+						try {
+							animations.put(anim.getName(), anim.getClass().newInstance());
+							animations.get(anim.getName()).postLoadInitOptions();
+							commThread.setCurrentAnimation(animations.get(anim.getName()));
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+						return false;
+					}
+					return true;
+				}
+
+				@Override
+				public void whilePressed() {
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vrpaintleds1", "Paint LEDs 1", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.TRIGGER.ordinal(), ControllerType.LEFT)) {
+				@Override
+				public boolean onPressed() {
+					return false;
+				}
+
+				@Override
+				public void whilePressed() {
+					ledSelections.forEach(selection -> {
+						VRTrackedController controller = VRProvider.getController(getBind().getVrControllerType());
+						if (selection.selector == controller) {
+							if (paintLEDHighlight(selection.highlight, paintColor))
+								controller.triggerHapticPulse(1000);
+						}
+					});
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vrpaintleds2", "Paint LEDs 2", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.TRIGGER.ordinal(), ControllerType.RIGHT)) {
+				@Override
+				public boolean onPressed() {
+					return false;
+				}
+
+				@Override
+				public void whilePressed() {
+					ledSelections.forEach(selection -> {
+						VRTrackedController controller = VRProvider.getController(getBind().getVrControllerType());
+						if (selection.selector == controller) {
+							if (paintLEDHighlight(selection.highlight, paintColor))
+								controller.triggerHapticPulse(1000);
+						}
+					});
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vreraseleds1", "Erase LEDs 1", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.GRIP.ordinal(), ControllerType.LEFT)) {
+				@Override
+				public boolean onPressed() {
+					return false;
+				}
+
+				@Override
+				public void whilePressed() {
+					ledSelections.forEach(selection -> {
+						VRTrackedController controller = VRProvider.getController(getBind().getVrControllerType());
+						if (selection.selector == controller) {
+							if (paintLEDHighlight(selection.highlight, ReadableColor.BLACK))
+								controller.triggerHapticPulse(1000);
+						}
+					});
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vreraseleds2", "Erase LEDs 2", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.GRIP.ordinal(), ControllerType.RIGHT)) {
+				@Override
+				public boolean onPressed() {
+					return false;
+				}
+
+				@Override
+				public void whilePressed() {
+					ledSelections.forEach(selection -> {
+						VRTrackedController controller = VRProvider.getController(getBind().getVrControllerType());
+						if (selection.selector == controller) {
+							if (paintLEDHighlight(selection.highlight, ReadableColor.BLACK))
+								controller.triggerHapticPulse(1000);
+						}
+					});
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vrtogglegui", "Toggle GUI", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.MENU.ordinal(), ControllerType.LEFT)) {
+				@Override
+				public boolean onPressed() {
+					LEDCubeManager.getInstance().setShowingVRGUI(!LEDCubeManager.getInstance().isShowingVRGUI());
+					return false;
+				}
+
+				@Override
+				public void whilePressed() {
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vrclearleds", "Clear LEDs", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.TOUCHPAD_U.ordinal(), ControllerType.RIGHT)) {
+				@Override
+				public boolean onPressed() {
+					LEDUtil.clear(ledManager);
+					return false;
+				}
+
+				@Override
+				public void whilePressed() {
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+			InputBindingManager.addBinding(new InputBinding("vrfloodfill", "Flood Fill", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.TOUCHPAD_D.ordinal(), ControllerType.RIGHT)) {
+				@Override
+				public boolean onPressed() {
+					for (LEDSelection selection : ledSelections) {
+						if (selection.selector == VRProvider.getController(getBind().getVrControllerType())) {
+							floodFill(selection);
+							return false;
+						}
+					}
+					return true;
+				}
+
+				@Override
+				public void whilePressed() {
+				}
+
+				@Override
+				public boolean onReleased() {
+					return true;
+				}
+			});
+		}
 	}
 
 	private void initOctree() {

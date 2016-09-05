@@ -2,6 +2,7 @@
 package com.techjar.ledcm.util.input;
 
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  *
@@ -12,6 +13,7 @@ public abstract class InputBinding {
 	@Getter private final String name;
 	@Getter private final String category;
 	@Getter private final boolean unbindable;
+	@Getter @Setter boolean pressed;
 	private InputInfo bind;
 
 	public InputBinding(String id, String name, String category, boolean unbindable, InputInfo defaultBind) {
@@ -23,6 +25,7 @@ public abstract class InputBinding {
 	}
 
 	public abstract boolean onPressed();
+	public abstract void whilePressed();
 	public abstract boolean onReleased();
 
 	public final InputInfo getBind() {

@@ -94,7 +94,7 @@ public class GUIInputOption extends GUI {
 
 	@Override
     public boolean processControllerEvent(Controller controller) { // TODO n' stuff
-        if (assign && Controllers.isEventButton()) {
+        if (assign && Controllers.isEventButton() && Controllers.getEventButtonState()) {
             binding.setBind(new InputInfo(InputInfo.Type.CONTROLLER, Controllers.getEventControlIndex()));
             if (changeHandler != null) {
                 changeHandler.setComponent(this);
@@ -108,8 +108,8 @@ public class GUIInputOption extends GUI {
 
 	@Override
     public boolean processVRInputEvent(VRInputEvent event) { // TODO n' stuff
-        if (assign && event.isButtonPressEvent()) {
-            binding.setBind(new InputInfo(InputInfo.Type.VR, event.getButton().ordinal()));
+        if (assign && event.isButtonPressEvent() && event.getButtonState()) {
+            binding.setBind(new InputInfo(InputInfo.Type.VR, event.getButton().ordinal(), event.getController().getType()));
             if (changeHandler != null) {
                 changeHandler.setComponent(this);
                 changeHandler.run();

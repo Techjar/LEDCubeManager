@@ -22,6 +22,8 @@ repositories {
 	maven { url "https://clojars.org/repo" }
 }
 
+sourceCompatibility = 1.8
+
 // In this section you declare the dependencies for your production and test code
 dependencies {
 	compile "org.projectlombok:lombok:1.16.8"

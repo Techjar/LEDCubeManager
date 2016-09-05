@@ -1,8 +1,10 @@
 package com.techjar.ledcm.util.input;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.vr.VRProvider.ControllerType;
 import com.techjar.ledcm.vr.VRTrackedController.ButtonType;
 
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 
 import org.lwjgl.input.Controller;
@@ -13,10 +15,17 @@ import org.lwjgl.input.Mouse;
  *
  * @author Techjar
  */
-@Value
+@Value @RequiredArgsConstructor
 public class InputInfo {
 	private final Type type;
 	private final int button;
+	private final ControllerType vrControllerType;
+
+	public InputInfo(Type type, int button) {
+		this.type = type;
+		this.button = button;
+		this.vrControllerType = null;
+	}
 
 	public String getDisplayString() {
 		switch (type) {
@@ -26,7 +35,7 @@ public class InputInfo {
 			case MOUSE:
 				if (Mouse.getButtonName(button) == null) return "";
 				return "MOUSE" + button;
-				/*case CONTROLLER:
+			/*case CONTROLLER:
                 Controller con = LEDCubeManager.getInstance().getController(LEDCubeManager.getConfig().getString("controls.controller"));
                 if (con == null || con.getButtonName(button) == null) return "";
                 return con.getButtonName(button);*/
@@ -34,7 +43,7 @@ public class InputInfo {
 				return "";
 			case VR:
 				if (button < 0 && button >= ButtonType.values().length) return "";
-				return ButtonType.values()[button].name();
+				return (vrControllerType == ControllerType.LEFT ? "L_" : "R_") + ButtonType.values()[button].name();
 		}
 		return "";
 	}
@@ -51,7 +60,7 @@ public class InputInfo {
 			case MOUSE:
 				if (code != -1)
 					return new InputInfo(type, code);
-				/*case CONTROLLER:
+			/*case CONTROLLER:
                 Controller con = LEDCubeManager.getInstance().getController(LEDCubeManager.getConfig().getString("controls.controller"));
                 if (code != -1) {
                     return new InputInfo(type, code);
@@ -61,15 +70,17 @@ public class InputInfo {
 			case CONTROLLER:
 				return null;
 			case VR:
-				if (code >= 0 && code < ButtonType.values().length)
-					return new InputInfo(type, code);
+				code = Integer.valueOf(str.substring(2));
+				int controllerType = Integer.valueOf(str.substring(1, 2));
+				if (code >= 0 && code < ButtonType.values().length && controllerType >= 0 && controllerType < ControllerType.values().length)
+					return new InputInfo(type, code, ControllerType.values()[controllerType]);
 		}
 		return null;
 	}
 
 	@Override
 	public String toString() {
-		return new StringBuilder(type.toString()).append(button).toString();
+		return new StringBuilder(type.toString()).append(vrControllerType != null ? vrControllerType.ordinal() : "").append(button).toString();
 	}
 
 	public static enum Type {
