@@ -47,12 +47,9 @@ public class GUIWindow extends GUIContainer {
 		this.closeBtn.setDimension(20, 20);
 		this.closeBtn.setParent(this);
 		this.closeBtn.windowClose = true;
-		this.closeBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				if (closeAction == REMOVE_ON_CLOSE) remove();
-				else if (closeAction == HIDE_ON_CLOSE) setVisible(false);
-			}
+		this.closeBtn.setClickHandler(component -> {
+			if (closeAction == REMOVE_ON_CLOSE) remove();
+			else if (closeAction == HIDE_ON_CLOSE) setVisible(false);
 		});
 	}
 

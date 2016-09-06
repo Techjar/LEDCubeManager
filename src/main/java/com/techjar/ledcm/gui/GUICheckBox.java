@@ -98,8 +98,7 @@ public class GUICheckBox extends GUI {
 		if (checked != this.checked) {
 			this.checked = checked;
 			if (changeHandler != null) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 		}
 	}

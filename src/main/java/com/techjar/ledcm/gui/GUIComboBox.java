@@ -160,8 +160,7 @@ public class GUIComboBox extends GUI {
 		if (selectedItem != this.selectedItem) {
 			this.selectedItem = MathHelper.clamp(selectedItem, -1, items.size() - 1);
 			if (changeHandler != null) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 		}
 	}

@@ -129,12 +129,9 @@ public class ScreenMainControl extends Screen {
 		playBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		playBtn.setDimension(100, 40);
 		playBtn.setPosition(5, -5);
-		playBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				if (LEDCubeManager.getLEDCube().getCommThread().getCurrentSequence() == null || !LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying()) {
-					LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
-				}
+		playBtn.setClickHandler(component -> {
+			if (LEDCubeManager.getLEDCube().getCommThread().getCurrentSequence() == null || !LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isPlaying()) {
+				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().play();
 			}
 		});
 		container.addComponent(playBtn);
@@ -142,47 +139,35 @@ public class ScreenMainControl extends Screen {
 		pauseBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		pauseBtn.setDimension(100, 40);
 		pauseBtn.setPosition(110, -5);
-		pauseBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().pause();
-			}
+		pauseBtn.setClickHandler(component -> {
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().pause();
 		});
 		container.addComponent(pauseBtn);
 		stopBtn = new GUIButton(font, new Color(255, 255, 255), "Stop", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		stopBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		stopBtn.setDimension(100, 40);
 		stopBtn.setPosition(215, -5);
-		stopBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
-			}
+		stopBtn.setClickHandler(component -> {
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stop();
 		});
 		container.addComponent(stopBtn);
 		chooseFileBtn = new GUIButton(font, new Color(255, 255, 255), "Choose File...", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		chooseFileBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		chooseFileBtn.setDimension(200, 40);
 		chooseFileBtn.setPosition(320, -5);
-		chooseFileBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						if (LEDCubeManager.isConvertingAudio()) return;
-						int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
-						if (option == JFileChooser.APPROVE_OPTION) {
-							try {
-								File file = LEDCubeManager.getFileChooser().getSelectedFile();
-								LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
-							} catch (Exception ex) {
-								ex.printStackTrace();
-							}
-						}
+		chooseFileBtn.setClickHandler(component -> {
+			new Thread(() -> {
+				if (LEDCubeManager.isConvertingAudio()) return;
+				int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
+				if (option == JFileChooser.APPROVE_OPTION) {
+					try {
+						File file = LEDCubeManager.getFileChooser().getSelectedFile();
+						LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
+					} catch (Exception ex) {
+						ex.printStackTrace();
 					}
-				}, "File Chooser").start();
-			}
+				}
+			}, "File Chooser").start();
 		});
 		container.addComponent(chooseFileBtn);
 		volumeSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
@@ -190,34 +175,25 @@ public class ScreenMainControl extends Screen {
 		volumeSlider.setDimension(150, 30);
 		volumeSlider.setPosition(525, -10);
 		volumeSlider.setValue(1);
-		volumeSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setVolume(volumeSlider.getValue());
-			}
+		volumeSlider.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setVolume(volumeSlider.getValue());
 		});
 		container.addComponent(volumeSlider);
 		progressSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
 		progressSlider.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		progressSlider.setDimension(310, 30);
 		progressSlider.setPosition(5, -55);
-		progressSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setPosition(progressSlider.getValue());
-			}
+		progressSlider.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setPosition(progressSlider.getValue());
 		});
 		container.addComponent(progressSlider);
 		togglePortBtn = new GUIButton(font, new Color(255, 255, 255), "Toggle Port", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		togglePortBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
 		togglePortBtn.setDimension(190, 35);
 		togglePortBtn.setPosition(-410, 5);
-		togglePortBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				if (LEDCubeManager.getLEDCube().getCommThread().isPortOpen()) LEDCubeManager.getLEDCube().getCommThread().closePort();
-				else LEDCubeManager.getLEDCube().getCommThread().openPort();
-			}
+		togglePortBtn.setClickHandler(component -> {
+			if (LEDCubeManager.getLEDCube().getCommThread().isPortOpen()) LEDCubeManager.getLEDCube().getCommThread().closePort();
+			else LEDCubeManager.getLEDCube().getCommThread().openPort();
 		});
 		container.addComponent(togglePortBtn);
 		/*GUIButton openPortBtn = new GUIButton(font, new Color(255, 255, 255), "Open", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
@@ -239,11 +215,8 @@ public class ScreenMainControl extends Screen {
 		redColorSlider.setValue(1);
 		redColorSlider.setVertical(true);
 		redColorSlider.setShowNotches(false);
-		redColorSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getPaintColor().setRed(Math.round(255 * redColorSlider.getValue()));
-			}
+		redColorSlider.setChangeHandler(component -> {
+			LEDCubeManager.getPaintColor().setRed(Math.round(255 * redColorSlider.getValue()));
 		});
 		container.addComponent(redColorSlider);
 		greenColorSlider = new GUISlider(new Color(0, 255, 0), new Color(50, 50, 50));
@@ -254,11 +227,8 @@ public class ScreenMainControl extends Screen {
 		greenColorSlider.setValue(1);
 		greenColorSlider.setVertical(true);
 		greenColorSlider.setShowNotches(false);
-		greenColorSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getPaintColor().setGreen(Math.round(255 * greenColorSlider.getValue()));
-			}
+		greenColorSlider.setChangeHandler(component -> {
+			LEDCubeManager.getPaintColor().setGreen(Math.round(255 * greenColorSlider.getValue()));
 		});
 		container.addComponent(greenColorSlider);
 		blueColorSlider = new GUISlider(new Color(0, 0, 255), new Color(50, 50, 50));
@@ -269,17 +239,14 @@ public class ScreenMainControl extends Screen {
 		blueColorSlider.setValue(1);
 		blueColorSlider.setVertical(true);
 		blueColorSlider.setShowNotches(false);
-		blueColorSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				if (LEDCubeManager.getLEDCube().getLEDManager().isMonochrome()) {
-					Color color = LEDCubeManager.getLEDCube().getLEDManager().getMonochromeColor();
-					LEDCubeManager.getPaintColor().setRed(Math.round(color.getRed() * blueColorSlider.getValue()));
-					LEDCubeManager.getPaintColor().setGreen(Math.round(color.getGreen() * blueColorSlider.getValue()));
-					LEDCubeManager.getPaintColor().setBlue(Math.round(color.getBlue() * blueColorSlider.getValue()));
-				} else {
-					LEDCubeManager.getPaintColor().setBlue(Math.round(255 * blueColorSlider.getValue()));
-				}
+		blueColorSlider.setChangeHandler(component -> {
+			if (LEDCubeManager.getLEDCube().getLEDManager().isMonochrome()) {
+				Color color = LEDCubeManager.getLEDCube().getLEDManager().getMonochromeColor();
+				LEDCubeManager.getPaintColor().setRed(Math.round(color.getRed() * blueColorSlider.getValue()));
+				LEDCubeManager.getPaintColor().setGreen(Math.round(color.getGreen() * blueColorSlider.getValue()));
+				LEDCubeManager.getPaintColor().setBlue(Math.round(color.getBlue() * blueColorSlider.getValue()));
+			} else {
+				LEDCubeManager.getPaintColor().setBlue(Math.round(255 * blueColorSlider.getValue()));
 			}
 		});
 		container.addComponent(blueColorSlider);
@@ -295,11 +262,8 @@ public class ScreenMainControl extends Screen {
 		xScaleSlider.setDimension(120, 30);
 		xScaleSlider.setPosition(-10, -240);
 		xScaleSlider.setIncrement(1F / (ledDim.x - 1));
-		xScaleSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getPaintSize().setX(Math.round((ledDim.x - 1) * xScaleSlider.getValue()));
-			}
+		xScaleSlider.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().getPaintSize().setX(Math.round((ledDim.x - 1) * xScaleSlider.getValue()));
 		});
 		container.addComponent(xScaleSlider);
 		xScaleLabel = new GUILabel(font, new Color(255, 255, 255), "X");
@@ -312,11 +276,8 @@ public class ScreenMainControl extends Screen {
 		yScaleSlider.setDimension(120, 30);
 		yScaleSlider.setPosition(-10, -205);
 		yScaleSlider.setIncrement(1F / (ledDim.y - 1));
-		yScaleSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getPaintSize().setY(Math.round((ledDim.y - 1) * yScaleSlider.getValue()));
-			}
+		yScaleSlider.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().getPaintSize().setY(Math.round((ledDim.y - 1) * yScaleSlider.getValue()));
 		});
 		container.addComponent(yScaleSlider);
 		yScaleLabel = new GUILabel(font, new Color(255, 255, 255), "Y");
@@ -329,11 +290,8 @@ public class ScreenMainControl extends Screen {
 		zScaleSlider.setDimension(120, 30);
 		zScaleSlider.setPosition(-10, -170);
 		zScaleSlider.setIncrement(1F / (ledDim.z - 1));
-		zScaleSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getPaintSize().setZ(Math.round((ledDim.z - 1) * zScaleSlider.getValue()));
-			}
+		zScaleSlider.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().getPaintSize().setZ(Math.round((ledDim.z - 1) * zScaleSlider.getValue()));
 		});
 		container.addComponent(zScaleSlider);
 		zScaleLabel = new GUILabel(font, new Color(255, 255, 255), "Z");
@@ -341,18 +299,6 @@ public class ScreenMainControl extends Screen {
 		zScaleLabel.setDimension(20, 30);
 		zScaleLabel.setPosition(-135, -170);
 		container.addComponent(zScaleLabel);
-		layersBtn = new GUIButton(font, new Color(255, 255, 255), "Layers", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
-		layersBtn.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
-		layersBtn.setDimension(120, 35);
-		layersBtn.setPosition(-10, -275);
-		layersBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				layersWindow.setVisible(!layersWindow.isVisible());
-				if (layersWindow.isVisible()) layersWindow.setToBePutOnTop(true);
-			}
-		});
-		container.addComponent(layersBtn);
 
 		layersWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
 		layersWindow.setDimension(150, 167);
@@ -360,97 +306,6 @@ public class ScreenMainControl extends Screen {
 		layersWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
 		layersWindow.setVisible(false);
 		container.addComponent(layersWindow);
-		radioOff = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-		radioOff.setDimension(30, 30);
-		radioOff.setPosition(5, 5);
-		radioOff.setSelected(true);
-		radioOff.setSelectHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setLayerIsolation(0);
-				layerSlider.setEnabled(false);
-				layerSlider.setValue(0);
-				layerSlider.setIncrement(0);
-			}
-		});
-		radioOffLabel = new GUILabel(font, new Color(255, 255, 255), "Off");
-		radioOffLabel.setDimension(60, 30);
-		radioOffLabel.setPosition(40, 5);
-		radioOff.setLabel(radioOffLabel);
-		layersWindow.addComponent(radioOffLabel);
-		layersWindow.addComponent(radioOff);
-		radioX = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-		radioX.setDimension(30, 30);
-		radioX.setPosition(5, 40);
-		radioX.setSelectHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setLayerIsolation(1);
-				layerSlider.setEnabled(true);
-				layerSlider.setValue(0);
-				layerSlider.setIncrement(1F / (ledDim.x - 1));
-				layerSlider.setChangeHandler(new GUICallback() {
-					@Override
-					public void run() {
-						LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.x - 1) * layerSlider.getValue()));
-					}
-				});
-			}
-		});
-		radioXLabel = new GUILabel(font, new Color(255, 255, 255), "X");
-		radioXLabel.setDimension(20, 30);
-		radioXLabel.setPosition(40, 40);
-		radioX.setLabel(radioXLabel);
-		layersWindow.addComponent(radioXLabel);
-		layersWindow.addComponent(radioX);
-		radioY = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-		radioY.setDimension(30, 30);
-		radioY.setPosition(5, 75);
-		radioY.setSelectHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setLayerIsolation(2);
-				layerSlider.setEnabled(true);
-				layerSlider.setValue(0);
-				layerSlider.setIncrement(1F / (ledDim.y - 1));
-				layerSlider.setChangeHandler(new GUICallback() {
-					@Override
-					public void run() {
-						LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.y - 1) * layerSlider.getValue()));
-					}
-				});
-			}
-		});
-		radioYLabel = new GUILabel(font, new Color(255, 255, 255), "Y");
-		radioYLabel.setDimension(20, 30);
-		radioYLabel.setPosition(40, 75);
-		radioY.setLabel(radioYLabel);
-		layersWindow.addComponent(radioYLabel);
-		layersWindow.addComponent(radioY);
-		radioZ = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-		radioZ.setDimension(30, 30);
-		radioZ.setPosition(5, 110);
-		radioZ.setSelectHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setLayerIsolation(3);
-				layerSlider.setEnabled(true);
-				layerSlider.setValue(0);
-				layerSlider.setIncrement(1F / (ledDim.z - 1));
-				layerSlider.setChangeHandler(new GUICallback() {
-					@Override
-					public void run() {
-						LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.z - 1) * layerSlider.getValue()));
-					}
-				});
-			}
-		});
-		radioZLabel = new GUILabel(font, new Color(255, 255, 255), "Z");
-		radioZLabel.setDimension(20, 30);
-		radioZLabel.setPosition(40, 110);
-		radioZ.setLabel(radioZLabel);
-		layersWindow.addComponent(radioZLabel);
-		layersWindow.addComponent(radioZ);
 		layerSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
 		layerSlider.setDimension(30, 125);
 		layerSlider.setPosition(105, 10);
@@ -464,6 +319,85 @@ public class ScreenMainControl extends Screen {
             }
         });*/
 		layersWindow.addComponent(layerSlider);
+		layersBtn = new GUIButton(font, new Color(255, 255, 255), "Layers", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+		layersBtn.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
+		layersBtn.setDimension(120, 35);
+		layersBtn.setPosition(-10, -275);
+		layersBtn.setClickHandler(component -> {
+			layersWindow.setVisible(!layersWindow.isVisible());
+			if (layersWindow.isVisible()) layersWindow.setToBePutOnTop(true);
+		});
+		container.addComponent(layersBtn);
+		radioOff = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		radioOff.setDimension(30, 30);
+		radioOff.setPosition(5, 5);
+		radioOff.setSelected(true);
+		radioOff.setSelectHandler(component -> {
+			LEDCubeManager.getLEDCube().setLayerIsolation(0);
+			layerSlider.setEnabled(false);
+			layerSlider.setValue(0);
+			layerSlider.setIncrement(0);
+		});
+		radioOffLabel = new GUILabel(font, new Color(255, 255, 255), "Off");
+		radioOffLabel.setDimension(60, 30);
+		radioOffLabel.setPosition(40, 5);
+		radioOff.setLabel(radioOffLabel);
+		layersWindow.addComponent(radioOffLabel);
+		layersWindow.addComponent(radioOff);
+		radioX = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		radioX.setDimension(30, 30);
+		radioX.setPosition(5, 40);
+		radioX.setSelectHandler(component -> {
+			LEDCubeManager.getLEDCube().setLayerIsolation(1);
+			layerSlider.setEnabled(true);
+			layerSlider.setValue(0);
+			layerSlider.setIncrement(1F / (ledDim.x - 1));
+			layerSlider.setChangeHandler(component2 -> {
+				LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.x - 1) * layerSlider.getValue()));
+			});
+		});
+		radioXLabel = new GUILabel(font, new Color(255, 255, 255), "X");
+		radioXLabel.setDimension(20, 30);
+		radioXLabel.setPosition(40, 40);
+		radioX.setLabel(radioXLabel);
+		layersWindow.addComponent(radioXLabel);
+		layersWindow.addComponent(radioX);
+		radioY = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		radioY.setDimension(30, 30);
+		radioY.setPosition(5, 75);
+		radioY.setSelectHandler(component -> {
+			LEDCubeManager.getLEDCube().setLayerIsolation(2);
+			layerSlider.setEnabled(true);
+			layerSlider.setValue(0);
+			layerSlider.setIncrement(1F / (ledDim.y - 1));
+			layerSlider.setChangeHandler(component2 -> {
+				LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.y - 1) * layerSlider.getValue()));
+			});
+		});
+		radioYLabel = new GUILabel(font, new Color(255, 255, 255), "Y");
+		radioYLabel.setDimension(20, 30);
+		radioYLabel.setPosition(40, 75);
+		radioY.setLabel(radioYLabel);
+		layersWindow.addComponent(radioYLabel);
+		layersWindow.addComponent(radioY);
+		radioZ = new GUIRadioButton(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		radioZ.setDimension(30, 30);
+		radioZ.setPosition(5, 110);
+		radioZ.setSelectHandler(component -> {
+			LEDCubeManager.getLEDCube().setLayerIsolation(3);
+			layerSlider.setEnabled(true);
+			layerSlider.setValue(0);
+			layerSlider.setIncrement(1F / (ledDim.z - 1));
+			layerSlider.setChangeHandler(component2 -> {
+				LEDCubeManager.getLEDCube().setSelectedLayer(Math.round((ledDim.z - 1) * layerSlider.getValue()));
+			});
+		});
+		radioZLabel = new GUILabel(font, new Color(255, 255, 255), "Z");
+		radioZLabel.setDimension(20, 30);
+		radioZLabel.setPosition(40, 110);
+		radioZ.setLabel(radioZLabel);
+		layersWindow.addComponent(radioZLabel);
+		layersWindow.addComponent(radioZ);
 
 
 		sequenceComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
@@ -471,57 +405,63 @@ public class ScreenMainControl extends Screen {
 		sequenceComboBox.setDimension(300, 35);
 		sequenceComboBox.setPosition(0, 10);
 		sequenceComboBox.setVisibleItems(2);
-		sequenceLoadBtn = new GUIButton(font, new Color(255, 255, 255), "Sequence", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
-		sequenceLoadBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
-		sequenceLoadBtn.setDimension(200, 40);
-		sequenceLoadBtn.setPosition(320, -50);
-		sequenceLoadBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				sequenceWindow.setVisible(!sequenceWindow.isVisible());
-				if (sequenceWindow.isVisible()) {
-					sequenceWindow.setToBePutOnTop(true);
-					sequenceComboBox.setSelectedItem(-1);
-					sequenceComboBox.clearItems();
-					File dir = new File("resources/sequences/");
-					for (File file : dir.listFiles()) {
-						String name = file.getName();
-						if (name.toLowerCase().endsWith(".sequence")) {
-							sequenceComboBox.addItem(name.substring(0, name.lastIndexOf('.')));
-						}
-					}
-				}
-			}
-		});
-		container.addComponent(sequenceLoadBtn);
 		sequenceWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
 		sequenceWindow.setDimension(350, 150);
 		sequenceWindow.setResizable(false);
 		sequenceWindow.setCloseAction(GUIWindow.HIDE_ON_CLOSE);
 		sequenceWindow.setVisible(false);
 		container.addComponent(sequenceWindow);
+		sequenceLoadBtn = new GUIButton(font, new Color(255, 255, 255), "Sequence", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+		sequenceLoadBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
+		sequenceLoadBtn.setDimension(200, 40);
+		sequenceLoadBtn.setPosition(320, -50);
+		sequenceLoadBtn.setClickHandler(component -> {
+			sequenceWindow.setVisible(!sequenceWindow.isVisible());
+			if (sequenceWindow.isVisible()) {
+				sequenceWindow.setToBePutOnTop(true);
+				sequenceComboBox.setSelectedItem(-1);
+				sequenceComboBox.clearItems();
+				File dir = new File("resources/sequences/");
+				for (File file : dir.listFiles()) {
+					String name = file.getName();
+					if (name.toLowerCase().endsWith(".sequence")) {
+						sequenceComboBox.addItem(name.substring(0, name.lastIndexOf('.')));
+					}
+				}
+			}
+		});
+		container.addComponent(sequenceLoadBtn);
+		audioInputBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
+		audioInputBtn = new GUIButton(font, new Color(255, 255, 255), "Audio Input", audioInputBtnBg);
+		audioInputBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+		audioInputBtn.setDimension(200, 35);
+		audioInputBtn.setPosition(-5, 85);
+		audioInputBtn.setClickHandler(component -> {
+			boolean running = LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isRunningAudioInput();
+			audioInputBtnBg.setBackgroundColor(running ? new Color(255, 0, 0) : new Color(0, 255, 0));
+			if (running) LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stopAudioInput();
+			else LEDCubeManager.getLEDCube().getSpectrumAnalyzer().startAudioInput();
+		});
+		container.addComponent(audioInputBtn);
 		sequencePlayBtn = new GUIButton(font, new Color(255, 255, 255), "Start", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		sequencePlayBtn.setParentAlignment(GUIAlignment.TOP_CENTER);
 		sequencePlayBtn.setDimension(100, 40);
 		sequencePlayBtn.setPosition(-55, 65);
-		sequencePlayBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				Object item = sequenceComboBox.getSelectedItem();
-				if (item != null) {
-					try {
-						File file = new File("resources/sequences/" + item.toString() + ".sequence");
-						AnimationSequence sequence = AnimationSequence.loadFromFile(file);
-						sequence.setName(item.toString());
-						LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(sequence);
-						sequenceWindow.setVisible(false);
-						chooseFileBtn.setEnabled(!sequence.isMusicSynced());
-						progressSlider.setEnabled(!sequence.isMusicSynced());
-						stopBtn.setEnabled(!sequence.isMusicSynced());
-						audioInputBtn.setEnabled(!sequence.isMusicSynced());
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
+		sequencePlayBtn.setClickHandler(component -> {
+			Object item = sequenceComboBox.getSelectedItem();
+			if (item != null) {
+				try {
+					File file = new File("resources/sequences/" + item.toString() + ".sequence");
+					AnimationSequence sequence = AnimationSequence.loadFromFile(file);
+					sequence.setName(item.toString());
+					LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(sequence);
+					sequenceWindow.setVisible(false);
+					chooseFileBtn.setEnabled(!sequence.isMusicSynced());
+					progressSlider.setEnabled(!sequence.isMusicSynced());
+					stopBtn.setEnabled(!sequence.isMusicSynced());
+					audioInputBtn.setEnabled(!sequence.isMusicSynced());
+				} catch (Exception ex) {
+					ex.printStackTrace();
 				}
 			}
 		});
@@ -530,15 +470,12 @@ public class ScreenMainControl extends Screen {
 		sequenceStopBtn.setParentAlignment(GUIAlignment.TOP_CENTER);
 		sequenceStopBtn.setDimension(100, 40);
 		sequenceStopBtn.setPosition(55, 65);
-		sequenceStopBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(null);
-				chooseFileBtn.setEnabled(true);
-				progressSlider.setEnabled(true);
-				stopBtn.setEnabled(true);
-				audioInputBtn.setEnabled(true);
-			}
+		sequenceStopBtn.setClickHandler(component -> {
+			LEDCubeManager.getLEDCube().getCommThread().setCurrentSequence(null);
+			chooseFileBtn.setEnabled(true);
+			progressSlider.setEnabled(true);
+			stopBtn.setEnabled(true);
+			audioInputBtn.setEnabled(true);
 		});
 		sequenceWindow.addComponent(sequenceStopBtn);
 		sequenceWindow.addComponent(sequenceComboBox);
@@ -553,23 +490,17 @@ public class ScreenMainControl extends Screen {
 		animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
 		animOptionsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
 		animOptionsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
-		animOptionsWindow.setDimensionChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
-			}
+		animOptionsWindow.setDimensionChangeHandler(component -> {
+			animOptionsScrollBox.setDimension((int)animOptionsWindow.getContainerBox().getWidth(), (int)animOptionsWindow.getContainerBox().getHeight());
 		});
 		animOptionsWindow.addComponent(animOptionsScrollBox);
 		animOptionsBtn = new GUIButton(font, new Color(255, 255, 255), "Options", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		animOptionsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
 		animOptionsBtn.setDimension(140, 35);
 		animOptionsBtn.setPosition(-605, 5);
-		animOptionsBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				animOptionsWindow.setVisible(!animOptionsWindow.isVisible());
-				if (animOptionsWindow.isVisible()) animOptionsWindow.setToBePutOnTop(true);
-			}
+		animOptionsBtn.setClickHandler(component -> {
+			animOptionsWindow.setVisible(!animOptionsWindow.isVisible());
+			if (animOptionsWindow.isVisible()) animOptionsWindow.setToBePutOnTop(true);
 		});
 		container.addComponent(animOptionsBtn);
 
@@ -578,13 +509,10 @@ public class ScreenMainControl extends Screen {
 		animComboBox.setDimension(400, 35);
 		animComboBox.setPosition(-5, 5);
 		animComboBox.setVisibleItems(8);
-		animComboBox.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				if (animComboBox.getSelectedItem() != null) {
-					Animation animation = LEDCubeManager.getLEDCube().getAnimations().get(animComboBox.getSelectedItem().toString());
-					LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(animation);
-				}
+		animComboBox.setChangeHandler(component -> {
+			if (animComboBox.getSelectedItem() != null) {
+				Animation animation = LEDCubeManager.getLEDCube().getAnimations().get(animComboBox.getSelectedItem().toString());
+				LEDCubeManager.getLEDCube().getCommThread().setCurrentAnimation(animation);
 			}
 		});
 		//populateAnimationList();
@@ -601,72 +529,10 @@ public class ScreenMainControl extends Screen {
 		settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
 		settingsScrollBox.setScrollXMode(GUIScrollBox.ScrollMode.DISABLED);
 		settingsScrollBox.setScrollYMode(GUIScrollBox.ScrollMode.AUTOMATIC);
-		settingsWindow.setDimensionChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
-			}
+		settingsWindow.setDimensionChangeHandler(component -> {
+			settingsScrollBox.setDimension((int)settingsWindow.getContainerBox().getWidth(), (int)settingsWindow.getContainerBox().getHeight() - 60);
 		});
 		settingsWindow.addComponent(settingsScrollBox);
-		settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
-		settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
-		settingsApplyBtn.setDimension(200, 40);
-		settingsApplyBtn.setPosition(-105, -30);
-		settingsApplyBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				settingsWindow.setVisible(false);
-				Object item = resolutionComboBox.getSelectedItem();
-				if (item != null) {
-					String[] split = item.toString().split("x");
-					if (split.length == 2) {
-						LEDCubeManager.getInstance().setDisplayMode(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
-					}
-				}
-				LEDCubeManager.getInstance().setFullscreen(fullscreenCheckbox.isChecked());
-				item = audioInputComboBox.getSelectedItem();
-				if (item != null) {
-					LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixer(item.toString());
-				}
-				item = antiAliasingComboBtn.getSelectedItem();
-				if (item != null) {
-					switch (item.toString()) {
-						case "Off":
-							LEDCubeManager.getInstance().setAntiAliasing(false, 2);
-							break;
-						default:
-							LEDCubeManager.getInstance().setAntiAliasing(true, Integer.parseInt(Character.toString(item.toString().charAt(0))));
-							break;
-					}
-				}
-			}
-		});
-		settingsWindow.addComponent(settingsApplyBtn);
-		controlsBtn = new GUIButton(font, new Color(255, 255, 255), "Controls", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
-		controlsBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
-		controlsBtn.setDimension(200, 40);
-		controlsBtn.setPosition(105, -30);
-		controlsBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				controlsWindow.setVisible(!controlsWindow.isVisible());
-				if (controlsWindow.isVisible()) controlsWindow.setToBePutOnTop(true);
-			}
-		});
-		settingsWindow.addComponent(controlsBtn);
-		settingsBtn = new GUIButton(font, new Color(255, 255, 255), "Settings", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
-		settingsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
-		settingsBtn.setDimension(160, 35);
-		settingsBtn.setPosition(-5, 45);
-		settingsBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				settingsWindow.setVisible(!settingsWindow.isVisible());
-				if (settingsWindow.isVisible()) settingsWindow.setToBePutOnTop(true);
-			}
-		});
-		container.addComponent(settingsBtn);
-
 		resolutionComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		resolutionComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
 		resolutionComboBox.setDimension(400, 35);
@@ -707,6 +573,37 @@ public class ScreenMainControl extends Screen {
 		}
 		antiAliasingComboBtn.setSelectedItem(LEDCubeManager.getInstance().isAntiAliasing() ? LEDCubeManager.getInstance().getAntiAliasingSamples() + "x" : "Off");
 		settingsScrollBox.addComponent(antiAliasingComboBtn);
+		settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+		settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
+		settingsApplyBtn.setDimension(200, 40);
+		settingsApplyBtn.setPosition(-105, -30);
+		settingsApplyBtn.setClickHandler(component -> {
+			settingsWindow.setVisible(false);
+			Object item = resolutionComboBox.getSelectedItem();
+			if (item != null) {
+				String[] split = item.toString().split("x");
+				if (split.length == 2) {
+					LEDCubeManager.getInstance().setDisplayMode(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+				}
+			}
+			LEDCubeManager.getInstance().setFullscreen(fullscreenCheckbox.isChecked());
+			item = audioInputComboBox.getSelectedItem();
+			if (item != null) {
+				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixer(item.toString());
+			}
+			item = antiAliasingComboBtn.getSelectedItem();
+			if (item != null) {
+				switch (item.toString()) {
+					case "Off":
+						LEDCubeManager.getInstance().setAntiAliasing(false, 2);
+						break;
+					default:
+						LEDCubeManager.getInstance().setAntiAliasing(true, Integer.parseInt(Character.toString(item.toString().charAt(0))));
+						break;
+				}
+			}
+		});
+		settingsWindow.addComponent(settingsApplyBtn);
 
 		controlsWindow = new GUIWindow(new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2));
 		controlsWindow.setDimension(500, 450);
@@ -717,29 +614,30 @@ public class ScreenMainControl extends Screen {
 		container.addComponent(controlsWindow);
 		controlsTabbed = new GUITabbed(fontTabbed, new Color(255, 255, 255), new GUIBackground(new Color(50, 50, 50), new Color(255, 0, 0), 2));
 		controlsTabbed.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
-		controlsWindow.setDimensionChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				controlsTabbed.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
-			}
+		controlsWindow.setDimensionChangeHandler(component -> {
+			controlsTabbed.setDimension((int)controlsWindow.getContainerBox().getWidth(), (int)controlsWindow.getContainerBox().getHeight());
 		});
 		controlsWindow.addComponent(controlsTabbed);
 
-		audioInputBtnBg = new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2);
-		audioInputBtn = new GUIButton(font, new Color(255, 255, 255), "Audio Input", audioInputBtnBg);
-		audioInputBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
-		audioInputBtn.setDimension(200, 35);
-		audioInputBtn.setPosition(-5, 85);
-		audioInputBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				boolean running = LEDCubeManager.getLEDCube().getSpectrumAnalyzer().isRunningAudioInput();
-				audioInputBtnBg.setBackgroundColor(running ? new Color(255, 0, 0) : new Color(0, 255, 0));
-				if (running) LEDCubeManager.getLEDCube().getSpectrumAnalyzer().stopAudioInput();
-				else LEDCubeManager.getLEDCube().getSpectrumAnalyzer().startAudioInput();
-			}
+		controlsBtn = new GUIButton(font, new Color(255, 255, 255), "Controls", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+		controlsBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
+		controlsBtn.setDimension(200, 40);
+		controlsBtn.setPosition(105, -30);
+		controlsBtn.setClickHandler(component -> {
+			controlsWindow.setVisible(!controlsWindow.isVisible());
+			if (controlsWindow.isVisible()) controlsWindow.setToBePutOnTop(true);
 		});
-		container.addComponent(audioInputBtn);
+		settingsWindow.addComponent(controlsBtn);
+		settingsBtn = new GUIButton(font, new Color(255, 255, 255), "Settings", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
+		settingsBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
+		settingsBtn.setDimension(160, 35);
+		settingsBtn.setPosition(-5, 45);
+		settingsBtn.setClickHandler(component -> {
+			settingsWindow.setVisible(!settingsWindow.isVisible());
+			if (settingsWindow.isVisible()) settingsWindow.setToBePutOnTop(true);
+		});
+		container.addComponent(settingsBtn);
+
 		mixerGainSpinner = new GUISpinner(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		mixerGainSpinner.setParentAlignment(GUIAlignment.TOP_RIGHT);
 		mixerGainSpinner.setDimension(200, 30);
@@ -749,13 +647,10 @@ public class ScreenMainControl extends Screen {
 		mixerGainSpinner.setValue(0);
 		mixerGainSpinner.setIncrement(1);
 		mixerGainSpinner.setDecimalPlaces(1);
-		mixerGainSpinner.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				float gain = (float)Math.pow(4, mixerGainSpinner.getValue() / 20F);
-				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(gain);
-				LEDCubeManager.getConfig().setProperty("sound.inputgain", gain);
-			}
+		mixerGainSpinner.setChangeHandler(component -> {
+			float gain = (float)Math.pow(4, mixerGainSpinner.getValue() / 20F);
+			LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixerGain(gain);
+			LEDCubeManager.getConfig().setProperty("sound.inputgain", gain);
 		});
 		mixerGainSpinner.setValue((float)MathHelper.log(LEDCubeManager.getConfig().getFloat("sound.inputgain"), 4) * 20);
 		container.addComponent(mixerGainSpinner);
@@ -768,11 +663,8 @@ public class ScreenMainControl extends Screen {
 		exitBtn.setParentAlignment(GUIAlignment.TOP_RIGHT);
 		exitBtn.setDimension(90, 35);
 		exitBtn.setPosition(-170, 45);
-		exitBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getInstance().shutdown();
-			}
+		exitBtn.setClickHandler(component -> {
+			LEDCubeManager.getInstance().shutdown();
 		});
 		container.addComponent(exitBtn);
 
@@ -787,12 +679,9 @@ public class ScreenMainControl extends Screen {
 		transformBtn.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
 		transformBtn.setDimension(165, 35);
 		transformBtn.setPosition(-10, -315);
-		transformBtn.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				transformWindow.setVisible(!transformWindow.isVisible());
-				if (transformWindow.isVisible()) transformWindow.setToBePutOnTop(true);
-			}
+		transformBtn.setClickHandler(component -> {
+			transformWindow.setVisible(!transformWindow.isVisible());
+			if (transformWindow.isVisible()) transformWindow.setToBePutOnTop(true);
 		});
 		container.addComponent(transformBtn);
 		mirrorLabel = new GUILabel(font, new Color(255, 255, 255), "Mirror");
@@ -800,13 +689,12 @@ public class ScreenMainControl extends Screen {
 		mirrorLabel.setPosition(10, 10);
 		transformWindow.addComponent(mirrorLabel);
 		mirrorX = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		mirrorY = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		mirrorZ = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		mirrorX.setDimension(30, 30);
 		mirrorX.setPosition(115, 10);
-		mirrorX.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setReflection(mirrorX.isChecked(), mirrorY.isChecked(), mirrorZ.isChecked());
-			}
+		mirrorX.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().setReflection(mirrorX.isChecked(), mirrorY.isChecked(), mirrorZ.isChecked());
 		});
 		transformWindow.addComponent(mirrorX);
 		mirrorXLabel = new GUILabel(font, new Color(255, 255, 255), "X");
@@ -814,14 +702,10 @@ public class ScreenMainControl extends Screen {
 		mirrorXLabel.setPosition(150, 10);
 		mirrorX.setLabel(mirrorXLabel);
 		transformWindow.addComponent(mirrorXLabel);
-		mirrorY = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		mirrorY.setDimension(30, 30);
 		mirrorY.setPosition(180, 10);
-		mirrorY.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setReflection(mirrorX.isChecked(), mirrorY.isChecked(), mirrorZ.isChecked());
-			}
+		mirrorY.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().setReflection(mirrorX.isChecked(), mirrorY.isChecked(), mirrorZ.isChecked());
 		});
 		transformWindow.addComponent(mirrorY);
 		mirrorYLabel = new GUILabel(font, new Color(255, 255, 255), "Y");
@@ -829,14 +713,10 @@ public class ScreenMainControl extends Screen {
 		mirrorYLabel.setPosition(215, 10);
 		mirrorY.setLabel(mirrorYLabel);
 		transformWindow.addComponent(mirrorYLabel);
-		mirrorZ = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		mirrorZ.setDimension(30, 30);
 		mirrorZ.setPosition(245, 10);
-		mirrorZ.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setReflection(mirrorX.isChecked(), mirrorY.isChecked(), mirrorZ.isChecked());
-			}
+		mirrorZ.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().setReflection(mirrorX.isChecked(), mirrorY.isChecked(), mirrorZ.isChecked());
 		});
 		transformWindow.addComponent(mirrorZ);
 		mirrorZLabel = new GUILabel(font, new Color(255, 255, 255), "Z");
@@ -863,11 +743,8 @@ public class ScreenMainControl extends Screen {
 		rotateXButton = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		rotateXButton.setDimension(100, 35);
 		rotateXButton.setPosition(195, 90);
-		rotateXButton.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().rotateTransform((float)Math.toRadians(rotateXSpinner.getValue()), new Vector3(1, 0, 0));
-			}
+		rotateXButton.setClickHandler(component -> {
+			LEDCubeManager.getLEDCube().rotateTransform((float)Math.toRadians(rotateXSpinner.getValue()), new Vector3(1, 0, 0));
 		});
 		transformWindow.addComponent(rotateXButton);
 		rotateYLabel = new GUILabel(font, new Color(255, 255, 255), "Y");
@@ -885,11 +762,8 @@ public class ScreenMainControl extends Screen {
 		rotateYButton = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		rotateYButton.setDimension(100, 35);
 		rotateYButton.setPosition(195, 130);
-		rotateYButton.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().rotateTransform((float)Math.toRadians(rotateYSpinner.getValue()), new Vector3(0, 1, 0));
-			}
+		rotateYButton.setClickHandler(component -> {
+			LEDCubeManager.getLEDCube().rotateTransform((float)Math.toRadians(rotateYSpinner.getValue()), new Vector3(0, 1, 0));
 		});
 		transformWindow.addComponent(rotateYButton);
 		rotateZLabel = new GUILabel(font, new Color(255, 255, 255), "Z");
@@ -907,22 +781,16 @@ public class ScreenMainControl extends Screen {
 		rotateZButton = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		rotateZButton.setDimension(100, 35);
 		rotateZButton.setPosition(195, 170);
-		rotateZButton.setClickHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().rotateTransform((float)Math.toRadians(rotateZSpinner.getValue()), new Vector3(0, 0, 1));
-			}
+		rotateZButton.setClickHandler(component -> {
+			LEDCubeManager.getLEDCube().rotateTransform((float)Math.toRadians(rotateZSpinner.getValue()), new Vector3(0, 0, 1));
 		});
 		transformWindow.addComponent(rotateZButton);
 		previewTransform = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		previewTransform.setDimension(30, 30);
 		previewTransform.setPosition(10, 210);
 		previewTransform.setChecked(true);
-		previewTransform.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				LEDCubeManager.getLEDCube().setPreviewTransform(previewTransform.isChecked());
-			}
+		previewTransform.setChangeHandler(component -> {
+			LEDCubeManager.getLEDCube().setPreviewTransform(previewTransform.isChecked());
 		});
 		transformWindow.addComponent(previewTransform);
 		previewTransformLabel = new GUILabel(font, new Color(255, 255, 255), "Preview");

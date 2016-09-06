@@ -36,7 +36,7 @@ public class GUIProgressBar extends GUI {
 	@Override
 	public void render() {
 		if (value < 1) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), dimension.getWidth(), dimension.getHeight(), bgColor);
-		if (value > 0) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), (float)dimension.getWidth() * value, dimension.getHeight(), bgColor);
+		if (value > 0) RenderHelper.drawSquare(getPosition().getX(), getPosition().getY(), (float)dimension.getWidth() * value, dimension.getHeight(), color);
 	}
 
 	public Color getBackgroundColor() {

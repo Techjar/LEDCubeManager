@@ -93,9 +93,9 @@ public class LEDCube {
 		if (LEDCubeManager.getLedManagerName() != null) {
 			ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + LEDCubeManager.getLedManagerName()).getConstructor(String[].class).newInstance((Object)LEDCubeManager.getLedManagerArgs());
 		} else {
-			ledManager = new ArduinoLEDManager(4, false);
+			//ledManager = new ArduinoLEDManager(4, false);
 			//ledManager = new TLC5940LEDManager(true);
-			//ledManager = new TestLEDManager(true, 16, 16, 16, false, new Color(255, 0, 0));
+			ledManager = new TestLEDManager(true, 64, 64, 64, false, new Color(255, 0, 0));
 		}
 		Dimension3D dim = ledManager.getDimensions();
 		centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);

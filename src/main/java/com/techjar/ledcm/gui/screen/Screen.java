@@ -14,7 +14,7 @@ import org.lwjgl.input.Controller;
  */
 public abstract class Screen {
 	protected GUIBox container;
-	protected GUICallback resizeHandler;
+	protected Runnable resizeHandler;
 	protected boolean visible = true;
 	protected boolean enabled = true;
 	protected boolean removeRequested;
@@ -22,12 +22,9 @@ public abstract class Screen {
 	public Screen() {
 		container = new GUIBox();
 		container.setDimension(LEDCubeManager.getWidth(), LEDCubeManager.getHeight());
-		LEDCubeManager.getInstance().addResizeHandler(resizeHandler = new GUICallback() {
-			@Override
-			public void run() {
-				container.setDimension(LEDCubeManager.getWidth(), LEDCubeManager.getHeight());
-				onResized();
-			}
+		LEDCubeManager.getInstance().addResizeHandler(resizeHandler = () -> {
+			container.setDimension(LEDCubeManager.getWidth(), LEDCubeManager.getHeight());
+			onResized();
 		});
 	}
 

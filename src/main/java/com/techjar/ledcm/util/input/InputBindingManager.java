@@ -90,12 +90,9 @@ public class InputBindingManager {
 				gui.setDimension(componentWidth, 35);
 				gui.setName(binding.getId());
 				gui.setPosition(labelWidth + 15, position);
-				gui.setChangeHandler(new GUICallback() {
-					@Override
-					public void run() {
-						saveConfig();
-						refreshConflicts();
-					}
+				gui.setChangeHandler(component -> {
+					saveConfig();
+					refreshConflicts();
 				});
 				GUILabel label = new GUILabel(screen.font, new Color(255, 255, 255), binding.getName());
 				int width = screen.font.getWidth(binding.getName());

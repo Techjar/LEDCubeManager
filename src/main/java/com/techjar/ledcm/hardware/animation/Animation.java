@@ -130,11 +130,8 @@ public abstract class Animation {
 						if (option.params.length >= 3) textField.setMaxLength(Integer.parseInt(option.params[2].toString()));
 						textField.setHeight(35);
 						textField.setCanLoseFocus(true);
-						textField.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, textField.getText());
-							}
+						textField.setChangeHandler(component -> {
+							setOption(option.id, textField.getText());
 						});
 						break;
 					case SLIDER:
@@ -144,11 +141,8 @@ public abstract class Animation {
 						if (option.params.length >= 2) slider.setIncrement(Float.parseFloat(option.params[1].toString()));
 						if (option.params.length >= 3) slider.setShowNotches(Boolean.parseBoolean(option.params[2].toString()));
 						slider.setHeight(30);
-						slider.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, Float.toString(slider.getValue()));
-							}
+						slider.setChangeHandler(component -> {
+							setOption(option.id, Float.toString(slider.getValue()));
 						});
 						break;
 					case COMBOBOX:
@@ -161,11 +155,8 @@ public abstract class Animation {
 						}
 						comboBox.setSelectedItem(selected);
 						comboBox.setHeight(35);
-						comboBox.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, comboBox.getSelectedItem() != null ? option.params[comboBox.getSelectedIndex() * 2 + 1].toString() : null);
-							}
+						comboBox.setChangeHandler(component -> {
+							setOption(option.id, comboBox.getSelectedItem() != null ? option.params[comboBox.getSelectedIndex() * 2 + 1].toString() : null);
 						});
 						break;
 					case COMBOBUTTON:
@@ -178,11 +169,8 @@ public abstract class Animation {
 						}
 						comboButton.setSelectedItem(selected);
 						comboButton.setHeight(35);
-						comboButton.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, comboButton.getSelectedItem() != null ? option.params[comboButton.getSelectedIndex() * 2 + 1].toString() : null);
-							}
+						comboButton.setChangeHandler(component -> {
+							setOption(option.id, comboButton.getSelectedItem() != null ? option.params[comboButton.getSelectedIndex() * 2 + 1].toString() : null);
 						});
 						break;
 					case CHECKBOX:
@@ -190,11 +178,8 @@ public abstract class Animation {
 						gui = checkBox;
 						checkBox.setChecked(Boolean.parseBoolean(optionValues.get(option.getId())));
 						checkBox.setDimension(30, 30);
-						checkBox.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, Boolean.toString(checkBox.isChecked()));
-							}
+						checkBox.setChangeHandler(component -> {
+							setOption(option.id, Boolean.toString(checkBox.isChecked()));
 						});
 						break;
 					case RADIOGROUP:
@@ -208,11 +193,8 @@ public abstract class Animation {
 							radioButton.setDimension(30, 30);
 							radioButton.setName(option.params[i].toString());
 							final int j = i;
-							radioButton.setSelectHandler(new GUICallback() {
-								@Override
-								public void run() {
-									setOption(option.id, option.params[j].toString());
-								}
+							radioButton.setSelectHandler(component -> {
+								setOption(option.id, option.params[j].toString());
 							});
 							GUILabel radioLabel = new GUILabel(screen.font, new Color(255, 255, 255), option.params[i + 1].toString());
 							int textWidth = screen.font.getWidth(option.params[i + 1].toString());
@@ -234,11 +216,8 @@ public abstract class Animation {
 						final GUIButton button = new GUIButton(screen.font, new Color(255, 255, 255), option.params[0].toString(), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 						gui = button;
 						button.setHeight(35);
-						button.setClickHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, null);
-							}
+						button.setClickHandler(component -> {
+							setOption(option.id, null);
 						});
 						break;
 					case SPINNER:
@@ -250,11 +229,8 @@ public abstract class Animation {
 						spinner.setIncrement(Float.parseFloat(option.params[3].toString()));
 						spinner.setDecimalPlaces(Integer.parseInt(option.params[4].toString()));
 						spinner.setValue(Float.parseFloat(option.params[0].toString()));
-						spinner.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, Float.toString(spinner.getValue()));
-							}
+						spinner.setChangeHandler(component -> {
+							setOption(option.id, Float.toString(spinner.getValue()));
 						});
 						break;
 					case COLORPICKER:
@@ -262,11 +238,8 @@ public abstract class Animation {
 						gui = colorPicker;
 						colorPicker.setHeight(30);
 						colorPicker.setValue((ReadableColor)option.params[0]);
-						colorPicker.setChangeHandler(new GUICallback() {
-							@Override
-							public void run() {
-								setOption(option.id, Util.colorToString(colorPicker.getValue(), false));
-							}
+						colorPicker.setChangeHandler(component -> {
+							setOption(option.id, Util.colorToString(colorPicker.getValue(), false));
 						});
 						break;
 				}
@@ -287,24 +260,21 @@ public abstract class Animation {
 			resetButton.setDimension(300, 35);
 			resetButton.setPosition(0, position);
 			resetButton.setParentAlignment(GUIAlignment.TOP_CENTER);
-			resetButton.setClickHandler(new GUICallback() {
-				@Override
-				public void run() {
-					try {
-						Animation anim = Animation.this.getClass().newInstance();
-						AnimationOption[] options = anim.getOptions();
-						for (AnimationOption option : options) {
-							if (option.getType() != AnimationOption.OptionType.BUTTON) {
-								String value = option.getParams()[0].toString();
-								if (option.getType() == AnimationOption.OptionType.COLORPICKER) {
-									value = Util.colorToString((ReadableColor)option.getParams()[0], false);
-								}
-								Util.setOptionInGUI(option, value);
+			resetButton.setClickHandler(component -> {
+				try {
+					Animation anim = Animation.this.getClass().newInstance();
+					AnimationOption[] animOptions = anim.getOptions();
+					for (AnimationOption option : animOptions) {
+						if (option.getType() != AnimationOption.OptionType.BUTTON) {
+							String value = option.getParams()[0].toString();
+							if (option.getType() == AnimationOption.OptionType.COLORPICKER) {
+								value = Util.colorToString((ReadableColor)option.getParams()[0], false);
 							}
+							Util.setOptionInGUI(option, value);
 						}
-					} catch (Exception ex) {
-						ex.printStackTrace();
 					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
 				}
 			});
 			box.addComponent(resetButton);

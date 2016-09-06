@@ -119,8 +119,7 @@ public abstract class GUI {
 	public void setPosition(Vector2 position) {
 		this.position.set(position);
 		if (positionChangeHandler != null) {
-			positionChangeHandler.setComponent(this);
-			positionChangeHandler.run();
+			positionChangeHandler.run(this);
 		}
 	}
 
@@ -151,8 +150,7 @@ public abstract class GUI {
 	public void setDimension(Dimension dimension) {
 		this.dimension.setSize(dimension);
 		if (dimensionChangeHandler != null) {
-			dimensionChangeHandler.setComponent(this);
-			dimensionChangeHandler.run();
+			dimensionChangeHandler.run(this);
 		}
 	}
 
@@ -307,8 +305,7 @@ public abstract class GUI {
 	public void remove() {
 		this.removeRequested = true;
 		if (removeHandler != null) {
-			removeHandler.setComponent(this);
-			removeHandler.run();
+			removeHandler.run(this);
 		}
 	}
 

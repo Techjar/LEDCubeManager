@@ -64,12 +64,7 @@ public class RenderPipelineVR implements RenderPipeline {
 		controllerModel = LEDCubeManager.getModelManager().getModel("vive_controller.model");
 		guiModel = LEDCubeManager.getModelManager().getModel("gui.model");
 
-		ledcm.addResizeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				setupGUIFramebuffer();
-			}
-		});
+		ledcm.addResizeHandler(() -> setupGUIFramebuffer());
 
 		LightingHandler lightingHandler = ledcm.getLightingHandler();
 		LightSource light = lightingHandler.getLight(0);
@@ -190,7 +185,7 @@ public class RenderPipelineVR implements RenderPipeline {
 		if (ledcm.isShowingVRGUI() && leftController.isTracking()) {
 			noLightingShader.use();
 			ledcm.sendMatrixToProgram();
-			drawGUI(leftController, displayMode);
+			drawGUI(leftController);
 			mainShader.use();
 		}
 
@@ -203,7 +198,7 @@ public class RenderPipelineVR implements RenderPipeline {
 		if (ledcm.isShowingVRGUI() && leftController.isTracking()) {
 			noLightingShader.use();
 			ledcm.sendMatrixToProgram();
-			drawGUI(leftController, displayMode);
+			drawGUI(leftController);
 			mainShader.use();
 		}
 
@@ -217,7 +212,7 @@ public class RenderPipelineVR implements RenderPipeline {
 		if (ledcm.isShowingVRGUI() && leftController.isTracking()) {
 			noLightingShader.use();
 			ledcm.sendMatrixToProgram();
-			drawGUI(leftController, displayMode);
+			drawGUI(leftController);
 			mainShader.use();
 		}
 
@@ -340,11 +335,10 @@ public class RenderPipelineVR implements RenderPipeline {
 		glStencilMask(0x00); // Don't write to stencil buffer
 	}
 
-	protected void drawGUI(VRTrackedController controller, DisplayMode displayMode) {
-		float scale = 0.75F;
-		float ratio = (float)displayMode.getHeight() / (float)displayMode.getWidth();
+	protected void drawGUI(VRTrackedController controller) {
+		Vector2 size = LEDCubeManager.getInstance().getVRGUISize();
 		glDisable(GL_CULL_FACE);
-		guiModel.render(controller.getPosition().add(controller.getRotation().inverse().forward().multiply(0.5F * scale * ratio + 0.05F)), controller.getRotation(), new Color(255, 255, 255), new Vector3(scale, 1, scale * ratio), true, false, texGui);
+		guiModel.render(controller.getPosition().add(controller.getRotation().inverse().forward().multiply(0.5F * size.getY() + 0.05F)), controller.getRotation(), new Color(255, 255, 255), new Vector3(size.getX(), 1, size.getY()), true, false, texGui);
 		glEnable(GL_CULL_FACE);
 	}
 

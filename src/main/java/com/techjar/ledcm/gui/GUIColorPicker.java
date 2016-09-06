@@ -23,42 +23,30 @@ public class GUIColorPicker extends GUI {
 		redSlider.setIncrement(1F / 255F);
 		redSlider.setShowNotches(false);
 		redSlider.setParent(this);
-		redSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				value.setRed(Math.round(redSlider.getValue() * 255));
-				if (changeHandler != null) {
-					changeHandler.setComponent(GUIColorPicker.this);
-					changeHandler.run();
-				}
+		redSlider.setChangeHandler(component -> {
+			value.setRed(Math.round(redSlider.getValue() * 255));
+			if (changeHandler != null) {
+				changeHandler.run(this);
 			}
 		});
 		greenSlider = new GUISlider(new Color(0, 255, 0), sliderLineColor);
 		greenSlider.setIncrement(1F / 255F);
 		greenSlider.setShowNotches(false);
 		greenSlider.setParent(this);
-		greenSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				value.setGreen(Math.round(greenSlider.getValue() * 255));
-				if (changeHandler != null) {
-					changeHandler.setComponent(GUIColorPicker.this);
-					changeHandler.run();
-				}
+		greenSlider.setChangeHandler(component -> {
+			value.setGreen(Math.round(greenSlider.getValue() * 255));
+			if (changeHandler != null) {
+				changeHandler.run(this);
 			}
 		});
 		blueSlider = new GUISlider(new Color(0, 0, 255), sliderLineColor);
 		blueSlider.setIncrement(1F / 255F);
 		blueSlider.setShowNotches(false);
 		blueSlider.setParent(this);
-		blueSlider.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				value.setBlue(Math.round(blueSlider.getValue() * 255));
-				if (changeHandler != null) {
-					changeHandler.setComponent(GUIColorPicker.this);
-					changeHandler.run();
-				}
+		blueSlider.setChangeHandler(component -> {
+			value.setBlue(Math.round(blueSlider.getValue() * 255));
+			if (changeHandler != null) {
+				changeHandler.run(this);
 			}
 		});
 	}
@@ -117,8 +105,7 @@ public class GUIColorPicker extends GUI {
 		greenSlider.setValue(color.getGreen() / 255F);
 		blueSlider.setValue(color.getBlue() / 255F);
 		if (changeHandler != null) {
-			changeHandler.setComponent(this);
-			changeHandler.run();
+			changeHandler.run(this);
 		}
 	}
 

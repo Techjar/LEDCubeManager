@@ -4,10 +4,10 @@ package com.techjar.ledcm.util;
  *
  * @author Techjar
  */
-public class ObjectContainer {
-	public Object value;
+public class ObjectContainer<T> {
+	public T value;
 
-	public ObjectContainer(Object value) {
+	public ObjectContainer(T value) {
 		this.value = value;
 	}
 }

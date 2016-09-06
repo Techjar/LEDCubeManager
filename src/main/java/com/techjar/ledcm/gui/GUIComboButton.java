@@ -47,16 +47,14 @@ public class GUIComboButton extends GUI {
 					LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
 					if (++selectedItem >= items.size()) selectedItem = 0;
 					if (changeHandler != null) {
-						changeHandler.setComponent(this);
-						changeHandler.run();
+						changeHandler.run(this);
 					}
 				}
 				else if (button == 1) {
 					LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
 					if (--selectedItem < 0) selectedItem = items.size() - 1;
 					if (changeHandler != null) {
-						changeHandler.setComponent(this);
-						changeHandler.run();
+						changeHandler.run(this);
 					}
 				}
 			}
@@ -104,8 +102,7 @@ public class GUIComboButton extends GUI {
 		if (selectedItem != this.selectedItem) {
 			this.selectedItem = MathHelper.clamp(selectedItem, -1, items.size() - 1);
 			if (changeHandler != null) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 		}
 	}

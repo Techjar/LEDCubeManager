@@ -13,7 +13,6 @@ import static org.lwjgl.opengl.GL32.*;
 import static org.lwjgl.util.glu.GLU.*;
 
 import com.techjar.ledcm.gui.GUI;
-import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.gui.screen.Screen;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.manager.LEDManager;
@@ -149,7 +148,7 @@ public class LEDCubeManager {
 	private static LEDCube ledCube;
 	private List<Screen> screenList = new ArrayList<>();
 	private List<ScreenHolder> screensToAdd = new ArrayList<>();
-	private List<GUICallback> resizeHandlers = new ArrayList<>();
+	private List<Runnable> resizeHandlers = new ArrayList<>();
 	private Queue<KeyPress> virtualKeyPresses = new LinkedList<>();
 	private Queue<VRInputEvent> vrInputEvents = new LinkedList<>();
 	private Map<String, Integer> validControllers = new HashMap<>();
@@ -988,6 +987,12 @@ public class LEDCubeManager {
 		}
 	}
 
+	public Vector2 getVRGUISize() {
+		float ratio = (float)displayMode.getHeight() / (float)displayMode.getWidth();
+		float scale = 0.75F;
+		return new Vector2(scale, ratio * scale);
+	}
+
 	private void computeVRMouseAim() {
 		if (vrMode && showingVRGUI) {
 			VRTrackedController leftController = VRProvider.getController(ControllerType.LEFT);
@@ -998,14 +1003,11 @@ public class LEDCubeManager {
 			Vector3 guiRight = leftControllerRot.right();
 			Vector3 guiUp = leftControllerRot.forward().negate();
 
-			float guiRatio = (float)displayMode.getHeight() / (float)displayMode.getWidth();
-			float guiScale = 0.75F;
-			float guiWidth = guiScale;
-			float guiWidthHalf = guiWidth / 2;
-			float guiHeight = guiScale * guiRatio;
-			float guiHeightHalf = guiHeight / 2;
+			Vector2 guiSize = getVRGUISize();
+			float guiWidthHalf = guiSize.getX() / 2;
+			float guiHeightHalf = guiSize.getY() / 2;
 
-			Vector3 guiPos = leftController.getPosition().add(leftControllerRot.forward().multiply(0.5F * guiScale * guiRatio + 0.05F));
+			Vector3 guiPos = leftController.getPosition().add(leftControllerRot.forward().multiply(0.5F * guiSize.getY() + 0.05F));
 			Vector3 guiTopLeft = guiPos.subtract(guiUp.multiply(guiHeightHalf)).subtract(guiRight.multiply(guiWidthHalf));
 
 			float guiControllerDot = guiNormal.dot(rightControllerDir);
@@ -1014,8 +1016,8 @@ public class LEDCubeManager {
 				if (intersectDist > 0) {
 					Vector3 pointOnPlane = rightController.getPosition().add(rightControllerDir.multiply(intersectDist));
 					Vector3 relativePoint = pointOnPlane.subtract(guiTopLeft);
-					float mouseX = relativePoint.dot(guiRight.divide(guiWidth));
-					float mouseY = relativePoint.dot(guiUp.divide(guiHeight));
+					float mouseX = relativePoint.dot(guiRight.divide(guiSize.getX()));
+					float mouseY = relativePoint.dot(guiUp.divide(guiSize.getY()));
 
 					if (mouseX >= 0 && mouseY >= 0 && mouseX <= 1 && mouseY <= 1) {
 						setMouseOverride(new Vector2(Math.round(mouseX * displayMode.getWidth()), Math.round(mouseY * displayMode.getHeight())));
@@ -1302,7 +1304,7 @@ public class LEDCubeManager {
 			resizeFrame(fullscreen);
 			resizeGL(displayMode.getWidth(), displayMode.getHeight());
 			setupAntiAliasing();
-			for (GUICallback callback : resizeHandlers) {
+			for (Runnable callback : resizeHandlers) {
 				callback.run();
 			}
 		}
@@ -1348,17 +1350,17 @@ public class LEDCubeManager {
 		antiAliasingSamples = samples;
 	}
 
-	public int addResizeHandler(GUICallback resizeHandler) {
+	public int addResizeHandler(Runnable resizeHandler) {
 		if (resizeHandlers.add(resizeHandler))
 			return resizeHandlers.indexOf(resizeHandler);
 		return -1;
 	}
 
-	public boolean removeResizeHandler(GUICallback resizeHandler) {
+	public boolean removeResizeHandler(Runnable resizeHandler) {
 		return resizeHandlers.remove(resizeHandler);
 	}
 
-	public GUICallback removeResizeHandler(int index) {
+	public Runnable removeResizeHandler(int index) {
 		return resizeHandlers.remove(index);
 	}
 

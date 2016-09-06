@@ -49,17 +49,13 @@ public class GUISpinner extends GUI {
 		textField.setParent(this);
 		textField.setCanLoseFocus(true);
 		textField.setText("0");
-		textField.setChangeHandler(new GUICallback() {
-			@Override
-			public void run() {
-				try {
-					value = MathHelper.clamp(Float.parseFloat(formatDecimal(Float.parseFloat(textField.getText()))), minValue, maxValue);
-					if (changeHandler != null) {
-						changeHandler.setComponent(GUISpinner.this);
-						changeHandler.run();
-					}
-				} catch (NumberFormatException ex) {
+		textField.setChangeHandler(component -> {
+			try {
+				value = MathHelper.clamp(Float.parseFloat(formatDecimal(Float.parseFloat(textField.getText()))), minValue, maxValue);
+				if (changeHandler != null) {
+					changeHandler.run(this);
 				}
+			} catch (NumberFormatException ex) {
 			}
 		});
 		updateRegex();
@@ -169,8 +165,7 @@ public class GUISpinner extends GUI {
 		textField.setText(formatDecimal(value));
 		textField.setChangeHandler(cb);
 		if (changeHandler != null) {
-			changeHandler.setComponent(this);
-			changeHandler.run();
+			changeHandler.run(this);
 		}
 	}
 

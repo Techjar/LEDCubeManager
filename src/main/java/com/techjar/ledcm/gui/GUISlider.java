@@ -48,8 +48,7 @@ public class GUISlider extends GUI {
 					case Keyboard.KEY_DOWN:
 						value = MathHelper.clamp(value - incr, 0, 1);
 						if (changeHandler != null && lastValue != value) {
-							changeHandler.setComponent(this);
-							changeHandler.run();
+							changeHandler.run(this);
 						}
 						lastValue = value;
 						return false;
@@ -57,8 +56,7 @@ public class GUISlider extends GUI {
 					case Keyboard.KEY_UP:
 						value = MathHelper.clamp(value + incr, 0, 1);
 						if (changeHandler != null && lastValue != value) {
-							changeHandler.setComponent(this);
-							changeHandler.run();
+							changeHandler.run(this);
 						}
 						lastValue = value;
 						return false;
@@ -98,8 +96,7 @@ public class GUISlider extends GUI {
 				value = MathHelper.clamp(Math.round(value * mult) / mult, 0, 1);
 			}
 			if (changeHandler != null && lastValue != value) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 			lastValue = value;
 		}
@@ -160,8 +157,7 @@ public class GUISlider extends GUI {
 			this.value = MathHelper.clamp(Math.round(this.value * mult) / mult, 0, 1);
 		}
 		if (changeHandler != null) {
-			changeHandler.setComponent(this);
-			changeHandler.run();
+			changeHandler.run(this);
 		}
 	}
 

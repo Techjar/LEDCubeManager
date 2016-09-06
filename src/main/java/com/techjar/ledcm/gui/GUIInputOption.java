@@ -47,8 +47,7 @@ public class GUIInputOption extends GUI {
 		if (assign && state) {
 			binding.setBind(new InputInfo(InputInfo.Type.KEYBOARD, key));
 			if (changeHandler != null) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 			assign = false;
 			return false;
@@ -62,8 +61,7 @@ public class GUIInputOption extends GUI {
 			if (assign) {
 				binding.setBind(new InputInfo(InputInfo.Type.MOUSE, button));
 				if (changeHandler != null) {
-					changeHandler.setComponent(this);
-					changeHandler.run();
+					changeHandler.run(this);
 				}
 				assign = false;
 				return false;
@@ -81,8 +79,7 @@ public class GUIInputOption extends GUI {
 					if (binding.isUnbindable()) {
 						binding.setBind(null);
 						if (changeHandler != null) {
-							changeHandler.setComponent(this);
-							changeHandler.run();
+							changeHandler.run(this);
 						}
 					}
 					return false;
@@ -97,8 +94,7 @@ public class GUIInputOption extends GUI {
         if (assign && Controllers.isEventButton() && Controllers.getEventButtonState()) {
             binding.setBind(new InputInfo(InputInfo.Type.CONTROLLER, Controllers.getEventControlIndex()));
             if (changeHandler != null) {
-                changeHandler.setComponent(this);
-                changeHandler.run();
+                changeHandler.run(this);
             }
             assign = false;
             return false;
@@ -111,8 +107,7 @@ public class GUIInputOption extends GUI {
         if (assign && event.isButtonPressEvent() && event.getButtonState()) {
             binding.setBind(new InputInfo(InputInfo.Type.VR, event.getButton().ordinal(), event.getController().getType()));
             if (changeHandler != null) {
-                changeHandler.setComponent(this);
-                changeHandler.run();
+                changeHandler.run(this);
             }
             assign = false;
             return false;

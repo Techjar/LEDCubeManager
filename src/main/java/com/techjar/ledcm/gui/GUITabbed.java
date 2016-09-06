@@ -171,8 +171,7 @@ public class GUITabbed extends GUI {
 		if (selectedTab != this.selectedTab) {
 			this.selectedTab = selectedTab;
 			if (changeHandler != null) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 		}
 	}

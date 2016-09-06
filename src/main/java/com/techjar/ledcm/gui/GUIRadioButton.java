@@ -109,8 +109,7 @@ public class GUIRadioButton extends GUI {
 				}
 			}
 			if (selectHandler != null) {
-				selectHandler.setComponent(this);
-				selectHandler.run();
+				selectHandler.run(this);
 			}
 		}
 	}

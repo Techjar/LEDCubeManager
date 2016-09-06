@@ -90,8 +90,7 @@ public class GUITextField extends GUIText {
 									}
 								}
 								if (changeHandler != null) {
-									changeHandler.setComponent(this);
-									changeHandler.run();
+									changeHandler.run(this);
 								}
 							}
 							return false;
@@ -194,8 +193,7 @@ public class GUITextField extends GUIText {
 			text.insert(cursorPosition, ch);
 			moveCursor(true);
 			if (changeHandler != null) {
-				changeHandler.setComponent(this);
-				changeHandler.run();
+				changeHandler.run(this);
 			}
 			repeatState = true;
 		} else if (key == Keyboard.KEY_BACK && text.length() > 0) {
@@ -204,8 +202,7 @@ public class GUITextField extends GUIText {
 				moveCursor(false);
 				if (cursorPosition == textPosition && textPosition > 0) textPosition--;
 				if (changeHandler != null) {
-					changeHandler.setComponent(this);
-					changeHandler.run();
+					changeHandler.run(this);
 				}
 				repeatState = true;
 			}
@@ -332,8 +329,7 @@ public class GUITextField extends GUIText {
 	public void setText(String text) {
 		super.setText(text);
 		if (changeHandler != null) {
-			changeHandler.setComponent(this);
-			changeHandler.run();
+			changeHandler.run(this);
 		}
 	}
 

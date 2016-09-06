@@ -10,11 +10,7 @@ import static org.lwjgl.opengl.GL31.*;
 import static org.lwjgl.opengl.GL43.*;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.ModelMesh;
-import com.techjar.ledcm.util.Quaternion;
-import com.techjar.ledcm.util.Tuple;
-import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -24,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import lombok.Value;
 
@@ -37,10 +34,10 @@ import org.lwjgl.util.vector.Matrix4f;
  * @author Techjar
  */
 public final class InstancedRenderer {
-	private static final Map<ModelMesh, LinkedList<InstanceItem>> itemsNormal = new HashMap<>();
+	private static final Map<ModelMesh, List<InstanceItem>> itemsNormal = new HashMap<>();
 	private static final List<InstanceItem> itemsAlpha = new ArrayList<>();
-	private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedNormal = new LinkedList<>();
-	private static final LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> groupedAlpha = new LinkedList<>();
+	private static final List<Tuple<ModelMesh, List<InstanceItem>>> groupedNormal = new LinkedList<>();
+	private static final List<Tuple<ModelMesh, List<InstanceItem>>> groupedAlpha = new LinkedList<>();
 	private static final List<Tuple<Integer, Integer>> vboIds = new ArrayList<>();
 	private static int vaoId;
 	private static int alphaTrickVboId;
@@ -98,23 +95,10 @@ public final class InstancedRenderer {
 	public static void prepareItems() {
 		groupedNormal.clear();
 		groupedAlpha.clear();
-		for (ModelMesh key : itemsNormal.keySet()) {
-			LinkedList<InstanceItem> list = itemsNormal.get(key);
-			LinkedList<InstanceItem> list2 = new LinkedList<>();
-			for (InstanceItem item : list) {
-				if (item.getMesh().isInFrustum(item.getPosition(), item.getScale())) {
-					list2.add(item);
-				}
-			}
-			groupedNormal.add(new Tuple<>(key, list2));
-		}
-		List<InstanceItem> itemsAlpha2 = new ArrayList<>();
-		for (InstanceItem item : itemsAlpha) {
-			if (item.getMesh().isInFrustum(item.getPosition(), item.getScale())) {
-				itemsAlpha2.add(item);
-			}
-		}
-		Collections.sort(itemsAlpha2, new AlphaSorter());
+		itemsNormal.entrySet().forEach(entry -> {
+			groupedNormal.add(new Tuple<>(entry.getKey(), entry.getValue().stream().filter(item -> item.getMesh().isInFrustum(item.getPosition(), item.getScale())).collect(Collectors.toList())));
+		});
+		List<InstanceItem> itemsAlpha2 = itemsAlpha.stream().filter(item -> item.getMesh().isInFrustum(item.getPosition(), item.getScale())).parallel().sorted(new AlphaSorter()).collect(Collectors.toList());
 		LinkedList<InstanceItem> currentList = null;
 		ModelMesh currentMesh = null;
 		for (InstanceItem item : itemsAlpha2) {
@@ -170,12 +154,12 @@ public final class InstancedRenderer {
 		return vboIds.get(index);
 	}
 
-	private static int[] renderItems(LinkedList<Tuple<ModelMesh, LinkedList<InstanceItem>>> items, boolean alphaDepthTrick) {
+	private static int[] renderItems(List<Tuple<ModelMesh, List<InstanceItem>>> items, boolean alphaDepthTrick) {
 		int total = 0;
 		int totalFaces = 0;
-		for (Tuple<ModelMesh, LinkedList<InstanceItem>> entry : items) {
+		for (Tuple<ModelMesh, List<InstanceItem>> entry : items) {
 			ModelMesh mesh = entry.getA();
-			LinkedList<InstanceItem> queue = entry.getB();
+			List<InstanceItem> queue = entry.getB();
 			int count = queue.size();
 			total += count;
 			totalFaces += mesh.getFaceCount() * count;

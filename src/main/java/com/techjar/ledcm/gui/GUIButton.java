@@ -37,8 +37,7 @@ public class GUIButton extends GUIText {
 					pressed = true;
 					LEDCubeManager.getSoundManager().playEffect("ui/click.wav", false);
 					if (clickHandler != null) {
-						clickHandler.setComponent(this);
-						clickHandler.run();
+						clickHandler.run(this);
 					}
 					return false;
 				}
@@ -83,8 +82,7 @@ public class GUIButton extends GUIText {
 
 	public void click() {
 		if (clickHandler != null) {
-			clickHandler.setComponent(this);
-			clickHandler.run();
+			clickHandler.run(this);
 		}
 	}
 
