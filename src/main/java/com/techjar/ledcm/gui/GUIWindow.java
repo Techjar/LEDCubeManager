@@ -27,7 +27,7 @@ public class GUIWindow extends GUIContainer {
 	protected boolean canResizeX = true;
 	protected boolean canResizeY = true;
 	protected int closeAction = HIDE_ON_CLOSE;
-	protected boolean onTop;
+	protected GUICallback closeHandler;
 
 	protected Vector2 mouseLast;
 	protected CursorType currentCursor;
@@ -37,6 +37,7 @@ public class GUIWindow extends GUIContainer {
 	protected boolean mouseLockX, mouseLockY;
 	protected boolean wasMousePressed;
 	protected boolean toBePutOnTop;
+	boolean onTop;
 	protected int resizeX;
 	protected int resizeY;
 
@@ -50,6 +51,9 @@ public class GUIWindow extends GUIContainer {
 		this.closeBtn.setClickHandler(component -> {
 			if (closeAction == REMOVE_ON_CLOSE) remove();
 			else if (closeAction == HIDE_ON_CLOSE) setVisible(false);
+			if (closeHandler != null) {
+				closeHandler.run(this);
+			}
 		});
 	}
 
@@ -232,6 +236,11 @@ public class GUIWindow extends GUIContainer {
 		return getPosition().add(new Vector2(guiBg.getBorderSize(), 20));
 	}
 
+	@Override
+	public Dimension getContainerDimension() {
+		return new Dimension(dimension.getWidth() - guiBg.getBorderSize() * 2, dimension.getHeight() - 20 - guiBg.getBorderSize());
+	}
+
 	protected boolean checkMouseButtons() {
 		for (int i = 0; i < Mouse.getButtonCount(); i++) {
 			if (mouseState[i]) return true;
@@ -309,13 +318,6 @@ public class GUIWindow extends GUIContainer {
 		return onTop;
 	}
 
-	/**
-	 * Used internally for setting the onTop field! Setting this will NOT put the window on top, but instead may cause problems!
-	 */
-	 public void setOnTop(boolean onTop) {
-		 this.onTop = onTop;
-	 }
-
 	public boolean isToBePutOnTop() {
 		return toBePutOnTop;
 	}
@@ -331,5 +333,13 @@ public class GUIWindow extends GUIContainer {
 		boxes[2] = new Rectangle(getPosition().getX(), getPosition().getY() + (dimension.getHeight() - guiBg.getBorderSize()), dimension.getWidth(), guiBg.getBorderSize());
 		boxes[3] = new Rectangle(getPosition().getX() + (dimension.getWidth() - guiBg.getBorderSize()), getPosition().getY(), guiBg.getBorderSize(), dimension.getHeight());
 		return boxes;
+	}
+
+	public GUICallback getCloseHandler() {
+		return closeHandler;
+	}
+
+	public void setCloseHandler(GUICallback closeHandler) {
+		this.closeHandler = closeHandler;
 	}
 }

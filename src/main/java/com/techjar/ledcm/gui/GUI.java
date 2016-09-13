@@ -74,8 +74,9 @@ public abstract class GUI {
 	 */
 	protected Vector2 getPosition() {
 		if (parent != null) {
-			Vector2 parentPos = this instanceof GUIBackground || (this instanceof GUIButton && ((GUIButton)this).windowClose) ? parent.getPosition() : parent.getContainerPosition();
-			Dimension parentDim = parent.getDimension();
+			boolean realParent = this instanceof GUIBackground || (this instanceof GUIButton && ((GUIButton)this).windowClose);
+			Vector2 parentPos = realParent ? parent.getPosition() : parent.getContainerPosition();
+			Dimension parentDim = realParent ? parent.getDimension() : parent.getContainerDimension();
 			switch (parentAlign) {
 				case TOP_LEFT:
 					return position.add(parentPos);
@@ -145,6 +146,10 @@ public abstract class GUI {
 
 	public Dimension getDimension() {
 		return new Dimension(dimension);
+	}
+
+	public Dimension getContainerDimension() {
+		return getDimension();
 	}
 
 	public void setDimension(Dimension dimension) {
@@ -232,14 +237,10 @@ public abstract class GUI {
 				if (gui.isVisible() && gui.getComponentBox().intersects(mouseBox)) return false;
 			}
 		}
-		if (boxes.length > 1) {
-			for (Shape box : boxes) {
-				if (!box.intersects(mouseBox)) return false;
-			}
-			return true;
+		for (Shape box : boxes) {
+			if (!box.intersects(mouseBox)) return false;
 		}
-		if (boxes.length < 1) return true;
-		return boxes[0].intersects(mouseBox);
+		return true;
 	}
 
 	public boolean checkMouseIntersect(boolean checkParentContainerBox, Shape... boxes) {
@@ -252,14 +253,13 @@ public abstract class GUI {
 
 	public boolean checkWithinContainer(Shape... boxes) {
 		if (parent == null || !(parent instanceof GUIContainer)) return true;
-		if (boxes.length > 1) {
-			for (Shape box : boxes) {
-				if (!parent.getContainerBox().contains(box)) return false;
-			}
-			return true;
+		if (boxes.length < 1) {
+			return parent.getContainerBox().contains(getComponentBox());
 		}
-		if (boxes.length < 1) return parent.getContainerBox().contains(getComponentBox());
-		return parent.getContainerBox().contains(boxes[0]);
+		for (Shape box : boxes) {
+			if (!parent.getContainerBox().contains(box)) return false;
+		}
+		return true;
 	}
 
 	public List<GUI> getContainerList() {

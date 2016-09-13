@@ -617,11 +617,8 @@ public class LEDCubeManager {
 		Image image = Toolkit.getDefaultToolkit().getImage("resources/textures/icon16.png");
 		PopupMenu menu = new PopupMenu();
 		MenuItem item = new MenuItem("Exit");
-		item.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				shutdown();
-			}
+		item.addActionListener(event -> {
+			shutdown();
 		});
 		menu.add(item);
 		TrayIcon trayIcon = new TrayIcon(image, Constants.APP_TITLE, menu);

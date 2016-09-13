@@ -121,6 +121,11 @@ public class GUITabbed extends GUI {
 	}
 
 	@Override
+	public Dimension getContainerDimension() {
+		return new Dimension(dimension.getWidth(), dimension.getHeight() - getTabHeight());
+	}
+
+	@Override
 	public void setDimension(Dimension dimension) {
 		super.setDimension(dimension);
 		for (TabInfo tab : tabs) {

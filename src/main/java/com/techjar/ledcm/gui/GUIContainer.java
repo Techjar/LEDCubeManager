@@ -1,5 +1,7 @@
 package com.techjar.ledcm.gui;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.vr.VRInputEvent;
 
@@ -72,14 +74,14 @@ public abstract class GUIContainer extends GUI {
 					if (gui.isRemoveRequested()) it.remove();
 					else if (gui instanceof GUIWindow) {
 						GUIWindow win = (GUIWindow)gui;
-						if (lastWin != null && lastWin != lastTopWin) lastWin.setOnTop(false);
+						if (lastWin != null && lastWin != lastTopWin) lastWin.onTop = false;
 						lastWin = win;
 						if (win.isToBePutOnTop()) {
 							it.remove();
 							toAdd.add(gui);
-							win.setOnTop(true);
+							win.onTop = true;
 							win.setToBePutOnTop(false);
-							if (lastTopWin != null) lastTopWin.setOnTop(false);
+							if (lastTopWin != null) lastTopWin.onTop = false;
 							lastTopWin = win;
 						}
 					} else if (gui instanceof GUIComboBox) {
@@ -98,13 +100,21 @@ public abstract class GUIContainer extends GUI {
 	public void render() {
 		RenderHelper.beginScissor(getScissorBox());
 		Rectangle containerBox = getContainerBox();
+		glPushAttrib(GL_STENCIL_BUFFER_BIT);
+		glStencilMask(0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glEnable(GL_STENCIL_TEST);
 		for (GUI gui : components) {
 			if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) {
+				glClear(GL_STENCIL_BUFFER_BIT);
+				glStencilFunc(GL_ALWAYS, 0xFF, 0xFF);
 				gui.render();
+				glStencilFunc(GL_EQUAL, 0xFF, 1);
 				if (!gui.isEnabled())
-					RenderHelper.drawSquare(gui.getX(), gui.getY(), gui.getWidth(), gui.getHeight(), new Color(40, 40, 40, 150));
+					RenderHelper.drawSquare(containerBox.getX(), containerBox.getY(), containerBox.getWidth(), containerBox.getHeight(), new Color(40, 40, 40, 150));
 			}
 		}
+		glPopAttrib();
 		RenderHelper.endScissor();
 	}
 

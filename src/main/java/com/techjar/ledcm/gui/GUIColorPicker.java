@@ -3,6 +3,8 @@ package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.render.RenderHelper;
 
+import com.techjar.ledcm.vr.VRInputEvent;
+import org.lwjgl.input.Controller;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
 import org.lwjgl.util.ReadableColor;
@@ -64,6 +66,22 @@ public class GUIColorPicker extends GUI {
 		if (!redSlider.mouseEvent(button, state, dwheel)) return false;
 		if (!greenSlider.mouseEvent(button, state, dwheel)) return false;
 		if (!blueSlider.mouseEvent(button, state, dwheel)) return false;
+		return true;
+	}
+
+	@Override
+	public boolean processControllerEvent(Controller controller) {
+		if (!redSlider.processControllerEvent(controller)) return false;
+		if (!greenSlider.processControllerEvent(controller)) return false;
+		if (!blueSlider.processControllerEvent(controller)) return false;
+		return true;
+	}
+
+	@Override
+	public boolean processVRInputEvent(VRInputEvent event) {
+		if (!redSlider.processVRInputEvent(event)) return false;
+		if (!greenSlider.processVRInputEvent(event)) return false;
+		if (!blueSlider.processVRInputEvent(event)) return false;
 		return true;
 	}
 

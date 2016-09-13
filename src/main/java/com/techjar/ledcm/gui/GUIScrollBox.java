@@ -9,6 +9,7 @@ import lombok.NonNull;
 
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
+import org.lwjgl.util.Dimension;
 import org.newdawn.slick.geom.Rectangle;
 
 /**
@@ -18,6 +19,7 @@ import org.newdawn.slick.geom.Rectangle;
 public class GUIScrollBox extends GUIContainer {
 	protected Color color;
 	protected Color bgColor;
+	protected GUIBackground guiBg;
 	protected ScrollMode scrollXMode = ScrollMode.AUTOMATIC;
 	protected ScrollMode scrollYMode = ScrollMode.AUTOMATIC;
 	protected int scrollXIncrement;
@@ -30,9 +32,18 @@ public class GUIScrollBox extends GUIContainer {
 	protected Vector2 mouseStart = new Vector2();
 	protected int scrolling;
 
-	public GUIScrollBox(Color color, Color bgColor) {
+	public GUIScrollBox(Color color, Color bgColor, GUIBackground guiBg) {
 		this.color = color;
 		this.bgColor = bgColor;
+		this.guiBg = guiBg;
+		if (this.guiBg != null) {
+			this.guiBg.setPosition(-guiBg.borderSize, -guiBg.borderSize);
+			this.guiBg.setParent(this);
+		}
+	}
+
+	public GUIScrollBox(Color color, Color bgColor) {
+		this(color, bgColor, null);
 	}
 
 	public GUIScrollBox(Color color) {
@@ -107,6 +118,7 @@ public class GUIScrollBox extends GUIContainer {
 
 	@Override
 	public void render() {
+		if (guiBg != null) guiBg.render();
 		Vector2 scrollbarOffset = getScrollbarOffset();
 		int[] size = getScrollbarSize();
 		if (getScrollX()) {
@@ -141,6 +153,12 @@ public class GUIScrollBox extends GUIContainer {
 	@Override
 	public Rectangle getContainerBox() {
 		return new Rectangle(getPosition().getX(), getPosition().getY(), dimension.getWidth() - (getScrollY() ? scrollbarWidth + 2 : 0), dimension.getHeight() - (getScrollX() ? scrollbarWidth + 2 : 0));
+	}
+
+	@Override
+	public void setDimension(Dimension dimension) {
+		super.setDimension(dimension);
+		if (guiBg != null) guiBg.setDimension(dimension.getWidth() + guiBg.borderSize * 2, dimension.getHeight() + guiBg.borderSize * 2);
 	}
 
 	private boolean getScrollX(boolean checkAuto) {

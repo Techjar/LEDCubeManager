@@ -2,34 +2,22 @@
 package com.techjar.ledcm.gui.screen;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.gui.*;
 import com.techjar.ledcm.render.RenderHelper;
-import com.techjar.ledcm.gui.GUIAlignment;
-import com.techjar.ledcm.gui.GUIBackground;
-import com.techjar.ledcm.gui.GUIButton;
-import com.techjar.ledcm.gui.GUICallback;
-import com.techjar.ledcm.gui.GUICheckBox;
-import com.techjar.ledcm.gui.GUIColorPicker;
-import com.techjar.ledcm.gui.GUIComboBox;
-import com.techjar.ledcm.gui.GUIComboButton;
-import com.techjar.ledcm.gui.GUILabel;
-import com.techjar.ledcm.gui.GUIRadioButton;
-import com.techjar.ledcm.gui.GUIScrollBox;
-import com.techjar.ledcm.gui.GUISlider;
-import com.techjar.ledcm.gui.GUISpinner;
-import com.techjar.ledcm.gui.GUITabbed;
-import com.techjar.ledcm.gui.GUITextField;
-import com.techjar.ledcm.gui.GUIWindow;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.sequence.AnimationSequence;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
+import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.PrintStreamRelayer;
 import com.techjar.ledcm.util.Vector3;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
@@ -116,7 +104,9 @@ public class ScreenMainControl extends Screen {
 	public final GUILabel previewTransformLabel;
 	public final GUILabel fullscreenLabel;
 	public final GUICheckBox fullscreenCheckbox;
+	public final GUISlider fovSlider;
 	public final GUIButton exitBtn;
+	public final GUIFileChooser fileChooser;
 
 	public ScreenMainControl() {
 		super();
@@ -125,6 +115,13 @@ public class ScreenMainControl extends Screen {
 
 		font = LEDCubeManager.getFontManager().getFont("chemrea", 30, false, false).getUnicodeFont();
 		fontTabbed = LEDCubeManager.getFontManager().getFont("chemrea", 22, false, false).getUnicodeFont();
+		fileChooser = new GUIFileChooser(font, new Color(255, 255, 255), new Color(50, 50, 50), 35, new GUIBackground(new Color(10, 10, 10), new Color(255, 0, 0), 2), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		fileChooser.setDimension(700, 500);
+		fileChooser.addFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac, *.m4a, *.aac)", "wav", "mp3", "ogg", "flac", "m4a", "aac"));
+		fileChooser.setMultiSelectionEnabled(false);
+		if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
+		container.addComponent(fileChooser);
+
 		playBtn = new GUIButton(font, new Color(255, 255, 255), "Play", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		playBtn.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		playBtn.setDimension(100, 40);
@@ -156,18 +153,32 @@ public class ScreenMainControl extends Screen {
 		chooseFileBtn.setDimension(200, 40);
 		chooseFileBtn.setPosition(320, -5);
 		chooseFileBtn.setClickHandler(component -> {
-			new Thread(() -> {
+			if (LEDCubeManager.getInstance().isVrMode()) {
 				if (LEDCubeManager.isConvertingAudio()) return;
-				int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
-				if (option == JFileChooser.APPROVE_OPTION) {
+				fileChooser.showOpenDialog(component2 -> {
 					try {
-						File file = LEDCubeManager.getFileChooser().getSelectedFile();
-						LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
+						final File file = fileChooser.getSelectedFile();
+						new Thread(() -> {
+							LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
+						}, "File Chooser").start();
 					} catch (Exception ex) {
 						ex.printStackTrace();
 					}
-				}
-			}, "File Chooser").start();
+				});
+			} else {
+				new Thread(() -> {
+					if (LEDCubeManager.isConvertingAudio()) return;
+					int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
+					if (option == JFileChooser.APPROVE_OPTION) {
+						try {
+							File file = LEDCubeManager.getFileChooser().getSelectedFile();
+							LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+					}
+				}, "File Chooser").start();
+			}
 		});
 		container.addComponent(chooseFileBtn);
 		volumeSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
@@ -573,10 +584,20 @@ public class ScreenMainControl extends Screen {
 		}
 		antiAliasingComboBtn.setSelectedItem(LEDCubeManager.getInstance().isAntiAliasing() ? LEDCubeManager.getInstance().getAntiAliasingSamples() + "x" : "Off");
 		settingsScrollBox.addComponent(antiAliasingComboBtn);
+		fovSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
+		fovSlider.setParentAlignment(GUIAlignment.TOP_CENTER);
+		fovSlider.setDimension(400, 30);
+		fovSlider.setPosition(0, 185);
+		fovSlider.setValue((LEDCubeManager.getInstance().getFieldOfView() - 30) / 60);
+		fovSlider.setChangeHandler(component -> {
+			LEDCubeManager.getInstance().setFieldOfView(fovSlider.getValue() * 60 + 30);
+			LEDCubeManager.getConfig().setProperty("display.fieldofview", LEDCubeManager.getInstance().getFieldOfView());
+		});
+		settingsScrollBox.addComponent(fovSlider);
 		settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
 		settingsApplyBtn.setDimension(200, 40);
-		settingsApplyBtn.setPosition(-105, -30);
+		settingsApplyBtn.setPosition(-105, -10);
 		settingsApplyBtn.setClickHandler(component -> {
 			settingsWindow.setVisible(false);
 			Object item = resolutionComboBox.getSelectedItem();
@@ -622,7 +643,7 @@ public class ScreenMainControl extends Screen {
 		controlsBtn = new GUIButton(font, new Color(255, 255, 255), "Controls", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		controlsBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
 		controlsBtn.setDimension(200, 40);
-		controlsBtn.setPosition(105, -30);
+		controlsBtn.setPosition(105, -10);
 		controlsBtn.setClickHandler(component -> {
 			controlsWindow.setVisible(!controlsWindow.isVisible());
 			if (controlsWindow.isVisible()) controlsWindow.setToBePutOnTop(true);
@@ -828,6 +849,7 @@ public class ScreenMainControl extends Screen {
 	}
 
 	private final void positionWindows() {
+		fileChooser.setPosition(container.getWidth() / 2 - fileChooser.getWidth() / 2, container.getHeight() / 2 - fileChooser.getHeight() / 2);
 		layersWindow.setPosition(container.getWidth() - layersWindow.getWidth() - 10, container.getHeight() - layersWindow.getHeight() - 360);
 		sequenceWindow.setPosition(container.getWidth() / 2 - sequenceWindow.getWidth() / 2, container.getHeight() / 2 - sequenceWindow.getHeight() / 2);
 		animOptionsWindow.setPosition(container.getWidth() / 2 - animOptionsWindow.getWidth() / 2, container.getHeight() / 2 - animOptionsWindow.getHeight() / 2);
