@@ -833,9 +833,9 @@ public final class Util {
 		if (!toClip.intersects(clipTo)) return new Rectangle(0, 0, 0, 0);
 		float newX = MathHelper.clamp(toClip.getX(), clipTo.getX(), clipTo.getMaxX());
 		float newY = MathHelper.clamp(toClip.getY(), clipTo.getY(), clipTo.getMaxY());
-		float newWidth = MathHelper.clamp(toClip.getWidth(), 0, clipTo.getWidth() - (newX - clipTo.getX()));
-		float newHeight = MathHelper.clamp(toClip.getHeight(), 0, clipTo.getHeight() - (newY - clipTo.getY()));
-		return new Rectangle(newX, newY, newWidth, newHeight);
+		float newMaxX = MathHelper.clamp(toClip.getMaxX(), clipTo.getX(), clipTo.getMaxX());
+		float newMaxY = MathHelper.clamp(toClip.getMaxY(), clipTo.getY(), clipTo.getMaxY());
+		return new Rectangle(newX, newY, newMaxX - newX, newMaxY - newY);
 	}
 
 	public static long bytesToMB(long bytes) {

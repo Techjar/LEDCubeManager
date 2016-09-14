@@ -127,14 +127,14 @@ public abstract class GUIContainer extends GUI {
 		glPopAttrib();
 		RenderHelper.endScissor();
 		if (LEDCubeManager.getInstance().debugGUI) {
-			if (RenderHelper.getPreviousScissor() != null) {
-				glColor4f(0, 0, 1, 1);
-				ShapeRenderer.draw(Util.clipRectangle(getScissorBox(), RenderHelper.getPreviousScissor()));
-			}
 			glColor4f(1, 0, 0, 1);
 			ShapeRenderer.draw(getContainerBox());
 			glColor4f(0, 1, 0, 1);
 			ShapeRenderer.draw(getScissorBox());
+			if (RenderHelper.getPreviousScissor() != null) {
+				glColor4f(0, 0, 1, 1);
+				ShapeRenderer.draw(Util.clipRectangle(getScissorBox(), RenderHelper.getPreviousScissor()));
+			}
 			glEnable(GL_TEXTURE_2D);
 		}
 	}
