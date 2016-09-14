@@ -169,6 +169,7 @@ public class LEDCubeManager {
 	public boolean renderFPS;
 	public boolean debugMode;
 	public boolean debugGL;
+	public boolean debugGUI;
 	public boolean wireframe;
 	@Getter private boolean vrMode;
 	@Getter @Setter private boolean showingVRGUI;
@@ -223,6 +224,11 @@ public class LEDCubeManager {
 			@Override
 			public void runAction(String parameter) {
 				debugGL = true;
+			}
+		}, new ArgumentParser.Argument(false, "\nRender GUI boxes", "--debug-gui") {
+			@Override
+			public void runAction(String parameter) {
+				debugGUI = true;
 			}
 		}, new ArgumentParser.Argument(false, "\nEnable wireframe rendering", "--wireframe") {
 			@Override

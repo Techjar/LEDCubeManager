@@ -283,7 +283,7 @@ public final class InstancedRenderer {
 		glBindVertexArray(vaoId);
 		glBindVertexBuffer(0, mesh.getVBO(), 0, 22);
 		glBindVertexBuffer(1, vbo.getA(), 0, 80);
-		if (mesh.getModel().isTranslucent() || color.getAlpha() < 255) {
+		if (alphaPolygonFix && (mesh.getModel().isTranslucent() || color.getAlpha() < 255)) {
 			glColorMask(false, false, false, false);
 			glDrawArrays(GL_TRIANGLES, 0, mesh.getIndices());
 			glColorMask(true, true, true, true);

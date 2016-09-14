@@ -2,7 +2,9 @@ package com.techjar.ledcm.gui;
 
 import static org.lwjgl.opengl.GL11.*;
 
+import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.render.RenderHelper;
+import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.vr.VRInputEvent;
 
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.List;
 import org.lwjgl.input.Controller;
 import org.lwjgl.util.Color;
 import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.geom.ShapeRenderer;
 
 /**
  *
@@ -103,19 +106,37 @@ public abstract class GUIContainer extends GUI {
 		glPushAttrib(GL_STENCIL_BUFFER_BIT);
 		glStencilMask(0xFF);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilFunc(GL_ALWAYS, 0xFF, 0xFF);
 		glEnable(GL_STENCIL_TEST);
+		glClear(GL_STENCIL_BUFFER_BIT);
 		for (GUI gui : components) {
 			if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) {
-				glClear(GL_STENCIL_BUFFER_BIT);
-				glStencilFunc(GL_ALWAYS, 0xFF, 0xFF);
+				if (gui.isEnabled()) glStencilMask(0x00);
+				else glStencilMask(0x01);
 				gui.render();
-				glStencilFunc(GL_EQUAL, 0xFF, 1);
-				if (!gui.isEnabled())
-					RenderHelper.drawSquare(containerBox.getX(), containerBox.getY(), containerBox.getWidth(), containerBox.getHeight(), new Color(40, 40, 40, 150));
+				if (LEDCubeManager.getInstance().debugGUI) {
+					glStencilMask(0x00);
+					glColor4f(1, 1, 1, 1);
+					ShapeRenderer.draw(gui.getComponentBox());
+					glEnable(GL_TEXTURE_2D);
+				}
 			}
 		}
+		glStencilFunc(GL_EQUAL, 0xFF, 1);
+		RenderHelper.drawSquare(containerBox.getX(), containerBox.getY(), containerBox.getWidth(), containerBox.getHeight(), new Color(40, 40, 40, 150));
 		glPopAttrib();
 		RenderHelper.endScissor();
+		if (LEDCubeManager.getInstance().debugGUI) {
+			if (RenderHelper.getPreviousScissor() != null) {
+				glColor4f(0, 0, 1, 1);
+				ShapeRenderer.draw(Util.clipRectangle(getScissorBox(), RenderHelper.getPreviousScissor()));
+			}
+			glColor4f(1, 0, 0, 1);
+			ShapeRenderer.draw(getContainerBox());
+			glColor4f(0, 1, 0, 1);
+			ShapeRenderer.draw(getScissorBox());
+			glEnable(GL_TEXTURE_2D);
+		}
 	}
 
 	@Override

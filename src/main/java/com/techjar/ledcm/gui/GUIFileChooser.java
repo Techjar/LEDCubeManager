@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GUIFileChooser extends GUI {
+public class GUIFileChooser extends GUIWindow {
 	public static final int FILES_ONLY = 0;
 	public static final int DIRECTORIES_ONLY = 1;
 	public static final int FILES_AND_DIRECTORIES = 2;
@@ -32,7 +32,7 @@ public class GUIFileChooser extends GUI {
 	protected Color color;
 	protected GUIBackground scrollBoxBg;
 	protected List<FileFilter> filters = new ArrayList<>();
-	protected GUIWindow window;
+	//protected GUIWindow window;
 	protected GUIScrollBox scrollBox;
 	protected GUIComboBox fileFilterComboBox;
 	protected GUIComboBox rootDirsComboBox;
@@ -50,27 +50,15 @@ public class GUIFileChooser extends GUI {
 	protected GUICallback chooseCallback;
 
 	public GUIFileChooser(UnicodeFont font, Color color, Color buttonBorderColor, int buttonHeight, GUIBackground guiBg, GUIBackground scrollBoxBg) {
+		super(guiBg);
 		this.font = font;
 		this.color = color;
 		this.buttonHeight = buttonHeight;
 		this.scrollBoxBg = scrollBoxBg;
-		window = new GUIWindow(new GUIBackground(guiBg.bgColor, guiBg.borderColor, guiBg.borderSize, guiBg.texture));
-		window.setParent(this);
-		window.setDimensionChangeHandler(component -> {
-			dimension.setSize(window.getDimension());
-			if (dimensionChangeHandler != null) {
-				dimensionChangeHandler.run(this);
-			}
-			updateDimensions();
-		});
-		window.setCloseHandler(component -> {
-			setVisible(false);
-			chooseCallback = null;
-		});
 		scrollBox = new GUIScrollBox(scrollBoxBg.borderColor, scrollBoxBg.bgColor, scrollBoxBg);
 		//scrollBox.setScrollXMode(ScrollMode.DISABLED);
 		scrollBox.setPosition(5 + scrollBoxBg.borderSize, 10 + scrollBoxBg.borderSize + buttonHeight);
-		window.addComponent(scrollBox);
+		addComponent(scrollBox);
 		fileFilterComboBox = new GUIComboBox(font, color, new GUIBackground(scrollBoxBg.bgColor, scrollBoxBg.borderColor, scrollBoxBg.borderSize, scrollBoxBg.texture));
 		fileFilterComboBox.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
 		fileFilterComboBox.setPosition(5, -5);
@@ -78,7 +66,7 @@ public class GUIFileChooser extends GUI {
 		fileFilterComboBox.setChangeHandler(component -> {
 			updateFileList();
 		});
-		window.addComponent(fileFilterComboBox);
+		addComponent(fileFilterComboBox);
 		rootDirsComboBox = new GUIComboBox(font, color, new GUIBackground(scrollBoxBg.bgColor, scrollBoxBg.borderColor, scrollBoxBg.borderSize, scrollBoxBg.texture));
 		rootDirsComboBox.setPosition(5, 5);
 		rootDirsComboBox.setDimension(0, buttonHeight);
@@ -95,7 +83,7 @@ public class GUIFileChooser extends GUI {
 		rootDirsComboBox.setChangeHandler(component -> {
 			setCurrentDirectory(new File(rootDirsComboBox.getSelectedItem().toString()));
 		});
-		window.addComponent(rootDirsComboBox);
+		addComponent(rootDirsComboBox);
 		chooseBtn = new GUIButton(font, color, "Open", new GUIBackground(guiBg.borderColor, buttonBorderColor, guiBg.borderSize, guiBg.texture));
 		chooseBtn.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
 		chooseBtn.setPosition(-5, -5);
@@ -110,55 +98,26 @@ public class GUIFileChooser extends GUI {
 			}
 			chooseFile();
 		});
-		window.addComponent(chooseBtn);
+		addComponent(chooseBtn);
 		currentDir = workingDir;
 		updateFilterList();
 		visible = false;
 	}
 
 	@Override
-	protected boolean keyboardEvent(int key, boolean state, char character) {
-		if (!window.keyboardEvent(key, state, character)) return false;
-		return true;
-	}
-
-	@Override
-	protected boolean mouseEvent(int button, boolean state, int dwheel) {
-		if (!window.mouseEvent(button, state, dwheel)) return false;
-		return true;
-	}
-
-	@Override
-	public boolean processControllerEvent(Controller controller) {
-		if (!window.processControllerEvent(controller)) return false;
-		return true;
-	}
-
-	@Override
-	public boolean processVRInputEvent(VRInputEvent event) {
-		if (!window.processVRInputEvent(event)) return false;
-		return true;
-	}
-
-	@Override
 	public void update(float delta) {
-		window.update(delta);
-	}
-
-	@Override
-	public void render() {
-		window.render();
+		super.update(delta);
+		if (!visible) chooseCallback = null;
 	}
 
 	@Override
 	public void setDimension(Dimension dimension) {
 		super.setDimension(dimension);
-		window.setDimension(dimension);
 		updateDimensions();
 	}
 
 	protected void updateDimensions() {
-		Rectangle rect = window.getContainerBox();
+		Rectangle rect = getContainerBox();
 		scrollBox.setDimension((int)rect.getWidth() - 10 - scrollBoxBg.borderSize * 2, (int)rect.getHeight() - buttonHeight * 2 - 20 - scrollBoxBg.borderSize * 2);
 		fileFilterComboBox.setDimension((int)rect.getWidth() - 15 - 100, buttonHeight);
 		rootDirsComboBox.setDimension((int)rect.getWidth() - 10, buttonHeight);

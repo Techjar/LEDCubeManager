@@ -7,21 +7,17 @@ import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.animation.Animation;
 import com.techjar.ledcm.hardware.animation.sequence.AnimationSequence;
-import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.OperatingSystem;
-import com.techjar.ledcm.util.PrintStreamRelayer;
 import com.techjar.ledcm.util.Vector3;
 import java.io.File;
-import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
-import org.lwjgl.util.ReadableColor;
 import org.newdawn.slick.UnicodeFont;
 
 /**
@@ -153,21 +149,20 @@ public class ScreenMainControl extends Screen {
 		chooseFileBtn.setDimension(200, 40);
 		chooseFileBtn.setPosition(320, -5);
 		chooseFileBtn.setClickHandler(component -> {
+			if (LEDCubeManager.isConvertingAudio()) return;
 			if (LEDCubeManager.getInstance().isVrMode()) {
-				if (LEDCubeManager.isConvertingAudio()) return;
 				fileChooser.showOpenDialog(component2 -> {
-					try {
-						final File file = fileChooser.getSelectedFile();
-						new Thread(() -> {
+					final File file = fileChooser.getSelectedFile();
+					new Thread(() -> {
+						try {
 							LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
-						}, "File Chooser").start();
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
+						} catch (Exception ex) {
+							ex.printStackTrace();
+						}
+					}, "File Chooser").start();
 				});
 			} else {
 				new Thread(() -> {
-					if (LEDCubeManager.isConvertingAudio()) return;
 					int option = LEDCubeManager.getFileChooser().showOpenDialog(LEDCubeManager.getFrame());
 					if (option == JFileChooser.APPROVE_OPTION) {
 						try {
@@ -433,10 +428,13 @@ public class ScreenMainControl extends Screen {
 				sequenceComboBox.setSelectedItem(-1);
 				sequenceComboBox.clearItems();
 				File dir = new File("resources/sequences/");
-				for (File file : dir.listFiles()) {
-					String name = file.getName();
-					if (name.toLowerCase().endsWith(".sequence")) {
-						sequenceComboBox.addItem(name.substring(0, name.lastIndexOf('.')));
+				File[] files = dir.listFiles();
+				if (files != null) {
+					for (File file : files) {
+						String name = file.getName();
+						if (name.toLowerCase().endsWith(".sequence")) {
+							sequenceComboBox.addItem(name.substring(0, name.lastIndexOf('.')));
+						}
 					}
 				}
 			}
@@ -471,6 +469,7 @@ public class ScreenMainControl extends Screen {
 					progressSlider.setEnabled(!sequence.isMusicSynced());
 					stopBtn.setEnabled(!sequence.isMusicSynced());
 					audioInputBtn.setEnabled(!sequence.isMusicSynced());
+					if (sequence.isMusicSynced()) fileChooser.setVisible(false);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -842,13 +841,11 @@ public class ScreenMainControl extends Screen {
 
 	public final void populateAnimationList() {
 		animComboBox.clearItems();
-		for (String name : LEDCubeManager.getLEDCube().getAnimationNames()) {
-			animComboBox.addItem(name);
-		}
+		LEDCubeManager.getLEDCube().getAnimationNames().forEach(animComboBox::addItem);
 		animComboBox.setSelectedItem(1);
 	}
 
-	private final void positionWindows() {
+	private void positionWindows() {
 		fileChooser.setPosition(container.getWidth() / 2 - fileChooser.getWidth() / 2, container.getHeight() / 2 - fileChooser.getHeight() / 2);
 		layersWindow.setPosition(container.getWidth() - layersWindow.getWidth() - 10, container.getHeight() - layersWindow.getHeight() - 360);
 		sequenceWindow.setPosition(container.getWidth() / 2 - sequenceWindow.getWidth() / 2, container.getHeight() / 2 - sequenceWindow.getHeight() / 2);
