@@ -25,6 +25,9 @@ public class VRTrackedController {
 	Quaternion rotation = new Quaternion();
 	Vector3 positionTransformed = new Vector3();
 	Quaternion rotationTransformed = new Quaternion();
+	String renderModelName;
+	@Getter VRRenderModel[] renderModels;
+	@Getter @Setter boolean scrolling;
 
 	VRControllerState_t.ByReference state;
 	VRControllerState_t lastState;
@@ -69,7 +72,7 @@ public class VRTrackedController {
 		}
 
 		if (deviceIndex != -1) {
-			VRProvider.vrSystem.GetControllerState.apply(deviceIndex, state);
+			VRProvider.vrSystem.GetControllerState.apply(deviceIndex, state, state.size());
 			state.read();
 		} else {
 			state.ulButtonPressed = 0;

@@ -190,11 +190,15 @@ public class LEDCube {
 		if (LEDCubeManager.getInstance().isVrMode()) {
 			for (ControllerType type : ControllerType.values()) {
 				VRTrackedController controller = VRProvider.getController(type);
-				if (controller.getType() == ControllerType.LEFT && controller.isButtonPressed(ButtonType.TOUCHPAD)) {
-					float lightBrightness = (controller.getAxis(AxisType.TOUCHPAD).getY() + 1) / 2;
-					LEDCubeManager.getInstance().getLightingHandler().getLight(1).brightness = lightBrightness * 0.75F;
-					LEDCubeManager.getInstance().getLightingHandler().getLight(2).brightness = lightBrightness * 0.75F;
-					controller.triggerHapticPulse(150);
+				if (controller.getType() == ControllerType.LEFT) {
+					controller.setScrolling(false);
+					if (controller.isButtonPressed(ButtonType.TOUCHPAD)) {
+						controller.setScrolling(true);
+						float lightBrightness = (controller.getAxis(AxisType.TOUCHPAD).getY() + 1) / 2;
+						LEDCubeManager.getInstance().getLightingHandler().getLight(1).brightness = lightBrightness * 0.75F;
+						LEDCubeManager.getInstance().getLightingHandler().getLight(2).brightness = lightBrightness * 0.75F;
+						controller.triggerHapticPulse(150);
+					}
 				}
 			}
 		}

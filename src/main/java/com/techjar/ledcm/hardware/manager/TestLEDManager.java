@@ -22,6 +22,7 @@ public class TestLEDManager implements LEDManager {
 	private final int zSize;
 	private final boolean monochrome;
 	private final Color monochromeColor;
+	private final Dimension3D dimensions;
 	private boolean gammaCorrection;
 	private LEDArray ledArray;
 
@@ -30,6 +31,7 @@ public class TestLEDManager implements LEDManager {
 		this.xSize = xSize;
 		this.ySize = ySize;
 		this.zSize = zSize;
+		this.dimensions = new Dimension3D(xSize, ySize, zSize);
 		this.monochrome = monochrome;
 		this.monochromeColor = monochromeColor;
 		red = new byte[xSize * ySize * zSize];
@@ -54,7 +56,7 @@ public class TestLEDManager implements LEDManager {
 
 	@Override
 	public Dimension3D getDimensions() {
-		return new Dimension3D(xSize, ySize, zSize);
+		return dimensions;
 	}
 
 	@Override

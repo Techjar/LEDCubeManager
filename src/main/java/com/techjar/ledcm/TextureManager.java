@@ -111,6 +111,35 @@ public class TextureManager {
 		return getImage(file, GL_LINEAR);
 	}
 
+	public Texture loadTexture(String ref, byte[] data, int width, int height, boolean alpha, int filter) {
+		int texWidth = Util.getNextPowerOfTwo(width);
+		int texHeight = Util.getNextPowerOfTwo(height);
+
+		int max = glGetInteger(GL_MAX_TEXTURE_SIZE);
+		if (texWidth > max || texHeight > max) {
+			throw new IllegalArgumentException("Attempted to allocate a texture too big for the current hardware.");
+		}
+
+		ByteBuffer texBuffer = BufferUtils.createByteBuffer(data.length);
+		texBuffer.put(data);
+		texBuffer.rewind();
+
+		int textureID = glGenTextures();
+		TextureFixed texture = new TextureFixed(ref, GL_TEXTURE_2D, textureID);
+		texture.setTextureWidth(texWidth);
+		texture.setTextureHeight(texHeight);
+		texture.setWidth(width);
+		texture.setHeight(height);
+		texture.setAlpha(alpha);
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texWidth, texHeight, 0, alpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, texBuffer);
+
+		return texture;
+	}
+
 	private TextureFixed loadTexture(String ref, InputStream in, int filter) throws IOException {
 		PNGDecoder decoder = new PNGDecoder(new BufferedInputStream(in));
 		if (!decoder.isRGB()) throw new IOException("Only RGB formatted images are supported by the PNGDecoder");

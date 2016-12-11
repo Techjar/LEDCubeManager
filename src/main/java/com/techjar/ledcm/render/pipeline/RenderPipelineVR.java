@@ -15,6 +15,7 @@ import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.render.LightingHandler;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.*;
+import com.techjar.ledcm.vr.VRRenderModel;
 import jopenvr.OpenVRUtil;
 
 import org.lwjgl.opengl.DisplayMode;
@@ -157,10 +158,40 @@ public class RenderPipelineVR implements RenderPipeline {
 			glEnable(GL_DEPTH_TEST);
 		}
 
-		if (leftController.isTracking())
-			controllerModel.render(leftController.getPosition(), leftController.getRotation(), new Color(255, 255, 255), stereoProvider.getWorldScale());
-		if (rightController.isTracking())
-			controllerModel.render(rightController.getPosition(), rightController.getRotation(), new Color(255, 255, 255), stereoProvider.getWorldScale());
+		if (leftController.isTracking()) {
+			//controllerModel.render(leftController.getPosition(), leftController.getRotation(), new Color(255, 255, 255), stereoProvider.getWorldScale());
+			VRRenderModel[] models = leftController.getRenderModels();
+			if (models != null) {
+				Vector3 controllerPos = leftController.getPosition();
+				Quaternion controllerRot = leftController.getRotation();
+				for (VRRenderModel model : models) {
+					if (model.visible) {
+						Matrix4f matrix = new Matrix4f();
+						matrix.translate(Util.convertVector(controllerPos));
+						Matrix4f.mul(matrix, controllerRot.getMatrix(), matrix);
+						Matrix4f.mul(matrix, model.transform, matrix);
+						model.model.render(matrix, new Color(255, 255, 255), stereoProvider.getWorldScale());
+					}
+				}
+			}
+		}
+		if (rightController.isTracking()) {
+			//controllerModel.render(rightController.getPosition(), rightController.getRotation(), new Color(255, 255, 255), stereoProvider.getWorldScale());
+			VRRenderModel[] models = rightController.getRenderModels();
+			if (models != null) {
+				Vector3 controllerPos = rightController.getPosition();
+				Quaternion controllerRot = rightController.getRotation();
+				for (VRRenderModel model : models) {
+					if (model.visible) {
+						Matrix4f matrix = new Matrix4f();
+						matrix.translate(Util.convertVector(controllerPos));
+						Matrix4f.mul(matrix, controllerRot.getMatrix(), matrix);
+						Matrix4f.mul(matrix, model.transform, matrix);
+						model.model.render(matrix, new Color(255, 255, 255), stereoProvider.getWorldScale());
+					}
+				}
+			}
+		}
 		if (playArea != null)
 			LEDCubeManager.getModelManager().getModel("playarea.model").render(VRProvider.getRoomPosition().add(VRProvider.getRoomRotation().up().multiply(0.001F)), VRProvider.getRoomRotation(), new Color(255, 255, 255, 100), new Vector3(playArea.getX(), 1, playArea.getY()).multiply(stereoProvider.getWorldScale()));
 		roomModel.render(new Vector3(), new Quaternion(), new Color(200, 200, 200), stereoProvider.getWorldScale());

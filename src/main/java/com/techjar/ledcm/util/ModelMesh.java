@@ -39,7 +39,7 @@ public class ModelMesh {
 		this.center = center;
 		this.radius = radius;
 		this.faceCount = faceCount;
-		int dataSize = vertices.length * 4 + normals.length * 2 + (hasTexCoords ? texCoords.length * 2 : (vertices.length / 3) * 2 * 2);
+		int dataSize = vertices.length * 4 + normals.length * 4 + (hasTexCoords ? texCoords.length * 4 : indices * 2 * 4);
 		if (buffer == null || buffer.capacity() < dataSize) {
 			buffer = BufferUtils.createByteBuffer(dataSize);
 		} else {
@@ -51,15 +51,15 @@ public class ModelMesh {
 			buffer.putFloat(vertices[i * 3]);
 			buffer.putFloat(vertices[i * 3 + 1]);
 			buffer.putFloat(vertices[i * 3 + 2]);
-			buffer.putShort(Util.floatToShortBits(normals[i * 3]));
-			buffer.putShort(Util.floatToShortBits(normals[i * 3 + 1]));
-			buffer.putShort(Util.floatToShortBits(normals[i * 3 + 2]));
+			buffer.putFloat(normals[i * 3]);
+			buffer.putFloat(normals[i * 3 + 1]);
+			buffer.putFloat(normals[i * 3 + 2]);
 			if (hasTexCoords) {
-				buffer.putShort(Util.floatToShortBits(texCoords[i * 2]));
-				buffer.putShort(Util.floatToShortBits(texCoords[i * 2 + 1]));
+				buffer.putFloat(texCoords[i * 2]);
+				buffer.putFloat(texCoords[i * 2 + 1]);
 			} else {
-				buffer.putShort((short)0);
-				buffer.putShort((short)0);
+				buffer.putFloat(0);
+				buffer.putFloat(0);
 			}
 		}
 		buffer.rewind();

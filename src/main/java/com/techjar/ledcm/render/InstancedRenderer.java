@@ -57,9 +57,9 @@ public final class InstancedRenderer {
 		for (int i = 0; i < 8; i++) glEnableVertexAttribArray(i);
 		glVertexAttribFormat(0, 3, GL_FLOAT, false, 0);
 		glVertexAttribBinding(0, 0);
-		glVertexAttribFormat(1, 3, GL_HALF_FLOAT, false, 12);
+		glVertexAttribFormat(1, 3, GL_FLOAT, false, 12);
 		glVertexAttribBinding(1, 0);
-		glVertexAttribFormat(2, 2, GL_HALF_FLOAT, false, 18);
+		glVertexAttribFormat(2, 2, GL_FLOAT, false, 24);
 		glVertexAttribBinding(2, 0);
 		glVertexAttribFormat(3, 4, GL_FLOAT, false, 0);
 		glVertexAttribBinding(3, 1);
@@ -83,12 +83,12 @@ public final class InstancedRenderer {
 		InstancedRenderer.alphaPolygonFix = alphaPolygonFix;
 	}
 
-	public static void addItem(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
+	public static void addItem(ModelMesh mesh, Matrix4f transform, Color color, Vector3 scale) {
 		if (mesh.getModel().isTranslucent() || color.getAlpha() < 255) {
-			itemsAlpha.add(new InstanceItem(mesh, position, rotation, color, scale));
+			itemsAlpha.add(new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		} else {
 			if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedList<InstanceItem>());
-			itemsNormal.get(mesh).add(new InstanceItem(mesh, position, rotation, color, scale));
+			itemsNormal.get(mesh).add(new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		}
 	}
 
@@ -175,8 +175,7 @@ public final class InstancedRenderer {
 						buffer.rewind();
 						Util.storeColorInBuffer(item.getColor(), buffer);
 						Matrix4f matrix = new Matrix4f();
-						matrix.translate(Util.convertVector(item.getPosition()));
-						Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
+						Matrix4f.mul(matrix, item.getTransform(), matrix);
 						matrix.scale(Util.convertVector(item.getScale()));
 						Util.storeMatrixInBuffer(matrix, buffer);
 
@@ -194,7 +193,7 @@ public final class InstancedRenderer {
 						glBufferSubData(GL_ARRAY_BUFFER, 0, buffer);
 						glBindBuffer(GL_ARRAY_BUFFER, 0);
 						glBindVertexArray(vaoId);
-						glBindVertexBuffer(0, mesh.getVBO(), 0, 22);
+						glBindVertexBuffer(0, mesh.getVBO(), 0, 32);
 						glBindVertexBuffer(1, vbo.getA(), 0, 80);
 						glColorMask(false, false, false, false);
 						glDrawArrays(GL_TRIANGLES, 0, mesh.getIndices());
@@ -215,8 +214,7 @@ public final class InstancedRenderer {
 				for (InstanceItem item : queue) {
 					Util.storeColorInBuffer(item.getColor(), buffer);
 					Matrix4f matrix = new Matrix4f();
-					matrix.translate(Util.convertVector(item.getPosition()));
-					Matrix4f.mul(matrix, item.getRotation().getMatrix(), matrix);
+					Matrix4f.mul(matrix, item.getTransform(), matrix);
 					matrix.scale(Util.convertVector(item.getScale()));
 					Util.storeMatrixInBuffer(matrix, buffer);
 				}
@@ -238,7 +236,7 @@ public final class InstancedRenderer {
 				else glBufferSubData(GL_ARRAY_BUFFER, 0, buffer);
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 				glBindVertexArray(vaoId);
-				glBindVertexBuffer(0, mesh.getVBO(), 0, 22);
+				glBindVertexBuffer(0, mesh.getVBO(), 0, 32);
 				glBindVertexBuffer(1, vbo.getA(), 0, 80);
 				glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.getIndices(), count);
 				glBindVertexArray(0);
@@ -250,7 +248,7 @@ public final class InstancedRenderer {
 	/**
 	 * Draws a single non-instanced mesh
 	 */
-	public static int draw(ModelMesh mesh, Vector3 position, Quaternion rotation, Color color, Vector3 scale, int textureID) {
+	public static int draw(ModelMesh mesh, Matrix4f transform, Color color, Vector3 scale, int textureID) {
 		int dataSize = 80;
 		if (buffer == null || buffer.capacity() < dataSize) {
 			buffer = BufferUtils.createByteBuffer(dataSize);
@@ -261,8 +259,7 @@ public final class InstancedRenderer {
 		buffer.rewind();
 		Util.storeColorInBuffer(color, buffer);
 		Matrix4f matrix = new Matrix4f();
-		matrix.translate(Util.convertVector(position));
-		Matrix4f.mul(matrix, rotation.getMatrix(), matrix);
+		Matrix4f.mul(matrix, transform, matrix);
 		matrix.scale(Util.convertVector(scale));
 		Util.storeMatrixInBuffer(matrix, buffer);
 
@@ -281,7 +278,7 @@ public final class InstancedRenderer {
 		glBufferSubData(GL_ARRAY_BUFFER, 0, buffer);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(vaoId);
-		glBindVertexBuffer(0, mesh.getVBO(), 0, 22);
+		glBindVertexBuffer(0, mesh.getVBO(), 0, 32);
 		glBindVertexBuffer(1, vbo.getA(), 0, 80);
 		if (alphaPolygonFix && (mesh.getModel().isTranslucent() || color.getAlpha() < 255)) {
 			glColorMask(false, false, false, false);
@@ -311,7 +308,7 @@ public final class InstancedRenderer {
 	@Value private static class InstanceItem {
 		private final ModelMesh mesh;
 		private final Vector3 position;
-		private final Quaternion rotation;
+		private final Matrix4f transform;
 		private final Color color;
 		private final Vector3 scale;
 	}

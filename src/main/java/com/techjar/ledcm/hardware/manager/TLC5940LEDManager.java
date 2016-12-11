@@ -13,6 +13,7 @@ import org.lwjgl.util.ReadableColor;
  * @author Techjar
  */
 public class TLC5940LEDManager implements LEDManager {
+	private final Dimension3D dimensions = new Dimension3D(8, 8, 8);
 	private final byte[] red = new byte[512];
 	private final byte[] green = new byte[512];
 	private final byte[] blue = new byte[512];
@@ -40,7 +41,7 @@ public class TLC5940LEDManager implements LEDManager {
 
 	@Override
 	public Dimension3D getDimensions() {
-		return new Dimension3D(8, 8, 8);
+		return dimensions;
 	}
 
 	@Override

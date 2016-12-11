@@ -109,16 +109,18 @@ public abstract class GUIContainer extends GUI {
 		glStencilFunc(GL_ALWAYS, 0xFF, 0xFF);
 		glEnable(GL_STENCIL_TEST);
 		glClear(GL_STENCIL_BUFFER_BIT);
-		for (GUI gui : components) {
-			if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) {
-				if (gui.isEnabled()) glStencilMask(0x00);
-				else glStencilMask(0x01);
-				gui.render();
-				if (LEDCubeManager.getInstance().debugGUI) {
-					glStencilMask(0x00);
-					glColor4f(1, 1, 1, 1);
-					ShapeRenderer.draw(gui.getComponentBox());
-					glEnable(GL_TEXTURE_2D);
+		synchronized (components) {
+			for (GUI gui : components) {
+				if (gui.isVisible() && gui.getComponentBox().intersects(containerBox)) {
+					if (gui.isEnabled()) glStencilMask(0x00);
+					else glStencilMask(0x01);
+					gui.render();
+					if (LEDCubeManager.getInstance().debugGUI) {
+						glStencilMask(0x00);
+						glColor4f(1, 1, 1, 1);
+						ShapeRenderer.draw(gui.getComponentBox());
+						glEnable(GL_TEXTURE_2D);
+					}
 				}
 			}
 		}

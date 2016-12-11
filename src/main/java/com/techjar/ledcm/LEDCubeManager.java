@@ -948,11 +948,12 @@ public class LEDCubeManager {
 			VRInputEvent event = vrInputEvents.poll();
 			//System.out.println(event);
 			boolean screenEat = false;
-			for (Screen screen : screenList)
+			for (Screen screen : screenList) {
 				if (screen.isVisible() && screen.isEnabled() && !screen.processVRInputEvent(event)) {
 					screenEat = true;
 					break;
 				}
+			}
 			if (!screenEat && event.getController().getType() == ControllerType.RIGHT && showingVRGUI && mouseOverride != null) {
 				if (event.isButtonPressEvent() && event.getButton() == ButtonType.TRIGGER) {
 					if (event.getButtonState()) event.getController().triggerHapticPulse(2000);
@@ -1045,6 +1046,8 @@ public class LEDCubeManager {
 				binding.whilePressed();
 			}
 		});
+
+		if (vrMode) VRProvider.getController(ControllerType.RIGHT).setScrolling(showingVRGUI && mouseOverride != null);
 
 		camera.update(delta);
 		textureManager.update(delta);

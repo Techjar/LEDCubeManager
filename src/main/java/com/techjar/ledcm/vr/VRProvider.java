@@ -1,15 +1,22 @@
 package com.techjar.ledcm.vr;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.LongBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
+import com.sun.jna.ptr.PointerByReference;
+import com.techjar.ledcm.util.AxisAlignedBB;
+import com.techjar.ledcm.util.Material;
+import com.techjar.ledcm.util.Model;
 import jopenvr.JOpenVRLibrary.EVREventType;
+import lombok.SneakyThrows;
 import org.lwjgl.util.Dimension;
 import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import jopenvr.*;
@@ -20,7 +27,6 @@ import lombok.Setter;
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.Quaternion;
@@ -29,6 +35,7 @@ import com.techjar.ledcm.util.Vector2;
 import com.techjar.ledcm.util.Vector3;
 import com.techjar.ledcm.util.exception.VRException;
 import com.techjar.ledcm.util.logging.LogHelper;
+import org.newdawn.slick.opengl.Texture;
 
 public class VRProvider {
 	private VRProvider() {
@@ -36,6 +43,9 @@ public class VRProvider {
 
 	@Getter private static boolean initialized;
 	static IntBuffer errorStore;
+	private static Pointer renderModelNamePtr;
+	private static RenderModel_ControllerMode_State_t renderModelModeState = new RenderModel_ControllerMode_State_t();
+	private static RenderModel_ComponentState_t renderModelComponentState = new RenderModel_ComponentState_t();
 
 	@Getter static VRStereoProvider stereoProvider;
 	@Getter static Dimension eyeTextureSize;
@@ -47,6 +57,7 @@ public class VRProvider {
 	static VR_IVROverlay_FnTable vrOverlay;
 	static VR_IVRSettings_FnTable vrSettings;
 	static VR_IVRChaperone_FnTable vrChaperone;
+	static VR_IVRRenderModels_FnTable vrRenderModels;
 	static TrackedDevicePose_t.ByReference hmdTrackedDevicePoseReference;
 	static TrackedDevicePose_t[] trackedDevicePoses;
 
@@ -95,6 +106,7 @@ public class VRProvider {
 		initOpenVROverlay();
 		initOpenVROSettings();
 		initOpenVRChaperone();
+		initOpenVRRenderModels();
 
 		HmdMatrix34_t matL = vrSystem.GetEyeToHeadTransform.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left);
 		OpenVRUtil.convertSteamVRMatrix3ToMatrix4f(matL, hmdTransformLeftEye);
@@ -251,6 +263,34 @@ public class VRProvider {
 		}
 	}
 
+	private static void initOpenVRRenderModels() {
+		vrRenderModels = new VR_IVRRenderModels_FnTable(JOpenVRLibrary.VR_GetGenericInterface(JOpenVRLibrary.IVRRenderModels_Version, errorStore));
+		if (vrRenderModels != null && errorStore.get(0) == 0) {
+			LogHelper.info("OpenVR render models initialized.");
+			vrRenderModels.setAutoSynch(false);
+			vrRenderModels.read();
+			int count = vrRenderModels.GetRenderModelCount.apply();
+			Pointer pointer = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+			for (int i = 0; i < count; i++) {
+				vrRenderModels.GetRenderModelName.apply(i, pointer, JOpenVRLibrary.k_unMaxPropertyStringSize - 1);
+				String name = pointer.getString(0);
+				LogHelper.fine("Render Model " + i + ": " + name);
+				int compCount = vrRenderModels.GetComponentCount.apply(pointer);
+				Pointer p2 = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+				for (int j = 0; j < compCount; j++) {
+					vrRenderModels.GetComponentName.apply(pointer, j, p2, JOpenVRLibrary.k_unMaxPropertyStringSize - 1);
+					Pointer p3 = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+					vrRenderModels.GetComponentRenderModelName.apply(pointer, p2, p3, JOpenVRLibrary.k_unMaxPropertyStringSize - 1);
+					String compName = p2.getString(0);
+					String modelName = p3.getString(0);
+					LogHelper.fine("\tComponent " + j + ": " + compName + " (" + (new File(modelName).exists() ? modelName : "no model") + ")");
+				}
+			}
+		} else {
+			throw new VRException(getVRInitError());
+		}
+	}
+
 	public static void poll(float delta) {
 		updatePoses();
 		pollEvents();
@@ -303,6 +343,55 @@ public class VRProvider {
 			if (controller.deviceIndex != -1 && trackedDevicePoses[controller.deviceIndex].bPoseIsValid != 0) {
 				controller.updatePose(poseMatrices[controller.deviceIndex]);
 				controller.tracking = true;
+
+				if (renderModelNamePtr == null) renderModelNamePtr = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+				vrSystem.GetStringTrackedDeviceProperty.apply(controller.deviceIndex, JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String, renderModelNamePtr, JOpenVRLibrary.k_unMaxPropertyStringSize - 1, errorStore);
+				String modelName = renderModelNamePtr.getString(0);
+				if (!modelName.equals(controller.renderModelName)) {
+					try {
+						if (controller.renderModels != null) {
+							for (VRRenderModel model : controller.renderModels) {
+								model.model.release();
+								vrRenderModels.FreeRenderModel.apply(model.renderModel);
+							}
+						}
+						int componentCount = vrRenderModels.GetComponentCount.apply(renderModelNamePtr);
+						if (componentCount > 0) {
+							ArrayList<VRRenderModel> renderModels = new ArrayList<>();
+							for (int j = 0; j < componentCount; j++) {
+								Pointer pComponentName = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+								vrRenderModels.GetComponentName.apply(renderModelNamePtr, j, pComponentName, JOpenVRLibrary.k_unMaxPropertyStringSize - 1);
+								Pointer pComponentModelName = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+								vrRenderModels.GetComponentRenderModelName.apply(renderModelNamePtr, pComponentName, pComponentModelName, JOpenVRLibrary.k_unMaxPropertyStringSize - 1);
+								String componentName = pComponentName.getString(0);
+								String componentModelName = pComponentModelName.getString(0);
+								VRRenderModel renderModel = loadRenderModel(componentModelName, modelName, componentName);
+								if (renderModel != null) renderModels.add(renderModel);
+							}
+							controller.renderModels = renderModels.toArray(new VRRenderModel[renderModels.size()]);
+						} else {
+							controller.renderModels = new VRRenderModel[1];
+							controller.renderModels[1] = loadRenderModel(modelName, modelName, null);
+						}
+						controller.renderModelName = modelName;
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+
+				if (controller.renderModels != null) {
+					for (VRRenderModel model : controller.renderModels) {
+						if (model.componentName != null) {
+							renderModelModeState.bScrollWheelVisible = controller.scrolling ? (byte)1 : (byte)0;
+							vrRenderModels.GetComponentState.apply(model.modelNamePtr, model.componentNamePtr, controller.state, renderModelModeState, renderModelComponentState);
+							model.visible = (renderModelComponentState.uProperties & JOpenVRLibrary.EVRComponentProperty.EVRComponentProperty_VRComponentProperty_IsVisible) != 0;
+							OpenVRUtil.convertSteamVRMatrix3ToMatrix4f(renderModelComponentState.mTrackingToComponentRenderModel, model.transform);
+							OpenVRUtil.convertSteamVRMatrix3ToMatrix4f(renderModelComponentState.mTrackingToComponentLocal, model.transformLocal);
+							model.transform.transpose();
+							model.transformLocal.transpose();
+						}
+					}
+				}
 			} else {
 				controller.updatePose(new Matrix4f());
 				controller.tracking = false;
@@ -346,6 +435,90 @@ public class VRProvider {
 			controllers[ControllerType.LEFT.ordinal()].deviceIndex = vrSystem.GetTrackedDeviceIndexForControllerRole.apply(JOpenVRLibrary.ETrackedControllerRole.ETrackedControllerRole_TrackedControllerRole_LeftHand);
 			controllers[ControllerType.RIGHT.ordinal()].deviceIndex = vrSystem.GetTrackedDeviceIndexForControllerRole.apply(JOpenVRLibrary.ETrackedControllerRole.ETrackedControllerRole_TrackedControllerRole_RightHand);
 		}
+	}
+
+	@SneakyThrows(InterruptedException.class)
+	private static VRRenderModel loadRenderModel(String name, String modelName, String componentName) {
+		Pointer pName = pointerFromString(name);
+		PointerByReference refModel = new PointerByReference();
+		int error;
+		while (true) {
+			error = vrRenderModels.LoadRenderModel_Async.apply(pName, refModel);
+			if (error != JOpenVRLibrary.EVRRenderModelError.EVRRenderModelError_VRRenderModelError_Loading)
+				break;
+			Thread.sleep(1);
+		}
+		if (error == JOpenVRLibrary.EVRRenderModelError.EVRRenderModelError_VRRenderModelError_InvalidModel) {
+			return null;
+		} else if (error != JOpenVRLibrary.EVRRenderModelError.EVRRenderModelError_VRRenderModelError_None) {
+			throw new VRException("Error loading render model (" + name + "): error " + error + " - " + vrRenderModels.GetRenderModelErrorNameFromEnum.apply(error));
+		}
+		RenderModel_t renderModel = new RenderModel_t(refModel.getValue());
+		renderModel.read();
+
+		PointerByReference refTexture = new PointerByReference();
+		while (true) {
+			error = vrRenderModels.LoadTexture_Async.apply(renderModel.diffuseTextureId, refTexture);
+			if (error != JOpenVRLibrary.EVRRenderModelError.EVRRenderModelError_VRRenderModelError_Loading)
+				break;
+			Thread.sleep(1);
+		}
+		if (error != JOpenVRLibrary.EVRRenderModelError.EVRRenderModelError_VRRenderModelError_None) {
+			throw new VRException("Error loading render model texture (" + name + "): error " + error + " - " + vrRenderModels.GetRenderModelErrorNameFromEnum.apply(error));
+		}
+		RenderModel_TextureMap_t textureMap = new RenderModel_TextureMap_t(refTexture.getValue());
+		textureMap.read();
+
+		Texture texture = LEDCubeManager.getTextureManager().loadTexture(name, textureMap.rubTextureMapData.getByteArray(0, textureMap.unWidth * textureMap.unHeight * 4), textureMap.unWidth, textureMap.unHeight, true, GL_LINEAR);
+		float[][] verticesIndexed = new float[renderModel.unVertexCount][3];
+		float[][] normalsIndexed = new float[renderModel.unVertexCount][3];
+		float[][] texCoordsIndexed = new float[renderModel.unVertexCount][2];
+		int structSize = new RenderModel_Vertex_t().size();
+		for (int i = 0; i < renderModel.unVertexCount; i++) {
+			RenderModel_Vertex_t vertex = new RenderModel_Vertex_t(renderModel.rVertexData.getPointer().share(i * structSize));
+			vertex.read();
+			verticesIndexed[i][0] = vertex.vPosition.v[0];
+			verticesIndexed[i][1] = vertex.vPosition.v[1];
+			verticesIndexed[i][2] = vertex.vPosition.v[2];
+			normalsIndexed[i][0] = vertex.vNormal.v[0];
+			normalsIndexed[i][1] = vertex.vNormal.v[1];
+			normalsIndexed[i][2] = vertex.vNormal.v[2];
+			texCoordsIndexed[i][0] = vertex.rfTextureCoord[0];
+			texCoordsIndexed[i][1] = vertex.rfTextureCoord[1];
+		}
+		short[] indices = renderModel.rIndexData.getPointer().getShortArray(0, renderModel.unTriangleCount * 3);
+		float[] vertices = new float[indices.length * 3];
+		float[] normals = new float[indices.length * 3];
+		float[] texCoords = new float[indices.length * 2];
+		Vector3 minVertex = new Vector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+		Vector3 maxVertex = new Vector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+		for (int i = 0; i < indices.length; i++) {
+			int index = indices[i];
+			vertices[i * 3] = verticesIndexed[index][0];
+			vertices[i * 3 + 1] = verticesIndexed[index][1];
+			vertices[i * 3 + 2] = verticesIndexed[index][2];
+			normals[i * 3] = normalsIndexed[index][0];
+			normals[i * 3 + 1] = normalsIndexed[index][1];
+			normals[i * 3 + 2] = normalsIndexed[index][2];
+			texCoords[i * 2] = texCoordsIndexed[index][0];
+			texCoords[i * 2 + 1] = texCoordsIndexed[index][1];
+			if (vertices[i * 3] < minVertex.getX()) minVertex.setX(vertices[i * 3]);
+			if (vertices[i * 3 + 1] < minVertex.getY()) minVertex.setY(vertices[i * 3 + 1]);
+			if (vertices[i * 3 + 2] < minVertex.getZ()) minVertex.setZ(vertices[i * 3 + 2]);
+			if (vertices[i * 3] > maxVertex.getX()) maxVertex.setX(vertices[i * 3]);
+			if (vertices[i * 3 + 1] > maxVertex.getY()) maxVertex.setY(vertices[i * 3 + 1]);
+			if (vertices[i * 3 + 2] > maxVertex.getZ()) maxVertex.setZ(vertices[i * 3 + 2]);
+		}
+		Vector3 center = minVertex.add(maxVertex).divide(2);
+		float radius = minVertex.distance(maxVertex) / 2;
+		Material material = new Material();
+		Model model = new Model(1, texture, LEDCubeManager.getTextureManager().getTexture("white.png"), material, false);
+		model.loadMesh(0, 0, indices.length, vertices, normals, texCoords, center, radius, renderModel.unTriangleCount);
+		if (model.getAABB() == null) model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
+		model.makeImmutable();
+
+		LogHelper.info("Loaded render model: " + modelName + (componentName != null ? " " + componentName : ""));
+		return new VRRenderModel(modelName, componentName, model, renderModel);
 	}
 
 	public static boolean setKeyboardShowing(boolean showing) {
@@ -424,7 +597,7 @@ public class VRProvider {
 	}
 
 	static Pointer pointerFromString(String in) {
-		Pointer p = new Memory(in.length() + 1);
+		Pointer p = new Memory(in.getBytes().length + 1);
 		p.setString(0, in);
 		return p;
 	}
