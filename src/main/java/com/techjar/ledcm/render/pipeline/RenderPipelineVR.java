@@ -40,7 +40,6 @@ import com.techjar.ledcm.vr.VRTrackedController;
 public class RenderPipelineVR implements RenderPipeline {
 	private ShaderProgram mainShader;
 	private ShaderProgram noLightingShader;
-	private Model controllerModel;
 	private Model roomModel;
 	private Model guiModel;
 	private int fboLeftEye;
@@ -62,7 +61,6 @@ public class RenderPipelineVR implements RenderPipeline {
 		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 		LEDCube ledCube = LEDCubeManager.getLEDCube();
 		ledCube.setRenderOffset(Util.convertVector(ledCube.getCenterPoint()).negate().multiply(ledCube.getSpaceMult()).add(cubePos));
-		controllerModel = LEDCubeManager.getModelManager().getModel("vive_controller.model");
 		guiModel = LEDCubeManager.getModelManager().getModel("gui.model");
 
 		ledcm.addResizeHandler(() -> setupGUIFramebuffer());
