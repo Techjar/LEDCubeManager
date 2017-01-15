@@ -5,6 +5,8 @@ import static org.lwjgl.opengl.GL11.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
+import com.techjar.ledcm.util.Vector2;
+import jopenvr.HmdVector2_t;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -27,7 +29,7 @@ public class VRStereoProvider {
 	@Getter @Setter protected Vector3 worldScale = new Vector3(1, 1, 1);
 
 	private HiddenAreaMesh_t[] hiddenMeshes = new HiddenAreaMesh_t[2];
-	private float[][] hiddenMeshVertices = new float[2][];
+	private Vector2[][] hiddenMeshVertices = new Vector2[2][];
 
 	public void submitFrame() {
 		VRProvider.vrCompositor.Submit.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left, VRProvider.texType0, null, JOpenVRLibrary.EVRSubmitFlags.EVRSubmitFlags_Submit_Default);
@@ -47,21 +49,20 @@ public class VRStereoProvider {
 		return size;
 	}
 
-	public void setupStencilMask(int width, int height, float renderScale) {
+	public void setupStencilMask(int width, int height) {
 		for (int i = 0; i < 2; i++) {
-			hiddenMeshes[i] = VRProvider.vrSystem.GetHiddenAreaMesh.apply(i);
+			hiddenMeshes[i] = VRProvider.vrSystem.GetHiddenAreaMesh.apply(i, 0);
 			hiddenMeshes[i].read();
 			if (hiddenMeshes[i].unTriangleCount > 0) {
 				stencilMask = true;
-				hiddenMeshVertices[i] = new float[hiddenMeshes[i].unTriangleCount * 3 * 2];
-				//Pointer pointer = new Memory(hiddenMeshes[i].unTriangleCount * 3 * 2);
-				hiddenMeshes[i].pVertexData.getPointer().read(0, hiddenMeshVertices[i], 0, hiddenMeshVertices[i].length);
-
-				for (int j = 0; j < hiddenMeshVertices[i].length; j += 2) {
-					hiddenMeshVertices[i][j] = hiddenMeshVertices[i][j] * width * renderScale;
-					hiddenMeshVertices[i][j + 1] = hiddenMeshVertices[i][j + 1] * height * renderScale;
+				hiddenMeshVertices[i] = new Vector2[hiddenMeshes[i].unTriangleCount * 3];
+				int structSize = new HmdVector2_t().size();
+				for (int j = 0; j < hiddenMeshes[i].unTriangleCount * 3; j++) {
+					HmdVector2_t vertex = new HmdVector2_t(hiddenMeshes[i].pVertexData.getPointer().share(j * structSize));
+					vertex.read();
+					hiddenMeshVertices[i][j] = new Vector2(vertex.v[0] * width, vertex.v[1] * height);
 				}
-				LogHelper.info("Loaded stencil mask.");
+				LogHelper.info("Loaded stencil mask for " + EyeType.values()[i] + " eye. Has " + hiddenMeshes[i].unTriangleCount + " triangles.");
 			} else {
 				LogHelper.info("No stencil mask found.");
 			}
@@ -134,7 +135,7 @@ public class VRStereoProvider {
 		}
 	}
 
-	public float[] getStencilMask(@NonNull EyeType eye) {
+	public Vector2[] getStencilMask(@NonNull EyeType eye) {
 		switch (eye) {
 			case LEFT:
 				return hiddenMeshVertices[0];

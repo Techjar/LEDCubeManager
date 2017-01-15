@@ -331,7 +331,7 @@ public class RenderPipelineVR implements RenderPipeline {
 
 	protected void drawStencil(EyeType eye) {
 		Dimension texSize = VRProvider.getEyeTextureSize();
-		float[] vertices = VRProvider.getStereoProvider().getStencilMask(eye);
+		Vector2[] vertices = VRProvider.getStereoProvider().getStencilMask(eye);
 
 		glEnable(GL_STENCIL_TEST);
 		glDisable(GL_CULL_FACE);
@@ -351,8 +351,8 @@ public class RenderPipelineVR implements RenderPipeline {
 		glViewport(0, 0, texSize.getWidth(), texSize.getHeight());
 
 		glBegin(GL_TRIANGLES);
-		for (int i = 0; i < vertices.length; i += 2) {
-			glVertex2f(vertices[i], vertices[i + 1]);
+		for (int i = 0; i < vertices.length; i++) {
+			glVertex2f(vertices[i].getX(), vertices[i].getY());
 		}
 		glEnd();
 

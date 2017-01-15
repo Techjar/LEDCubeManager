@@ -16,16 +16,13 @@ public class Material {
 	public final float shininess;
 
 	public Material() {
-		this.ambient = new Vector3f(0.2F, 0.2F, 0.2F);
-		this.diffuse = new Vector3f(0.8F, 0.8F, 0.8F);
-		this.specular = new Vector3f(1.0F, 1.0F, 1.0F);
-		this.shininess = 20.0F;
+		this(null, null, null, 20.0F);
 	}
 
 	public Material(Vector3f ambient, Vector3f diffuse, Vector3f specular, float shininess) {
-		this.ambient = ambient;
-		this.diffuse = diffuse;
-		this.specular = specular;
+		this.ambient = ambient != null ? ambient : new Vector3f(0.2F, 0.2F, 0.2F);
+		this.diffuse = diffuse != null ? diffuse : new Vector3f(0.8F, 0.8F, 0.8F);
+		this.specular = specular != null ? specular : new Vector3f(1.0F, 1.0F, 1.0F);
 		this.shininess = shininess;
 	}
 

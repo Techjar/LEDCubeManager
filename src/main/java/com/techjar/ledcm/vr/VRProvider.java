@@ -17,6 +17,7 @@ import jopenvr.JOpenVRLibrary.EVREventType;
 import lombok.SneakyThrows;
 import org.lwjgl.util.Dimension;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import jopenvr.*;
@@ -126,7 +127,7 @@ public class VRProvider {
 		eyeTextureSize = new Dimension(eyeTexSize[0], eyeTexSize[1]);
 		LogHelper.info("Eye texture size: %d x %d", eyeTextureSize.getWidth(), eyeTextureSize.getHeight());
 		stereoProvider.setupEyeTextures(eyeTextureSize.getWidth(), eyeTextureSize.getHeight());
-		stereoProvider.setupStencilMask(eyeTextureSize.getWidth(), eyeTextureSize.getHeight(), 1);
+		stereoProvider.setupStencilMask(eyeTextureSize.getWidth(), eyeTextureSize.getHeight());
 
 		LogHelper.info("OpenVR initialization complete!");
 		initialized = true;
@@ -354,6 +355,7 @@ public class VRProvider {
 								model.model.release();
 								vrRenderModels.FreeRenderModel.apply(model.renderModel);
 							}
+							controller.renderModels = null;
 						}
 						int componentCount = vrRenderModels.GetComponentCount.apply(renderModelNamePtr);
 						if (componentCount > 0) {
@@ -370,8 +372,8 @@ public class VRProvider {
 							}
 							controller.renderModels = renderModels.toArray(new VRRenderModel[renderModels.size()]);
 						} else {
-							controller.renderModels = new VRRenderModel[1];
-							controller.renderModels[1] = loadRenderModel(modelName, modelName, null);
+							VRRenderModel renderModel = loadRenderModel(modelName, modelName, null);
+							controller.renderModels = new VRRenderModel[]{renderModel};
 						}
 						controller.renderModelName = modelName;
 					} catch (Exception ex) {
@@ -420,6 +422,11 @@ public class VRProvider {
 					break;
 				case EVREventType.EVREventType_VREvent_Quit:
 					LEDCubeManager.getInstance().shutdown();
+					break;
+				case EVREventType.EVREventType_VREvent_ModelSkinSettingsHaveChanged:
+					for (VRTrackedController controller : controllers) {
+						controller.renderModelName = null;
+					}
 					break;
 			}
 		}
@@ -511,7 +518,7 @@ public class VRProvider {
 		}
 		Vector3 center = minVertex.add(maxVertex).divide(2);
 		float radius = minVertex.distance(maxVertex) / 2;
-		Material material = new Material();
+		Material material = new Material(null, null, new Vector3f(0.2F, 0.2F, 0.2F), 20.0F);
 		Model model = new Model(1, texture, LEDCubeManager.getTextureManager().getTexture("white.png"), material, false);
 		model.loadMesh(0, 0, indices.length, vertices, normals, texCoords, center, radius, renderModel.unTriangleCount);
 		if (model.getAABB() == null) model.setAABB(new AxisAlignedBB(minVertex, maxVertex));

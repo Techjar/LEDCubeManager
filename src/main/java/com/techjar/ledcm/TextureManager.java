@@ -112,8 +112,10 @@ public class TextureManager {
 	}
 
 	public Texture loadTexture(String ref, byte[] data, int width, int height, boolean alpha, int filter) {
-		int texWidth = Util.getNextPowerOfTwo(width);
-		int texHeight = Util.getNextPowerOfTwo(height);
+		//int texWidth = Util.getNextPowerOfTwo(width);
+		//int texHeight = Util.getNextPowerOfTwo(height);
+		int texWidth = width;
+		int texHeight = height;
 
 		int max = glGetInteger(GL_MAX_TEXTURE_SIZE);
 		if (texWidth > max || texHeight > max) {

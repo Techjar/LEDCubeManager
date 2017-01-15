@@ -100,6 +100,8 @@ public class ScreenMainControl extends Screen {
 	public final GUILabel previewTransformLabel;
 	public final GUILabel fullscreenLabel;
 	public final GUICheckBox fullscreenCheckbox;
+	public final GUILabel limitFramerateLabel;
+	public final GUICheckBox limitFramerateCheckbox;
 	public final GUISlider fovSlider;
 	public final GUIButton exitBtn;
 	public final GUIFileChooser fileChooser;
@@ -593,6 +595,19 @@ public class ScreenMainControl extends Screen {
 			LEDCubeManager.getConfig().setProperty("display.fieldofview", LEDCubeManager.getInstance().getFieldOfView());
 		});
 		settingsScrollBox.addComponent(fovSlider);
+		limitFramerateLabel = new GUILabel(font, new Color(255, 255, 255), "Limit Framerate");
+		limitFramerateLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
+		limitFramerateLabel.setDimension(font.getWidth(limitFramerateLabel.getText()), 30);
+		limitFramerateLabel.setPosition(-165 + (limitFramerateLabel.getWidth() / 2), 230);
+		settingsScrollBox.addComponent(limitFramerateLabel);
+		limitFramerateCheckbox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		limitFramerateCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
+		limitFramerateCheckbox.setDimension(30, 30);
+		limitFramerateCheckbox.setPosition(-185, 230);
+		limitFramerateCheckbox.setLabel(limitFramerateLabel);
+		limitFramerateCheckbox.setChecked(LEDCubeManager.getInstance().isLimitFramerate());
+		if (LEDCubeManager.getInstance().isVrMode()) limitFramerateCheckbox.setEnabled(false);
+		settingsScrollBox.addComponent(limitFramerateCheckbox);
 		settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
 		settingsApplyBtn.setDimension(200, 40);
@@ -607,6 +622,7 @@ public class ScreenMainControl extends Screen {
 				}
 			}
 			LEDCubeManager.getInstance().setFullscreen(fullscreenCheckbox.isChecked());
+			LEDCubeManager.getInstance().setLimitFramerate(limitFramerateCheckbox.isChecked());
 			item = audioInputComboBox.getSelectedItem();
 			if (item != null) {
 				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixer(item.toString());

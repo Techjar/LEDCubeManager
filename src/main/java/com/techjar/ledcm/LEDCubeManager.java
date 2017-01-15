@@ -10,6 +10,7 @@ import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL32.*;
+import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.util.glu.GLU.*;
 
 import com.techjar.ledcm.gui.GUI;
@@ -182,9 +183,12 @@ public class LEDCubeManager {
 	@Getter @Setter private float fieldOfView;
 	@Getter private float nearClip = 0.001F;
 	@Getter @Setter private float viewDistance;
+	@Getter private boolean limitFramerate;
 	@Getter private int multisampleFBO;
 	private int multisampleTexture;
 	private int multisampleDepthTexture;
+	private int multisampleRenderbuffer;
+	private int multisampleDepthRenderbuffer;
 	private int shadowMapSize = 1024;
 	private int depthFBO;
 	private int depthTexture;
@@ -509,7 +513,7 @@ public class LEDCubeManager {
 	public void run() {
 		while (!Display.isCloseRequested() && !closeRequested) {
 			try {
-				if (vrMode || rateCapTimer.getMilliseconds() >= 1000D / 300D) {
+				if (!limitFramerate || vrMode || rateCapTimer.getMilliseconds() >= 1000D / 300D) {
 					rateCapTimer.restart();
 					runGameLoop();
 				} else if (1000D / 300D - rateCapTimer.getMilliseconds() > 1) {
@@ -565,12 +569,20 @@ public class LEDCubeManager {
 
 	private void setupAntiAliasing() {
 		if (multisampleFBO != 0) {
+			glDeleteFramebuffers(multisampleFBO);
+			multisampleFBO = 0;
+		}
+		if (multisampleTexture != 0) {
 			glDeleteTextures(multisampleTexture);
 			glDeleteTextures(multisampleDepthTexture);
-			glDeleteFramebuffers(multisampleFBO);
 			multisampleTexture = 0;
 			multisampleDepthTexture = 0;
-			multisampleFBO = 0;
+		}
+		if (multisampleRenderbuffer != 0) {
+			glDeleteRenderbuffers(multisampleRenderbuffer);
+			glDeleteRenderbuffers(multisampleRenderbuffer);
+			multisampleRenderbuffer = 0;
+			multisampleRenderbuffer = 0;
 		}
 		if (antiAliasing) {
 			multisampleTexture = glGenTextures();
@@ -583,6 +595,21 @@ public class LEDCubeManager {
 			glBindFramebuffer(GL_FRAMEBUFFER, multisampleFBO);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampleTexture, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture, 0);
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+				throw new RuntimeException("Anti-aliasing framebuffer is invalid.");
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		} else {
+			multisampleRenderbuffer = glGenRenderbuffers();
+			multisampleDepthRenderbuffer = glGenRenderbuffers();
+			glBindRenderbuffer(GL_RENDERBUFFER, multisampleRenderbuffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, displayMode.getWidth(), displayMode.getHeight());
+			glBindRenderbuffer(GL_RENDERBUFFER, multisampleDepthRenderbuffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, displayMode.getWidth(), displayMode.getHeight());
+			multisampleFBO = glGenFramebuffers();
+			glBindFramebuffer(GL_FRAMEBUFFER, multisampleFBO);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffer);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multisampleDepthRenderbuffer);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 				throw new RuntimeException("Anti-aliasing framebuffer is invalid.");
 			}
@@ -681,6 +708,7 @@ public class LEDCubeManager {
 		config.defaultProperty("display.viewdistance", 100F);
 		config.defaultProperty("display.antialiasing", true);
 		config.defaultProperty("display.antialiasingsamples", 4);
+		config.defaultProperty("display.limitframerate", true);
 		config.defaultProperty("sound.effectvolume", 1.0F);
 		config.defaultProperty("sound.musicvolume", 1.0F);
 		config.defaultProperty("sound.inputdevice", "");
@@ -696,6 +724,7 @@ public class LEDCubeManager {
 		fieldOfView = config.getFloat("display.fieldofview");
 		viewDistance = config.getFloat("display.viewdistance");
 		fullscreen = config.getBoolean("display.fullscreen");
+		limitFramerate = config.getBoolean("display.limitframerate");
 		newFullscreen = fullscreen;
 
 		if (!antiAliasingSupported) {
@@ -1106,7 +1135,7 @@ public class LEDCubeManager {
 	@SneakyThrows(IOException.class)
 	public void render() {
 		renderStart = System.nanoTime();
-		if (antiAliasing) glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFBO);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFBO);
 
 		// Setup and render 3D
 		/*glMatrixMode(GL_PROJECTION);
@@ -1142,11 +1171,9 @@ public class LEDCubeManager {
 		render2D();
 		checkGLError("Post render 2D");
 
-		if (antiAliasing) {
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
-			glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
-		}
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
+		glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
 		boolean frameServe = frameServer.numClients > 0 && frameServeTimer.getMilliseconds() >= 1000D / 60D;
 		if (screenshot || frameServe) {
 			frameServeTimer.restart();
@@ -1354,6 +1381,11 @@ public class LEDCubeManager {
 	public void setAntiAliasing(boolean enabled, int samples) {
 		antiAliasing = enabled;
 		antiAliasingSamples = samples;
+	}
+
+	public void setLimitFramerate(boolean limitFramerate) {
+		this.limitFramerate = limitFramerate;
+		config.setProperty("display.limitframerate", limitFramerate);
 	}
 
 	public int addResizeHandler(Runnable resizeHandler) {
