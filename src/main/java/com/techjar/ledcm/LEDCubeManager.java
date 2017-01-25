@@ -176,8 +176,8 @@ public class LEDCubeManager {
 	@Getter @Setter private boolean showingVRGUI;
 	@Getter @Setter private boolean showingGUI = true;
 	@Getter @Setter private Vector2 mouseOverride;
-	public boolean antiAliasingSupported;
-	public int antiAliasingMaxSamples;
+	public final boolean antiAliasingSupported;
+	public final int antiAliasingMaxSamples;
 	@Getter private boolean antiAliasing = true;
 	@Getter private int antiAliasingSamples = 4;
 	@Getter @Setter private float fieldOfView;
@@ -284,18 +284,12 @@ public class LEDCubeManager {
 		LogHelper.init(new File(dataDirectory, "logs"));
 		LongSleeperThread.startSleeper();
 
-		try {
-			Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(), null);
-			pb.makeCurrent();
-			antiAliasingMaxSamples = glGetInteger(GL_MAX_SAMPLES);
-			antiAliasingSupported = antiAliasingMaxSamples > 0;
-			pb.destroy();
-			LogHelper.config("AA Supported: %s / Max Samples: %d", antiAliasingSupported ? "yes" : "no", antiAliasingMaxSamples);
-		} catch (LWJGLException ex) {
-			antiAliasingMaxSamples = 0;
-			antiAliasingSupported = false;
-			LogHelper.error("Failed to detect supported AA modes, AA will be disabled", ex);
-		}
+		Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
+		pb.makeCurrent();
+		antiAliasingMaxSamples = glGetInteger(GL_MAX_SAMPLES);
+		antiAliasingSupported = antiAliasingMaxSamples > 0;
+		pb.destroy();
+		LogHelper.config("AA Supported: %s / Max Samples: %d", antiAliasingSupported ? "yes" : "no", antiAliasingMaxSamples);
 	}
 
 	public void start() throws LWJGLException, IOException, AWTException {
