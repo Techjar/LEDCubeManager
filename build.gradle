@@ -88,3 +88,4 @@ task zip(type: Zip) {
 
 unpackNatives.dependsOn 'unpackNatives2'
 build.dependsOn 'zip'
+zip.dependsOn unpackNatives
