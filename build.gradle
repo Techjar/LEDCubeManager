@@ -65,7 +65,7 @@ task unpackNatives2(type: Copy) {
 	into 'build/natives'
 }
 
-task zip(type: Zip) {
+task zip(type: Zip, dependsOn: ['build', 'unpackNatives']) {
 	from([jar.outputs, 'start.bat', 'start.sh']) {
 		into '/'
 	}
@@ -87,4 +87,3 @@ task zip(type: Zip) {
 }
 
 unpackNatives.dependsOn 'unpackNatives2'
-build.dependsOn 'zip'
