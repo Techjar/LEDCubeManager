@@ -284,7 +284,7 @@ public class LEDCubeManager {
 		LogHelper.init(new File(dataDirectory, "logs"));
 		LongSleeperThread.startSleeper();
 
-		Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
+		Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(), null);
 		pb.makeCurrent();
 		antiAliasingMaxSamples = glGetInteger(GL_MAX_SAMPLES);
 		antiAliasingSupported = antiAliasingMaxSamples > 0;
