@@ -10,7 +10,6 @@ import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL32.*;
-import static org.lwjgl.opengl.GL45.*;
 import static org.lwjgl.util.glu.GLU.*;
 
 import com.techjar.ledcm.gui.GUI;
@@ -22,20 +21,20 @@ import com.techjar.ledcm.render.pipeline.RenderPipeline;
 import com.techjar.ledcm.render.pipeline.RenderPipelineGUI;
 import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
 import com.techjar.ledcm.render.pipeline.RenderPipelineVR;
-import com.techjar.ledcm.util.Angle;
+import com.techjar.ledcm.util.math.Angle;
 import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.ConfigManager;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.KeyPress;
 import com.techjar.ledcm.util.LightSource;
 import com.techjar.ledcm.util.OperatingSystem;
-import com.techjar.ledcm.util.Quaternion;
+import com.techjar.ledcm.util.math.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Tuple;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;
@@ -58,8 +57,6 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -1215,7 +1212,7 @@ public class LEDCubeManager {
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
 			tuple.getA().render3D();
 		}
-		InstancedRenderer.resetItems();
+		//InstancedRenderer.clearItems();
 
 		glPopMatrix();
 	}

@@ -4,8 +4,7 @@ package com.techjar.ledcm.hardware;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.google.common.collect.ImmutableList;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -53,10 +52,12 @@ public class LEDCharacter {
 		List<Vector3> list = transformedVectors == null ? thicknessVectors : transformedVectors;
 		for (int i = 0; i < list.size(); i++) {
 			Vector3 vec = list.get(i);
-			vec.set(Math.round(vec.getX()), Math.round(vec.getY()), Math.round(vec.getZ()));
-			if (Util.isInsideCube(vec)) {
+			int x = Math.round(vec.getX());
+			int y = Math.round(vec.getY());
+			int z = Math.round(vec.getZ());
+			if (Util.isInsideCube(x, y, z)) {
 				Vector3 origVec = transformedVectors == null ? vec : thicknessVectors.get(i);
-				ledManager.setLEDColor((int)vec.getX(), (int)vec.getY(), (int)vec.getZ(), colorizer.getColorAt(new Vector3(origVec.getX(), origVec.getY(), origVec.getZ())));
+				ledManager.setLEDColor(z, y, z, colorizer.getColorAt(origVec));
 			}
 		}
 	}

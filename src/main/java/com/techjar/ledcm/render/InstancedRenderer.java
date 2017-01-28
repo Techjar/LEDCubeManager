@@ -14,7 +14,6 @@ import com.techjar.ledcm.util.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -22,8 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import lombok.Value;
+import com.techjar.ledcm.util.math.Quaternion;
+import com.techjar.ledcm.util.math.Vector3;
+import lombok.AllArgsConstructor;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix4f;
@@ -46,6 +49,7 @@ public final class InstancedRenderer {
 	private static final int maxVboCount = 64;
 	private static ByteBuffer zeroBuffer = BufferUtils.createByteBuffer(500000);
 	private static ByteBuffer buffer = BufferUtils.createByteBuffer(8000000);
+	private static Matrix4f bufferMatrix = new Matrix4f();
 
 	private InstancedRenderer() {
 	}
@@ -83,13 +87,22 @@ public final class InstancedRenderer {
 		InstancedRenderer.alphaPolygonFix = alphaPolygonFix;
 	}
 
-	public static void addItem(ModelMesh mesh, Matrix4f transform, Color color, Vector3 scale) {
+	public static InstanceItem addItem(ModelMesh mesh, Matrix4f transform, Color color, Vector3 scale) {
+		InstanceItem item;
 		if (mesh.getModel().isTranslucent() || color.getAlpha() < 255) {
-			itemsAlpha.add(new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
+			itemsAlpha.add(item = new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		} else {
 			if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedList<InstanceItem>());
-			itemsNormal.get(mesh).add(new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
+			itemsNormal.get(mesh).add(item = new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		}
+		return item;
+	}
+
+	public static void removeItem(InstanceItem item) {
+		if (itemsNormal.containsKey(item.getMesh())) {
+			itemsNormal.get(item.getMesh()).remove(item);
+		}
+		itemsAlpha.remove(item);
 	}
 
 	public static void prepareItems() {
@@ -111,7 +124,7 @@ public final class InstancedRenderer {
 		}
 	}
 
-	public static void resetItems() {
+	public static void clearItems() {
 		itemsNormal.clear();
 		itemsAlpha.clear();
 		groupedNormal.clear();
@@ -174,10 +187,10 @@ public final class InstancedRenderer {
 					for (InstanceItem item : queue) {
 						buffer.rewind();
 						Util.storeColorInBuffer(item.getColor(), buffer);
-						Matrix4f matrix = new Matrix4f();
-						Matrix4f.mul(matrix, item.getTransform(), matrix);
-						matrix.scale(Util.convertVector(item.getScale()));
-						Util.storeMatrixInBuffer(matrix, buffer);
+						bufferMatrix.setIdentity();
+						Matrix4f.mul(bufferMatrix, item.getTransform(), bufferMatrix);
+						bufferMatrix.scale(Util.convertVector(item.getScale()));
+						Util.storeMatrixInBuffer(bufferMatrix, buffer);
 
 						glActiveTexture(GL_TEXTURE0);
 						mesh.getModel().getTexture().bind();
@@ -213,10 +226,10 @@ public final class InstancedRenderer {
 				}
 				for (InstanceItem item : queue) {
 					Util.storeColorInBuffer(item.getColor(), buffer);
-					Matrix4f matrix = new Matrix4f();
-					Matrix4f.mul(matrix, item.getTransform(), matrix);
-					matrix.scale(Util.convertVector(item.getScale()));
-					Util.storeMatrixInBuffer(matrix, buffer);
+					bufferMatrix.setIdentity();
+					Matrix4f.mul(bufferMatrix, item.getTransform(), bufferMatrix);
+					bufferMatrix.scale(Util.convertVector(item.getScale()));
+					Util.storeMatrixInBuffer(bufferMatrix, buffer);
 				}
 				glActiveTexture(GL_TEXTURE0);
 				mesh.getModel().getTexture().bind();
@@ -305,11 +318,25 @@ public final class InstancedRenderer {
 		}
 	}
 
-	@Value private static class InstanceItem {
-		private final ModelMesh mesh;
-		private final Vector3 position;
-		private final Matrix4f transform;
-		private final Color color;
-		private final Vector3 scale;
+	@AllArgsConstructor
+	public static class InstanceItem {
+		@Getter private ModelMesh mesh;
+		@Getter private Vector3 position;
+		@Getter private Matrix4f transform;
+		@Getter @Setter private Color color;
+		@Getter @Setter private Vector3 scale;
+
+		public void setTransform(Vector3 position, Quaternion rotation) {
+			this.position = position;
+			Matrix4f matrix = new Matrix4f();
+			matrix.translate(Util.convertVector(position));
+			Matrix4f.mul(matrix, rotation.getMatrix(), matrix);
+			this.transform = matrix;
+		}
+
+		public void setTransform(Matrix4f transform) {
+			this.transform = transform;
+			this.position = new Vector3(transform.m30, transform.m31, transform.m32);
+		}
 	}
 }

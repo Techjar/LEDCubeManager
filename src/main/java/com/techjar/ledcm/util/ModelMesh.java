@@ -6,10 +6,10 @@ import static org.lwjgl.opengl.GL15.*;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.logging.LogHelper;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+
+import com.techjar.ledcm.util.math.Vector3;
 import lombok.Getter;
 import org.lwjgl.BufferUtils;
-import org.newdawn.slick.opengl.Texture;
 
 /**
  *
@@ -84,6 +84,6 @@ public class ModelMesh {
 	}
 
 	public Vector3 getCenter() {
-		return center.copy();
+		return center;
 	}
 }

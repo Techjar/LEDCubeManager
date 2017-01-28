@@ -46,6 +46,11 @@ import java.util.Random;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 
+import com.techjar.ledcm.util.math.Dimension3D;
+import com.techjar.ledcm.util.math.PooledMutableVector3;
+import com.techjar.ledcm.util.math.Quaternion;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import lombok.SneakyThrows;
 
 import org.lwjgl.input.Controller;
@@ -134,6 +139,10 @@ public final class Util {
 
 	public static Vector3 convertVector(Vector3f vector) {
 		return new Vector3(vector.getX(), vector.getY(), vector.getZ());
+	}
+
+	public static PooledMutableVector3 convertVectorPooled(Vector3f vector) {
+		return PooledMutableVector3.get(vector.getX(), vector.getY(), vector.getZ());
 	}
 
 	public static org.lwjgl.util.vector.Quaternion convertQuaternion(Quaternion quat) {

@@ -2,11 +2,11 @@
 package com.techjar.ledcm.render;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.Angle;
+import com.techjar.ledcm.util.math.Angle;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;

@@ -1,6 +1,8 @@
 
 package com.techjar.ledcm.util;
 
+import com.techjar.ledcm.util.math.Vector3;
+
 /**
  *
  * @author Techjar
@@ -19,11 +21,11 @@ public class AxisAlignedBB {
 	}
 
 	public Vector3 getMinPoint() {
-		return minPoint.copy();
+		return minPoint;
 	}
 
 	public Vector3 getMaxPoint() {
-		return maxPoint.copy();
+		return maxPoint;
 	}
 
 	public boolean containsPoint(Vector3 point) {

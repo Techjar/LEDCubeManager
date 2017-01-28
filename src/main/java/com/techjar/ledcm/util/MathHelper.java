@@ -1,5 +1,8 @@
 package com.techjar.ledcm.util;
 
+import com.techjar.ledcm.util.math.Angle;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import org.lwjgl.util.Color;
 
 /**

@@ -3,8 +3,9 @@ package com.techjar.ledcm.hardware;
 
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.Dimension3D;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Dimension3D;
+import com.techjar.ledcm.util.math.PooledMutableVector3;
+import com.techjar.ledcm.util.math.Vector3;
 import org.lwjgl.util.Color;
 
 /**
@@ -49,8 +50,9 @@ public class LEDArray {
 			for (int x = 0; x < dim.x; x++) {
 				for (int y = 0; y < dim.y; y++) {
 					for (int z = 0; z < dim.z; z++) {
-						Vector3 vec = new Vector3(x, y, z);
-						Vector3 newVec = LEDCubeManager.getLEDCube().applyTransform(vec);
+						PooledMutableVector3 vec = PooledMutableVector3.get(x, y, z);
+						PooledMutableVector3 newVec = PooledMutableVector3.get(x, y, z);
+						LEDCubeManager.getLEDCube().applyTransform(newVec);
 						if (newVec.getX() >= 0 && newVec.getX() < dim.x && newVec.getY() >= 0 && newVec.getY() < dim.y && newVec.getZ() >= 0 && newVec.getZ() < dim.z) {
 							int index = manager.encodeVector(vec);
 							int newIndex = manager.encodeVector(newVec);
@@ -58,6 +60,7 @@ public class LEDArray {
 							greenT[newIndex] = green[index];
 							blueT[newIndex] = blue[index];
 						}
+						vec.release();
 					}
 				}
 			}

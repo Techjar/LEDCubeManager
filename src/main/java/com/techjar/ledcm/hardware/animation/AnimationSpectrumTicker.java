@@ -2,9 +2,7 @@
 package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
 import ddf.minim.analysis.BeatDetect;
 import ddf.minim.analysis.FFT;
 import org.lwjgl.util.Color;

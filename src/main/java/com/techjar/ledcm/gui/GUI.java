@@ -1,7 +1,7 @@
 package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 import com.techjar.ledcm.vr.VRInputEvent;
 
 import java.util.ArrayList;
@@ -20,6 +20,8 @@ import org.newdawn.slick.geom.Shape;
  */
 public abstract class GUI {
 	protected Vector2 position = new Vector2();
+	protected Vector2 relativePosition = new Vector2();
+	protected Vector2 cachedParentPos = null;
 	protected Dimension dimension = new Dimension();
 	protected Rectangle baseBox = new Rectangle(0, 0, 0, 0);
 	protected GUICallback dimensionChangeHandler;
@@ -76,31 +78,44 @@ public abstract class GUI {
 		if (parent != null) {
 			boolean realParent = this instanceof GUIBackground || (this instanceof GUIButton && ((GUIButton)this).windowClose);
 			Vector2 parentPos = realParent ? parent.getPosition() : parent.getContainerPosition();
-			Dimension parentDim = realParent ? parent.getDimension() : parent.getContainerDimension();
-			switch (parentAlign) {
-				case TOP_LEFT:
-					return position.add(parentPos);
-				case TOP_RIGHT:
-					return new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY());
-				case BOTTOM_LEFT:
-					return new Vector2(position.getX() + parentPos.getX(), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
-				case BOTTOM_RIGHT:
-					return new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
-				case TOP_CENTER:
-					return new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY());
-				case BOTTOM_CENTER:
-					return new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
-				case LEFT_CENTER:
-					return new Vector2(position.getX() + parentPos.getX(), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
-				case RIGHT_CENTER:
-					return new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
-				case CENTER:
-					return new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
-				default:
-					throw new RuntimeException("Illegal value for parentAlign");
+			if (!parentPos.equals(cachedParentPos)) {
+				Dimension parentDim = realParent ? parent.getDimension() : parent.getContainerDimension();
+				switch (parentAlign) {
+					case TOP_LEFT:
+						relativePosition = position.add(parentPos);
+						break;
+					case TOP_RIGHT:
+						relativePosition = new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY());
+						break;
+					case BOTTOM_LEFT:
+						relativePosition = new Vector2(position.getX() + parentPos.getX(), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
+						break;
+					case BOTTOM_RIGHT:
+						relativePosition = new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
+						break;
+					case TOP_CENTER:
+						relativePosition = new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY());
+						break;
+					case BOTTOM_CENTER:
+						relativePosition = new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY() + parentDim.getHeight() - dimension.getHeight());
+						break;
+					case LEFT_CENTER:
+						relativePosition = new Vector2(position.getX() + parentPos.getX(), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
+						break;
+					case RIGHT_CENTER:
+						relativePosition = new Vector2(position.getX() + parentPos.getX() + parentDim.getWidth() - dimension.getWidth(), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
+						break;
+					case CENTER:
+						relativePosition = new Vector2(position.getX() + parentPos.getX() + (parentDim.getWidth() / 2) - (dimension.getWidth() / 2), position.getY() + parentPos.getY() + (parentDim.getHeight() / 2) - (dimension.getHeight() / 2));
+						break;
+					default:
+						throw new RuntimeException("Illegal value for parentAlign (this should never happen!)");
+				}
+				cachedParentPos = parentPos.copy();
 			}
+			return relativePosition;
 		}
-		return position.copy();
+		return position;
 	}
 
 	public Vector2 getContainerPosition() {
@@ -114,11 +129,11 @@ public abstract class GUI {
 	 * @return The position of this component as a {@link Vector2}
 	 */
 	public Vector2 getRawPosition() {
-		return position.copy();
+		return position;
 	}
 
 	public void setPosition(Vector2 position) {
-		this.position.set(position);
+		this.position = position;
 		if (positionChangeHandler != null) {
 			positionChangeHandler.run(this);
 		}

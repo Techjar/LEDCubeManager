@@ -1,5 +1,5 @@
 
-package com.techjar.ledcm.util;
+package com.techjar.ledcm.util.math;
 
 /**
  *

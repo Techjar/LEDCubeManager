@@ -8,8 +8,9 @@ import com.obj.WavefrontObject;
 import com.techjar.ledcm.util.AxisAlignedBB;
 import com.techjar.ledcm.util.Material;
 import com.techjar.ledcm.util.Model;
+import com.techjar.ledcm.util.math.MutableVector3;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.logging.LogHelper;
 import java.io.BufferedReader;
 import java.io.File;
@@ -156,16 +157,18 @@ public class ModelManager {
 					}
 				}
 			}
-			Vector3 minVertex = new Vector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
-			Vector3 maxVertex = new Vector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+			MutableVector3 minVertexM = new MutableVector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+			MutableVector3 maxVertexM = new MutableVector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
 			for (Vertex vertex : object.getVertices()) {
-				if (vertex.getX() < minVertex.getX()) minVertex.setX(vertex.getX());
-				if (vertex.getY() < minVertex.getY()) minVertex.setY(vertex.getY());
-				if (vertex.getZ() < minVertex.getZ()) minVertex.setZ(vertex.getZ());
-				if (vertex.getX() > maxVertex.getX()) maxVertex.setX(vertex.getX());
-				if (vertex.getY() > maxVertex.getY()) maxVertex.setY(vertex.getY());
-				if (vertex.getZ() > maxVertex.getZ()) maxVertex.setZ(vertex.getZ());
+				if (vertex.getX() < minVertexM.getX()) minVertexM.setX(vertex.getX());
+				if (vertex.getY() < minVertexM.getY()) minVertexM.setY(vertex.getY());
+				if (vertex.getZ() < minVertexM.getZ()) minVertexM.setZ(vertex.getZ());
+				if (vertex.getX() > maxVertexM.getX()) maxVertexM.setX(vertex.getX());
+				if (vertex.getY() > maxVertexM.getY()) maxVertexM.setY(vertex.getY());
+				if (vertex.getZ() > maxVertexM.getZ()) maxVertexM.setZ(vertex.getZ());
 			}
+			Vector3 minVertex = minVertexM.toImmutable();
+			Vector3 maxVertex = maxVertexM.toImmutable();
 			Vector3 center = minVertex.add(maxVertex).divide(2);
 			if (model.getAABB() == null) model.setAABB(new AxisAlignedBB(minVertex, maxVertex));
 			model.loadMesh(i, objectLODDists.get(i), vertices.size() / 3, Util.floatListToArray(vertices), Util.floatListToArray(normals), Util.floatListToArray(texCoords), center, (float)object.radius, object.getCurrentGroup().getFaces().size());

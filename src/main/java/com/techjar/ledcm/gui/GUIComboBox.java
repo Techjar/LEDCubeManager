@@ -6,7 +6,7 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 
 import java.util.ArrayList;
 import java.util.Collection;

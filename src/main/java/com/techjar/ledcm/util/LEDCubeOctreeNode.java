@@ -1,6 +1,8 @@
 
 package com.techjar.ledcm.util;
 
+import com.techjar.ledcm.util.math.Vector3;
+
 /**
  *
  * @author Techjar

@@ -9,10 +9,10 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector2f;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.Quaternion;
+import com.techjar.ledcm.util.math.Quaternion;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.vr.VRProvider.ControllerType;
 
 public class VRTrackedController {
@@ -183,19 +183,19 @@ public class VRTrackedController {
 	}
 
 	public Vector3 getPosition() {
-		return positionTransformed.copy();
+		return positionTransformed;
 	}
 
 	public Quaternion getRotation() {
-		return rotationTransformed.copy();
+		return rotationTransformed;
 	}
 
 	public Vector3 getPositionRoom() {
-		return position.copy();
+		return position;
 	}
 
 	public Quaternion getRotationRoom() {
-		return rotation.copy();
+		return rotation;
 	}
 
 	public boolean isButtonTouched(@NonNull ButtonType button) {

@@ -9,16 +9,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
-import jopenvr.HmdMatrix34_t;
-import jopenvr.HmdMatrix44_t;
-
 import org.lwjgl.LWJGLUtil;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Quaternion;
 import org.lwjgl.util.vector.Vector3f;
 
-import com.techjar.ledcm.util.Angle;
+import com.techjar.ledcm.util.math.Angle;
 
 /**
  *

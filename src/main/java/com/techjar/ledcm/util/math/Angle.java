@@ -1,9 +1,6 @@
 
-package com.techjar.ledcm.util;
+package com.techjar.ledcm.util.math;
 
-import static com.techjar.ledcm.util.Axis.PITCH;
-
-import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
 
 /**
