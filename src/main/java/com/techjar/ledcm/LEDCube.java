@@ -247,8 +247,16 @@ public class LEDCube {
 							instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
 							pos.release();
 						} else {
-							instanceItems[index].setColor(color);
-							instanceItems[index].setScale(renderScale);
+							float distance = LEDCubeManager.getCamera().getPosition().distance(instanceItems[index].getPosition());
+							if (instanceItems[index].getMesh().getModel().getMeshByDistance(distance) != instanceItems[index].getMesh()) {
+								InstancedRenderer.removeItem(instanceItems[index]);
+								PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+								instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
+								pos.release();
+							} else {
+								instanceItems[index].setColor(color);
+								instanceItems[index].setScale(renderScale);
+							}
 						}
 					} else if (instanceItems[index] != null) {
 						InstancedRenderer.removeItem(instanceItems[index]);
@@ -279,8 +287,16 @@ public class LEDCube {
 									highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
 									pos.release();
 								} else {
-									highlightInstanceItems[index].setColor(color);
-									highlightInstanceItems[index].setScale(scale);
+									float distance = LEDCubeManager.getCamera().getPosition().distance(highlightInstanceItems[index].getPosition());
+									if (highlightInstanceItems[index].getMesh().getModel().getMeshByDistance(distance) != highlightInstanceItems[index].getMesh()) {
+										InstancedRenderer.removeItem(instanceItems[index]);
+										PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+										highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
+										pos.release();
+									} else {
+										highlightInstanceItems[index].setColor(color);
+										highlightInstanceItems[index].setScale(renderScale);
+									}
 								}
 								break;
 							} else if (highlightInstanceItems[index] != null) {
