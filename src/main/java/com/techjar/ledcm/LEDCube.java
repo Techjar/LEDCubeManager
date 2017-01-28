@@ -292,7 +292,7 @@ public class LEDCube {
 										highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
 									} else {
 										highlightInstanceItems[index].setColor(color);
-										highlightInstanceItems[index].setScale(renderScale);
+										highlightInstanceItems[index].setScale(scale);
 									}
 								}
 								break;
