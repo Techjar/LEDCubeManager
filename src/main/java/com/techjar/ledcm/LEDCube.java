@@ -92,9 +92,9 @@ public class LEDCube {
 		if (LEDCubeManager.getLedManagerName() != null) {
 			ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + LEDCubeManager.getLedManagerName()).getConstructor(String[].class).newInstance((Object)LEDCubeManager.getLedManagerArgs());
 		} else {
-			ledManager = new ArduinoLEDManager(4, false);
+			//ledManager = new ArduinoLEDManager(4, false);
 			//ledManager = new TLC5940LEDManager(true);
-			//ledManager = new TestLEDManager(true, 8, 8, 128, false, new Color(255, 0, 0));
+			ledManager = new TestLEDManager(true, 32, 32, 32, false, new Color(255, 0, 0));
 		}
 		Dimension3D dim = ledManager.getDimensions();
 		centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
@@ -232,6 +232,7 @@ public class LEDCube {
 
 		Dimension3D dim = ledManager.getDimensions();
 		LEDArray ledArray = previewTransform ? ledManager.getLEDArray().getTransformed() : ledManager.getLEDArray();
+		PooledMutableVector3 pos = PooledMutableVector3.get();
 		for (int y = 0; y < dim.y; y++) {
 			for (int z = 0; z < dim.z; z++) {
 				for (int x = 0; x < dim.x; x++) {
@@ -243,16 +244,14 @@ public class LEDCube {
 							color = new Color(Math.round(ledColor.getRed() * ledManager.getFactor()), Math.round(ledColor.getGreen() * ledManager.getFactor()), Math.round(ledColor.getBlue() * ledManager.getFactor()));
 						} else color = ledArray.getLEDColor(x, y, z);
 						if (instanceItems[index] == null) {
-							PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+							pos.set(x * mult, y * mult, z * mult);
 							instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
-							pos.release();
 						} else {
-							float distance = LEDCubeManager.getCamera().getPosition().distance(instanceItems[index].getPosition());
-							if (instanceItems[index].getMesh().getModel().getMeshByDistance(distance) != instanceItems[index].getMesh()) {
+							float distance = LEDCubeManager.getCamera().getPosition().distanceSquared(instanceItems[index].getPosition());
+							if (instanceItems[index].getMesh().getModel().getMeshByDistanceSquared(distance - instanceItems[index].getMesh().getModel().getMesh(0).getRadius()) != instanceItems[index].getMesh()) {
 								InstancedRenderer.removeItem(instanceItems[index]);
-								PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+								pos.set(x * mult, y * mult, z * mult);
 								instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
-								pos.release();
 							} else {
 								instanceItems[index].setColor(color);
 								instanceItems[index].setScale(renderScale);
@@ -283,16 +282,14 @@ public class LEDCube {
 						for (LEDSelection selection : ledSelections) {
 							if (selection.highlight[ledManager.encodeVector(x, y, z)] && isLEDWithinIsolation(x, y, z)) {
 								if (highlightInstanceItems[index] == null) {
-									PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+									pos.set(x * mult, y * mult, z * mult);
 									highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
-									pos.release();
 								} else {
-									float distance = LEDCubeManager.getCamera().getPosition().distance(highlightInstanceItems[index].getPosition());
-									if (highlightInstanceItems[index].getMesh().getModel().getMeshByDistance(distance) != highlightInstanceItems[index].getMesh()) {
-										InstancedRenderer.removeItem(instanceItems[index]);
-										PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+									float distance = LEDCubeManager.getCamera().getPosition().distanceSquared(highlightInstanceItems[index].getPosition());
+									if (highlightInstanceItems[index].getMesh().getModel().getMeshByDistanceSquared(distance - highlightInstanceItems[index].getMesh().getModel().getMesh(0).getRadius()) != highlightInstanceItems[index].getMesh()) {
+										InstancedRenderer.removeItem(highlightInstanceItems[index]);
+										pos.set(x * mult, y * mult, z * mult);
 										highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
-										pos.release();
 									} else {
 										highlightInstanceItems[index].setColor(color);
 										highlightInstanceItems[index].setScale(renderScale);
@@ -308,6 +305,7 @@ public class LEDCube {
 				}
 			}
 		}
+		pos.release();
 	}
 
 	public LEDManager getLEDManager() {
@@ -810,21 +808,22 @@ public class LEDCube {
 	public Vector3 getLEDAtPosition(Vector3 position) {
 		Dimension3D dim = ledManager.getDimensions();
 		if (octrees == null) {
+			PooledMutableVector3 pos = PooledMutableVector3.get();
 			for (int y = 0; y < dim.y; y++) {
 				for (int z = 0; z < dim.z; z++) {
 					for (int x = 0; x < dim.x; x++) {
 						float xx = x * spaceMult;
 						float yy = y * spaceMult;
 						float zz = z * spaceMult;
-						PooledMutableVector3 pos = PooledMutableVector3.get(xx, yy, zz);
+						pos.set(xx, yy, zz);
 						if (model.getAABB().offset(pos).containsPoint(position) && isLEDWithinIsolation(x, y, z)) {
 							pos.release();
 							return new Vector3(x, y, z);
 						}
-						pos.release();
 					}
 				}
 			}
+			pos.release();
 		} else {
 			Vector3 ret = null;
 			for (int i = 0; i < octrees.length; i++) {
@@ -843,21 +842,22 @@ public class LEDCube {
 	public Vector3 getLEDIntersecting(AxisAlignedBB aabb) {
 		Dimension3D dim = ledManager.getDimensions();
 		if (octrees == null) {
+			PooledMutableVector3 pos = PooledMutableVector3.get();
 			for (int y = 0; y < dim.y; y++) {
 				for (int z = 0; z < dim.z; z++) {
 					for (int x = 0; x < dim.x; x++) {
 						float xx = x * spaceMult;
 						float yy = y * spaceMult;
 						float zz = z * spaceMult;
-						PooledMutableVector3 pos = PooledMutableVector3.get(xx, yy, zz);
+						pos.set(xx, yy, zz);
 						if (model.getAABB().offset(pos).intersects(aabb) && isLEDWithinIsolation(x, y, z)) {
 							pos.release();
 							return new Vector3(x, y, z);
 						}
-						pos.release();
 					}
 				}
 			}
+			pos.release();
 		} else {
 			Vector3 ret = null;
 			for (int i = 0; i < octrees.length; i++) {

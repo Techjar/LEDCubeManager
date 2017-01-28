@@ -92,7 +92,7 @@ public final class InstancedRenderer {
 		if (mesh.getModel().isTranslucent() || color.getAlpha() < 255) {
 			itemsAlpha.add(item = new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		} else {
-			if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedList<InstanceItem>());
+			if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new ArrayList<InstanceItem>());
 			itemsNormal.get(mesh).add(item = new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		}
 		return item;
