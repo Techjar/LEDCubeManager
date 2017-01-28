@@ -57,7 +57,7 @@ public class LEDCharacter {
 			int z = Math.round(vec.getZ());
 			if (Util.isInsideCube(x, y, z)) {
 				Vector3 origVec = transformedVectors == null ? vec : thicknessVectors.get(i);
-				ledManager.setLEDColor(z, y, z, colorizer.getColorAt(origVec));
+				ledManager.setLEDColor(x, y, z, colorizer.getColorAt(origVec));
 			}
 		}
 	}
