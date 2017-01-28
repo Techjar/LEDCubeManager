@@ -661,23 +661,14 @@ public class LEDCube {
 
 	private void initOctree() {
 		Dimension3D dim = ledManager.getDimensions();
-		int minDim = Util.getNextPowerOfTwo(Math.min(dim.x, Math.min(dim.y, dim.z)));
-		float octreeSize = spaceMult * minDim;
+		int maxDim = Util.getNextPowerOfTwo(Math.max(dim.x, Math.max(dim.y, dim.z)));
+		float octreeSize = spaceMult * maxDim;
 		ArrayList<LEDCubeOctreeNode> list = new ArrayList<>();
-		int multX = (int)Math.ceil(dim.x / (float)minDim) * minDim;
-		int multY = (int)Math.ceil(dim.y / (float)minDim) * minDim;
-		int multZ = (int)Math.ceil(dim.z / (float)minDim) * minDim;
-		for (int x = 0; x < multX; x += minDim) {
-			for (int y = 0; y < multY; y += minDim) {
-				for (int z = 0; z < multZ; z += minDim) {
-					Vector3 offset = new Vector3(octreeSize * (x / minDim), octreeSize * (y / minDim), octreeSize * (z / minDim));
-					LEDCubeOctreeNode octree = new LEDCubeOctreeNode(new AxisAlignedBB(new Vector3(-spaceMult / 2, -spaceMult / 2, -spaceMult / 2).add(offset), new Vector3(octreeSize + (spaceMult / 2), octreeSize + (spaceMult / 2), octreeSize + (spaceMult / 2)).add(offset)));
-					recursiveFillOctree(octree, octreeSize / 2, minDim, new Vector3(x, y, z));
-					list.add(octree);
-				}
-			}
-		}
+		LEDCubeOctreeNode octree = new LEDCubeOctreeNode(new AxisAlignedBB(new Vector3(-spaceMult / 2, -spaceMult / 2, -spaceMult / 2), new Vector3(octreeSize + (spaceMult / 2), octreeSize + (spaceMult / 2), octreeSize + (spaceMult / 2))));
+		recursiveFillOctree(octree, octreeSize / 2, maxDim, new Vector3());
+		list.add(octree);
 		list.toArray(octrees = new LEDCubeOctreeNode[list.size()]);
+		LogHelper.info("LED lookup octree created");
 	}
 
 	private void recursiveFillOctree(LEDCubeOctreeNode node, float size, int count, Vector3 ledPos) {
@@ -695,6 +686,7 @@ public class LEDCube {
 				if (nextLedPos.getX() >= dim.x || nextLedPos.getY() >= dim.y || nextLedPos.getZ() >= dim.z) continue;
 				LEDCubeOctreeNode newNode = new LEDCubeOctreeNode(new AxisAlignedBB(nodeAABB.getMinPoint().add(new Vector3(xOffset, yOffset, zOffset)), nodeAABB.getMinPoint().add(new Vector3(xOffset + size, yOffset + size, zOffset + size))));
 				node.setNode(i, newNode);
+				LogHelper.finest("Filling octree node at " + (int)nextLedPos.getX() + "," + (int)nextLedPos.getY() + "," + (int)nextLedPos.getZ() + " on level " + (int)MathHelper.log2(count));
 				recursiveFillOctree(newNode, size / 2, count / 2, nextLedPos);
 			} else {
 				AxisAlignedBB modelAABB = model.getAABB();
