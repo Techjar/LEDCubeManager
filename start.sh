@@ -1,3 +1,2 @@
 #!/bin/bash
-cd dist
-java -Xmx2048M -jar LEDCubeManager.jar --showfps
+java -Xmx2G -XX:+UseParallelGC -XX:MaxGCPauseMillis=3 -jar LEDCubeManager.jar --showfps

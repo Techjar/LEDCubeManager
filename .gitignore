@@ -13,6 +13,21 @@ nbdist/
 nbactions.xml
 nb-con
 
+# Eclipse
+*.pydevproject
+.project
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
 # IntelliJ
 out/
 .idea/
@@ -25,6 +40,11 @@ javadoc/
 archive/
 resampled/
 config.yml
+/.apt_generated
+*.blend1
 
 # Keep This Shit
 !/lib/*.jar
+
+# Gradle junk
+.gradle

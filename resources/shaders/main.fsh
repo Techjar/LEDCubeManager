@@ -17,6 +17,7 @@ struct Material {
 
 layout(binding = 0) uniform sampler2D model_texture;
 //layout(binding = 1) uniform sampler2D model_normalmap;
+layout(binding = 2) uniform sampler2D model_specularmap;
 layout(location=0) uniform Material front_material;
 layout(location=4) uniform vec3 scene_ambient;
 layout(location=5) uniform int num_lights;
@@ -27,10 +28,11 @@ uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
 
 in VERTEX {
-    vec3    position;
-    vec3    normal;
-    vec2    texcoord;
-    vec4    color;
+    vec3 position;
+    vec3 normal;
+    vec2 texcoord;
+    vec4 color;
+	vec3 viewDirection;
 } vertex;
 
 out vec4 out_Color;
@@ -38,10 +40,8 @@ out vec4 out_Color;
 void main(void) {
     vec4 color = texture2D(model_texture, vertex.texcoord) * vertex.color;
     if (color.a < 0.002) discard;
+    vec3 fragSpecular = texture2D(model_specularmap, vertex.texcoord).rgb * front_material.specular;
 
-    mat4 view_inverse = inverse(view_matrix);
-    vec3 normalDirection = vertex.normal;
-    vec3 viewDirection = normalize(vec3(view_inverse * vec4(0, 0, 0, 1) - vec4(vertex.position, 0)));
     vec3 lightDirection = vec3(0, 0, 0);
     float attenuation = 0;
     vec3 totalDiffuse = vec3(0, 0, 0);
@@ -77,13 +77,13 @@ void main(void) {
                 }
             }
         }
-        float normalLightDot = dot(normalDirection, lightDirection);
+        float normalLightDot = dot(vertex.normal, lightDirection);
         vec3 diffuse = attenuation * light.diffuse * front_material.diffuse * max(0, normalLightDot);
         vec3 specular;
         if (normalLightDot < 0) {
             specular = vec3(0, 0, 0);
         } else {
-            specular = attenuation * light.specular * front_material.specular * pow(max(0, dot(-normalize(reflect(lightDirection, normalDirection)), viewDirection)), front_material.shininess);
+            specular = attenuation * light.specular * fragSpecular * pow(max(0, dot(-normalize(reflect(lightDirection, vertex.normal)), vertex.viewDirection)), front_material.shininess);
         }
         totalDiffuse += diffuse;
         totalSpecular += specular;

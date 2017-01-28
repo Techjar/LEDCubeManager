@@ -19,10 +19,11 @@ uniform mat4 projection_matrix;
 
 // The output of the vertex shader (matched to the fragment shader)
 out VERTEX {
-    vec3    position;
-    vec3    normal;
-    vec2    texcoord;
-    vec4    color;
+    vec3 position;
+    vec3 normal;
+    vec2 texcoord;
+    vec4 color;
+	vec3 viewDirection;
 } vertex;
 
 // Ok, go!
@@ -44,4 +45,8 @@ void main(void) {
     // Pass the per-instance texcoord through to the fragment shader.
     vertex.texcoord = texcoord;
     vertex.color = color;
+	
+	// Per-vertex view direction used in fragment shader
+    mat4 view_inverse = inverse(view_matrix);
+    vertex.viewDirection = normalize(vec3(view_inverse * vec4(0, 0, 0, 1) - vec4(vertex.position, 0)));
 }

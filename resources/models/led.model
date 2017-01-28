@@ -1,2 +1,3 @@
-render led.obj 80 led_lod1.obj 180 led_lod2.obj 600 led_lod3.obj
+render led.obj 0.8 led_lod1.obj 1.8 led_lod2.obj 6 led_lod3.obj
+scale 1.1
 collision mesh led_collision.obj
