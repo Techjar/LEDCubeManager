@@ -1212,7 +1212,7 @@ public class LEDCubeManager {
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
 			tuple.getA().render3D();
 		}
-		//InstancedRenderer.clearItems();
+		InstancedRenderer.resetVBOIndex();
 
 		glPopMatrix();
 	}

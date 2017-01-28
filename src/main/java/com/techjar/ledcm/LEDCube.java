@@ -92,9 +92,9 @@ public class LEDCube {
 		if (LEDCubeManager.getLedManagerName() != null) {
 			ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + LEDCubeManager.getLedManagerName()).getConstructor(String[].class).newInstance((Object)LEDCubeManager.getLedManagerArgs());
 		} else {
-			//ledManager = new ArduinoLEDManager(4, false);
+			ledManager = new ArduinoLEDManager(4, false);
 			//ledManager = new TLC5940LEDManager(true);
-			ledManager = new TestLEDManager(true, 32, 32, 32, false, new Color(255, 0, 0));
+			//ledManager = new TestLEDManager(true, 16, 16, 16, false, new Color(255, 0, 0));
 		}
 		Dimension3D dim = ledManager.getDimensions();
 		centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
@@ -248,7 +248,7 @@ public class LEDCube {
 							instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
 						} else {
 							float distance = LEDCubeManager.getCamera().getPosition().distanceSquared(instanceItems[index].getPosition());
-							if (instanceItems[index].getMesh().getModel().getMeshByDistanceSquared(distance - instanceItems[index].getMesh().getModel().getMesh(0).getRadius()) != instanceItems[index].getMesh()) {
+							if (model.getMeshByDistanceSquared(distance - model.getMesh(0).getRadius()) != instanceItems[index].getMesh()) {
 								InstancedRenderer.removeItem(instanceItems[index]);
 								pos.set(x * mult, y * mult, z * mult);
 								instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
@@ -286,7 +286,7 @@ public class LEDCube {
 									highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
 								} else {
 									float distance = LEDCubeManager.getCamera().getPosition().distanceSquared(highlightInstanceItems[index].getPosition());
-									if (highlightInstanceItems[index].getMesh().getModel().getMeshByDistanceSquared(distance - highlightInstanceItems[index].getMesh().getModel().getMesh(0).getRadius()) != highlightInstanceItems[index].getMesh()) {
+									if (model.getMeshByDistanceSquared(distance - model.getMesh(0).getRadius()) != highlightInstanceItems[index].getMesh()) {
 										InstancedRenderer.removeItem(highlightInstanceItems[index]);
 										pos.set(x * mult, y * mult, z * mult);
 										highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
