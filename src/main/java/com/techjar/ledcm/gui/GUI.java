@@ -134,6 +134,7 @@ public abstract class GUI {
 
 	public void setPosition(Vector2 position) {
 		this.position = position;
+		this.cachedParentPos = null;
 		if (positionChangeHandler != null) {
 			positionChangeHandler.run(this);
 		}

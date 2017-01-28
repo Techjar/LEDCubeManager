@@ -30,7 +30,7 @@ public class GUIWindow extends GUIContainer {
 	protected int closeAction = HIDE_ON_CLOSE;
 	protected GUICallback closeHandler;
 
-	protected MutableVector2 mouseLast;
+	protected MutableVector2 mouseLast = new MutableVector2();
 	protected CursorType currentCursor;
 	protected boolean hovered;
 	protected boolean dragging;
