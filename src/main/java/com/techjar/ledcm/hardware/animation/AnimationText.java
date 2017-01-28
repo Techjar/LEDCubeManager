@@ -5,9 +5,9 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.LEDCharacter;
 import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.util.MathHelper;
-import com.techjar.ledcm.util.Timer;
+import com.techjar.ledcm.util.math.PooledMutableVector3;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import java.util.Random;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
@@ -65,8 +65,9 @@ public class AnimationText extends Animation {
 								case 0:
 									ch.applyTransform(new LEDCharacter.Transformer() {
 										@Override
-										public Vector3 transform(Vector3 vector) {
-											vector = vector.add(new Vector3(0, 0, (dimension.z - 1) + dimension.x)).add(new Vector3(0, 0, scrollOffset));
+										public Vector3 transform(Vector3 vec) {
+											PooledMutableVector3 vector = PooledMutableVector3.get(vec);
+											vector.add(new Vector3(0, 0, (dimension.z - 1) + dimension.x)).add(new Vector3(0, 0, scrollOffset));
 											if (vector.getZ() > dimension.z - 1) {
 												int z = (int)vector.getZ() - (dimension.z - 1);
 												vector.setZ(dimension.z - 1);
@@ -82,7 +83,9 @@ public class AnimationText extends Animation {
 													}
 												}
 											}
-											return vector;
+											Vector3 retVec = vector.toImmutable();
+											vector.release();
+											return retVec;
 										}
 									});
 									break;

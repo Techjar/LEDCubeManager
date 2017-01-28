@@ -1,5 +1,5 @@
 
-package com.techjar.ledcm.util;
+package com.techjar.ledcm.util.math;
 
 /**
  *
@@ -18,6 +18,6 @@ public enum Axis {
 	}
 
 	public Vector3 getVector() {
-		return vector.copy();
+		return vector;
 	}
 }

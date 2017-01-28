@@ -1,7 +1,5 @@
 
-package com.techjar.ledcm.util;
-
-import lombok.Getter;
+package com.techjar.ledcm.util.math;
 
 /**
  *
@@ -19,16 +17,18 @@ public enum Direction {
 	private final int x;
 	private final int y;
 	private final int z;
+	private final Vector3 vector;
 	public static final Direction[] VALID_DIRECTIONS = {UP, DOWN, NORTH, SOUTH, EAST, WEST};
 
 	private Direction(int x, int y, int z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.vector = new Vector3(x, y, z);
 	}
 
 	public Vector3 getVector() {
-		return new Vector3(x, y, z);
+		return vector;
 	}
 
 	public Direction getOpposite() {

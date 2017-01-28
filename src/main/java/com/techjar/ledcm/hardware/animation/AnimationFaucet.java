@@ -2,14 +2,14 @@
 package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.Direction;
+import com.techjar.ledcm.util.math.Direction;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
-import java.util.ArrayList;
-import java.util.List;
+import com.techjar.ledcm.util.math.MutableVector2;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
+
 import java.util.Random;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
@@ -20,7 +20,7 @@ import org.lwjgl.util.ReadableColor;
  */
 public class AnimationFaucet extends Animation {
 	private Random random = new Random();
-	private Vector2[] faucets;
+	private MutableVector2[] faucets;
 	private Timer timer = new Timer();
 	private int colorMode = 0;
 	private int speed = 3;
@@ -70,7 +70,7 @@ public class AnimationFaucet extends Animation {
 				}
 			}
 			for (int i = 0; i < faucets.length; i++) {
-				Vector2 pos = faucets[i];
+				MutableVector2 pos = faucets[i];
 				if (random.nextInt(2) == 0) {
 					int j = 0;
 					do {
@@ -92,10 +92,10 @@ public class AnimationFaucet extends Animation {
 	public synchronized void reset() {
 		colorSeed = random.nextInt();
 		timer.restart();
-		faucets = new Vector2[faucetCount];
+		faucets = new MutableVector2[faucetCount];
 		for (int i = 0; i < faucetCount; i++) {
 			do {
-				faucets[i] = new Vector2(random.nextInt(dimension.x), random.nextInt(dimension.z));
+				faucets[i] = new MutableVector2(random.nextInt(dimension.x), random.nextInt(dimension.z));
 			} while (isFaucetAt(faucets[i], true));
 		}
 	}

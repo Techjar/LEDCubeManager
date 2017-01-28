@@ -4,7 +4,7 @@ package com.techjar.ledcm.hardware.animation;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.LEDUtil;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

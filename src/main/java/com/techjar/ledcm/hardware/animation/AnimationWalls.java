@@ -3,7 +3,7 @@ package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.LEDUtil;
-import com.techjar.ledcm.util.Direction;
+import com.techjar.ledcm.util.math.Direction;
 import com.techjar.ledcm.util.Util;
 import java.util.Arrays;
 import java.util.Random;

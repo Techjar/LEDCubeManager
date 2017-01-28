@@ -1,5 +1,5 @@
 
-package com.techjar.ledcm.util;
+package com.techjar.ledcm.util.math;
 
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
@@ -9,6 +9,8 @@ import org.lwjgl.util.vector.Matrix4f;
  * @author Techjar
  */
 public class Vector3 {
+	public static final Vector3 ZERO = new Vector3();
+
 	protected float x;
 	protected float y;
 	protected float z;
@@ -42,36 +44,12 @@ public class Vector3 {
 		return x;
 	}
 
-	public void setX(float x) {
-		this.x = x;
-	}
-
 	public float getY() {
 		return y;
 	}
 
-	public void setY(float y) {
-		this.y = y;
-	}
-
 	public float getZ() {
 		return z;
-	}
-
-	public void setZ(float z) {
-		this.z = z;
-	}
-
-	public void set(float x, float y, float z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
-
-	public void set(Vector3 other) {
-		x = other.x;
-		y = other.y;
-		z = other.z;
 	}
 
 	public Vector3 add(Vector3 other) {
@@ -172,10 +150,6 @@ public class Vector3 {
 		return this.distanceSquared2D(new Vector2(other.x, other.z));
 	}
 
-	public void normalize() {
-		set(divide(length()));
-	}
-
 	public Vector3 normalized() {
 		return divide(length());
 	}
@@ -195,8 +169,7 @@ public class Vector3 {
 	public static Vector3 slerp(Vector3 start, Vector3 end, float fraction) {
 		float dot = start.dot(end);
 		float theta = (float)Math.acos(dot) * fraction;
-		Vector3 relative = end.subtract(start.multiply(dot));
-		relative.normalize();
+		Vector3 relative = end.subtract(start.multiply(dot)).normalized();
 		return start.multiply((float)Math.cos(theta)).add(relative.multiply((float)Math.sin(theta)));
 	}
 

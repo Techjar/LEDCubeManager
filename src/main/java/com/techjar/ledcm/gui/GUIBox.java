@@ -1,6 +1,6 @@
 package com.techjar.ledcm.gui;
 
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 import org.lwjgl.util.Dimension;
 import org.newdawn.slick.geom.Rectangle;
 

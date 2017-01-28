@@ -3,7 +3,6 @@ package com.techjar.ledcm.vr;
 import static org.lwjgl.opengl.GL11.*;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
@@ -13,6 +12,7 @@ import com.sun.jna.ptr.PointerByReference;
 import com.techjar.ledcm.util.AxisAlignedBB;
 import com.techjar.ledcm.util.Material;
 import com.techjar.ledcm.util.Model;
+import com.techjar.ledcm.util.math.MutableVector3;
 import jopenvr.JOpenVRLibrary.EVREventType;
 import lombok.SneakyThrows;
 import org.lwjgl.util.Dimension;
@@ -30,10 +30,10 @@ import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.OperatingSystem;
-import com.techjar.ledcm.util.Quaternion;
+import com.techjar.ledcm.util.math.Quaternion;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.exception.VRException;
 import com.techjar.ledcm.util.logging.LogHelper;
 import org.newdawn.slick.opengl.Texture;
@@ -321,9 +321,7 @@ public class VRProvider {
 			trackedDevicePoses[i].read();
 			if (trackedDevicePoses[i].bPoseIsValid != 0) {
 				OpenVRUtil.convertSteamVRMatrix3ToMatrix4f(trackedDevicePoses[i].mDeviceToAbsoluteTracking, poseMatrices[i]);
-				deviceVelocity[i].setX(trackedDevicePoses[i].vVelocity.v[0]);
-				deviceVelocity[i].setY(trackedDevicePoses[i].vVelocity.v[1]);
-				deviceVelocity[i].setZ(trackedDevicePoses[i].vVelocity.v[2]);
+				deviceVelocity[i] = new Vector3(trackedDevicePoses[i].vVelocity.v[0], trackedDevicePoses[i].vVelocity.v[1], trackedDevicePoses[i].vVelocity.v[2]);
 			}
 		}
 
@@ -497,8 +495,8 @@ public class VRProvider {
 		float[] vertices = new float[indices.length * 3];
 		float[] normals = new float[indices.length * 3];
 		float[] texCoords = new float[indices.length * 2];
-		Vector3 minVertex = new Vector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
-		Vector3 maxVertex = new Vector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
+		MutableVector3 minVertexM = new MutableVector3(Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE);
+		MutableVector3 maxVertexM = new MutableVector3(Float.MIN_VALUE, Float.MIN_VALUE, Float.MIN_VALUE);
 		for (int i = 0; i < indices.length; i++) {
 			int index = indices[i];
 			vertices[i * 3] = verticesIndexed[index][0];
@@ -509,13 +507,15 @@ public class VRProvider {
 			normals[i * 3 + 2] = normalsIndexed[index][2];
 			texCoords[i * 2] = texCoordsIndexed[index][0];
 			texCoords[i * 2 + 1] = texCoordsIndexed[index][1];
-			if (vertices[i * 3] < minVertex.getX()) minVertex.setX(vertices[i * 3]);
-			if (vertices[i * 3 + 1] < minVertex.getY()) minVertex.setY(vertices[i * 3 + 1]);
-			if (vertices[i * 3 + 2] < minVertex.getZ()) minVertex.setZ(vertices[i * 3 + 2]);
-			if (vertices[i * 3] > maxVertex.getX()) maxVertex.setX(vertices[i * 3]);
-			if (vertices[i * 3 + 1] > maxVertex.getY()) maxVertex.setY(vertices[i * 3 + 1]);
-			if (vertices[i * 3 + 2] > maxVertex.getZ()) maxVertex.setZ(vertices[i * 3 + 2]);
+			if (vertices[i * 3] < minVertexM.getX()) minVertexM.setX(vertices[i * 3]);
+			if (vertices[i * 3 + 1] < minVertexM.getY()) minVertexM.setY(vertices[i * 3 + 1]);
+			if (vertices[i * 3 + 2] < minVertexM.getZ()) minVertexM.setZ(vertices[i * 3 + 2]);
+			if (vertices[i * 3] > maxVertexM.getX()) maxVertexM.setX(vertices[i * 3]);
+			if (vertices[i * 3 + 1] > maxVertexM.getY()) maxVertexM.setY(vertices[i * 3 + 1]);
+			if (vertices[i * 3 + 2] > maxVertexM.getZ()) maxVertexM.setZ(vertices[i * 3 + 2]);
 		}
+		Vector3 minVertex = minVertexM.toImmutable();
+		Vector3 maxVertex = maxVertexM.toImmutable();
 		Vector3 center = minVertex.add(maxVertex).divide(2);
 		float radius = minVertex.distance(maxVertex) / 2;
 		Material material = new Material(null, null, new Vector3f(0.2F, 0.2F, 0.2F), 20.0F);
@@ -553,19 +553,19 @@ public class VRProvider {
 	}
 
 	public static Vector3 getHMDPosition() {
-		return hmdPositionTransformed.copy();
+		return hmdPositionTransformed;
 	}
 
 	public static Quaternion getHMDRotation() {
-		return hmdRotationTransformed.copy();
+		return hmdRotationTransformed;
 	}
 
 	public static Vector3 getHMDPositionRoom() {
-		return hmdPosition.copy();
+		return hmdPosition;
 	}
 
 	public static Quaternion getHMDRotationRoom() {
-		return hmdRotation.copy();
+		return hmdRotation;
 	}
 
 	public static VRTrackedController getController(@NonNull ControllerType controller) {

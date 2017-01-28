@@ -8,9 +8,10 @@ import com.techjar.ledcm.render.InstancedRenderer;
 import com.techjar.ledcm.util.logging.LogHelper;
 import com.techjar.ledcm.LEDCubeManager;
 
+import com.techjar.ledcm.util.math.Quaternion;
+import com.techjar.ledcm.util.math.Vector3;
 import lombok.Getter;
 
-import org.lwjgl.opengl.Display;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Matrix4f;
 import org.newdawn.slick.opengl.Texture;
@@ -42,44 +43,47 @@ public class Model {
 
 	/**
 	 * Renders an instance of this model with the specified parameters through the {@link InstancedRenderer}.
+	 *
+	 * @return the InstanceItem if instanced is true
 	 */
-	public void render(Matrix4f transform, Color color, Vector3 scale, boolean lod, boolean instanced, int textureID) {
+	public InstancedRenderer.InstanceItem render(Matrix4f transform, Color color, Vector3 scale, boolean lod, boolean instanced, int textureID) {
 		if (instanced && textureID != 0) throw new IllegalArgumentException("textureID cannot be set for instanced render, use non-instanced render instead");
 		float distance = LEDCubeManager.getCamera().getPosition().distance(new Vector3(transform.m30, transform.m31, transform.m32));
 		ModelMesh mesh = lod ? getMeshByDistance(distance - meshes[0].getRadius()) : meshes[0];
-		if (instanced) InstancedRenderer.addItem(mesh, transform, color, scale);
+		if (instanced) return InstancedRenderer.addItem(mesh, transform, color, scale);
 		else InstancedRenderer.draw(mesh, transform, color, scale, textureID);
+		return null;
 	}
 
-	public void render(Matrix4f transform, Color color, Vector3 scale, boolean lod, boolean instanced) {
-		render(transform, color, scale, lod, instanced, 0);
+	public InstancedRenderer.InstanceItem render(Matrix4f transform, Color color, Vector3 scale, boolean lod, boolean instanced) {
+		return render(transform, color, scale, lod, instanced, 0);
 	}
 
-	public void render(Matrix4f transform, Color color, Vector3 scale) {
-		render(transform, color, scale, true, true, 0);
+	public InstancedRenderer.InstanceItem render(Matrix4f transform, Color color, Vector3 scale) {
+		return render(transform, color, scale, true, true, 0);
 	}
 
-	public void render(Matrix4f transform, Color color) {
-		render(transform, color, new Vector3(1, 1, 1), true, true, 0);
+	public InstancedRenderer.InstanceItem render(Matrix4f transform, Color color) {
+		return render(transform, color, new Vector3(1, 1, 1), true, true, 0);
 	}
 
-	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced, int textureID) {
+	public InstancedRenderer.InstanceItem render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced, int textureID) {
 		Matrix4f matrix = new Matrix4f();
 		matrix.translate(Util.convertVector(position));
 		Matrix4f.mul(matrix, rotation.getMatrix(), matrix);
-		render(matrix, color, scale, lod, instanced, textureID);
+		return render(matrix, color, scale, lod, instanced, textureID);
 	}
 
-	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced) {
-		render(position, rotation, color, scale, lod, instanced, 0);
+	public InstancedRenderer.InstanceItem render(Vector3 position, Quaternion rotation, Color color, Vector3 scale, boolean lod, boolean instanced) {
+		return render(position, rotation, color, scale, lod, instanced, 0);
 	}
 
-	public void render(Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
-		render(position, rotation, color, scale, true, true, 0);
+	public InstancedRenderer.InstanceItem render(Vector3 position, Quaternion rotation, Color color, Vector3 scale) {
+		return render(position, rotation, color, scale, true, true, 0);
 	}
 
-	public void render(Vector3 position, Quaternion rotation, Color color) {
-		render(position, rotation, color, new Vector3(1, 1, 1), true, true, 0);
+	public InstancedRenderer.InstanceItem render(Vector3 position, Quaternion rotation, Color color) {
+		return render(position, rotation, color, new Vector3(1, 1, 1), true, true, 0);
 	}
 
 	public void loadMesh(int lod, float lodDistance, int indices, float[] vertices, float[] normals, float[] texCoords, Vector3 center, float radius, int faceCount) {

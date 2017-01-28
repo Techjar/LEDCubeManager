@@ -1,12 +1,11 @@
 
 package com.techjar.ledcm.hardware.animation;
 
-import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.hardware.LEDUtil;
-import com.techjar.ledcm.util.Direction;
+import com.techjar.ledcm.util.math.Direction;
 import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

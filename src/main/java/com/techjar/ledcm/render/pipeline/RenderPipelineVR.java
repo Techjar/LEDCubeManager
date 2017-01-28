@@ -7,14 +7,15 @@ import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL32.*;
 
 import java.nio.ByteBuffer;
-import java.util.Random;
 
-import com.techjar.ledcm.gui.GUICallback;
 import com.techjar.ledcm.hardware.LEDArray;
-import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.render.LightingHandler;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.*;
+import com.techjar.ledcm.util.math.Dimension3D;
+import com.techjar.ledcm.util.math.Quaternion;
+import com.techjar.ledcm.util.math.Vector2;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.vr.VRRenderModel;
 import jopenvr.OpenVRUtil;
 
@@ -28,7 +29,6 @@ import org.lwjgl.util.vector.Vector4f;
 import com.hackoeur.jglm.Matrices;
 import com.techjar.ledcm.LEDCube;
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.ModelManager;
 import com.techjar.ledcm.render.InstancedRenderer;
 import com.techjar.ledcm.util.logging.LogHelper;
 import com.techjar.ledcm.vr.VRProvider;

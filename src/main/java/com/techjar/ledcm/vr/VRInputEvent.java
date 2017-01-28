@@ -2,7 +2,7 @@ package com.techjar.ledcm.vr;
 
 import lombok.Getter;
 
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 import com.techjar.ledcm.vr.VRTrackedController.AxisType;
 import com.techjar.ledcm.vr.VRTrackedController.ButtonType;
 

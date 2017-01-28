@@ -2,9 +2,9 @@
 package com.techjar.ledcm.hardware.manager;
 
 import com.techjar.ledcm.hardware.LEDArray;
-import com.techjar.ledcm.util.Dimension3D;
+import com.techjar.ledcm.util.math.Dimension3D;
 import com.techjar.ledcm.util.MathHelper;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 

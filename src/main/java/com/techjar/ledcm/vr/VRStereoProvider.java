@@ -5,13 +5,13 @@ import static org.lwjgl.opengl.GL11.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 import jopenvr.HmdVector2_t;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.logging.LogHelper;
 
 import jopenvr.HiddenAreaMesh_t;

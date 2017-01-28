@@ -3,11 +3,11 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.MutableVector2;
+import com.techjar.ledcm.util.math.Vector2;
 
 import lombok.NonNull;
 
-import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
 import org.newdawn.slick.geom.Rectangle;
@@ -26,10 +26,10 @@ public class GUIScrollBox extends GUIContainer {
 	protected int scrollYIncrement;
 	protected int scrollbarWidth = 10;
 
-	protected Vector2 scrollOffset = new Vector2();
-	protected Vector2 scrollOffsetStart = new Vector2();
-	protected Vector2 scrollbarOffsetStart = new Vector2();
-	protected Vector2 mouseStart = new Vector2();
+	protected MutableVector2 scrollOffset = new MutableVector2();
+	protected MutableVector2 scrollOffsetStart = new MutableVector2();
+	protected MutableVector2 scrollbarOffsetStart = new MutableVector2();
+	protected MutableVector2 mouseStart = new MutableVector2();
 	protected int scrolling;
 
 	public GUIScrollBox(Color color, Color bgColor, GUIBackground guiBg) {
@@ -225,7 +225,7 @@ public class GUIScrollBox extends GUIContainer {
 
 	public void setScrollOffset(Vector2 offset) {
 		int[] maxOffset = getMaxScrollOffset();
-		this.scrollOffset = new Vector2(MathHelper.clamp(offset.getX(), 0, maxOffset[0]), MathHelper.clamp(offset.getY(), 0, maxOffset[1]));
+		this.scrollOffset.set(MathHelper.clamp(offset.getX(), 0, maxOffset[0]), MathHelper.clamp(offset.getY(), 0, maxOffset[1]));
 	}
 
 	public void setScrollOffset(int x, int y) {

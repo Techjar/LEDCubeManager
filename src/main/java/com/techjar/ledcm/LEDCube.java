@@ -1,29 +1,27 @@
 
 package com.techjar.ledcm;
 
-import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.manager.ArduinoLEDManager;
 import com.techjar.ledcm.hardware.CommThread;
 import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.LEDUtil;
-import com.techjar.ledcm.hardware.handler.SerialPortHandler;
 import com.techjar.ledcm.hardware.SpectrumAnalyzer;
-import com.techjar.ledcm.hardware.manager.TLC5940LEDManager;
-import com.techjar.ledcm.hardware.manager.TestLEDManager;
 import com.techjar.ledcm.hardware.animation.*;
 import com.techjar.ledcm.hardware.handler.PortHandler;
-import com.techjar.ledcm.util.Angle;
+import com.techjar.ledcm.render.InstancedRenderer;
+import com.techjar.ledcm.util.math.Angle;
 import com.techjar.ledcm.util.AxisAlignedBB;
-import com.techjar.ledcm.util.Dimension3D;
-import com.techjar.ledcm.util.Direction;
+import com.techjar.ledcm.util.math.Dimension3D;
+import com.techjar.ledcm.util.math.Direction;
 import com.techjar.ledcm.util.LEDCubeOctreeNode;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Model;
-import com.techjar.ledcm.util.Quaternion;
-import com.techjar.ledcm.util.Tuple;
+import com.techjar.ledcm.util.math.MutableVector3;
+import com.techjar.ledcm.util.math.PooledMutableVector3;
+import com.techjar.ledcm.util.math.Quaternion;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.input.InputBinding;
 import com.techjar.ledcm.util.input.InputBindingManager;
 import com.techjar.ledcm.util.input.InputInfo;
@@ -35,8 +33,6 @@ import com.techjar.ledcm.vr.VRTrackedController;
 import com.techjar.ledcm.vr.VRTrackedController.AxisType;
 import com.techjar.ledcm.vr.VRTrackedController.ButtonType;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,11 +78,13 @@ public class LEDCube {
 	@Getter private CommThread commThread;
 	@Getter private SpectrumAnalyzer spectrumAnalyzer;
 	@Getter private Color paintColor = new Color(255, 255, 255);
-	@Getter private Vector3 paintSize = new Vector3(0, 0, 0);
+	@Getter private MutableVector3 paintSize = new MutableVector3(0, 0, 0);
 	@Getter @Setter private int layerIsolation = 0;
 	@Getter @Setter private int selectedLayer = 0;
 	@Getter @Setter private boolean previewTransform = true;
 	@Getter private Model model;
+	private InstancedRenderer.InstanceItem[] instanceItems;
+	private InstancedRenderer.InstanceItem[] highlightInstanceItems;
 
 	@SneakyThrows(Exception.class)
 	public LEDCube() {
@@ -99,6 +97,8 @@ public class LEDCube {
 		}
 		Dimension3D dim = ledManager.getDimensions();
 		centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
+		instanceItems = new InstancedRenderer.InstanceItem[dim.x * dim.y * dim.x];
+		highlightInstanceItems = new InstancedRenderer.InstanceItem[dim.x * dim.y * dim.x];
 		//setRenderOffset(Util.convertVector(centerPoint).multiply(ledSpaceMult).negate());
 		model = LEDCubeManager.getModelManager().getModel("led.model");
 		initOctree();
@@ -234,27 +234,57 @@ public class LEDCube {
 		for (int y = 0; y < dim.y; y++) {
 			for (int z = 0; z < dim.z; z++) {
 				for (int x = 0; x < dim.x; x++) {
+					int index = ledManager.encodeVector(x, y, z);
 					if (isLEDWithinIsolation(x, y, z)) {
-						Vector3 pos = new Vector3(x * mult, y * mult, z * mult);
 						Color color;
 						if (trueColor) {
 							Color ledColor = ledArray.getLEDColorReal(x, y, z);
 							color = new Color(Math.round(ledColor.getRed() * ledManager.getFactor()), Math.round(ledColor.getGreen() * ledManager.getFactor()), Math.round(ledColor.getBlue() * ledManager.getFactor()));
 						} else color = ledArray.getLEDColor(x, y, z);
-						model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
+						if (instanceItems[index] == null) {
+							PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+							instanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, renderScale);
+							pos.release();
+						} else {
+							instanceItems[index].setColor(color);
+							instanceItems[index].setScale(renderScale);
+						}
+					} else if (instanceItems[index] != null) {
+						InstancedRenderer.removeItem(instanceItems[index]);
+						instanceItems[index] = null;
 					}
 				}
 			}
 		}
 
-		for (LEDSelection selection : ledSelections) {
+		if (ledSelections.size() < 1) {
+			for (int i = 0; i < highlightInstanceItems.length; i++) {
+				if (highlightInstanceItems[i] != null) {
+					InstancedRenderer.removeItem(highlightInstanceItems[i]);
+					highlightInstanceItems[i] = null;
+				}
+			}
+		} else {
+			Vector3 scale = new Vector3(1.2F, 1.2F, 1.2F).multiply(renderScale);
+			Color color = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32);
 			for (int y = 0; y < dim.y; y++) {
 				for (int x = 0; x < dim.x; x++) {
 					for (int z = 0; z < dim.z; z++) {
-						if (selection.highlight[ledManager.encodeVector(x, y, z)]) {
-							if (isLEDWithinIsolation(x, y, z)) {
-								Vector3 pos = new Vector3(x * mult, y * mult, z * mult);
-								model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), 32), new Vector3(1.2F, 1.2F, 1.2F).multiply(renderScale));
+						int index = ledManager.encodeVector(x, y, z);
+						for (LEDSelection selection : ledSelections) {
+							if (selection.highlight[ledManager.encodeVector(x, y, z)] && isLEDWithinIsolation(x, y, z)) {
+								if (highlightInstanceItems[index] == null) {
+									PooledMutableVector3 pos = PooledMutableVector3.get(x * mult, y * mult, z * mult);
+									highlightInstanceItems[index] = model.render(Util.transformVector(pos, renderTransform, false), new Quaternion(), color, scale);
+									pos.release();
+								} else {
+									highlightInstanceItems[index].setColor(color);
+									highlightInstanceItems[index].setScale(scale);
+								}
+								break;
+							} else if (highlightInstanceItems[index] != null) {
+								InstancedRenderer.removeItem(highlightInstanceItems[index]);
+								highlightInstanceItems[index] = null;
 							}
 						}
 					}
@@ -743,12 +773,20 @@ public class LEDCube {
 	public Vector3 traceRayToLED(Vector3[] ray) {
 		Vector3 position = Util.transformVector(ray[0], Matrix4f.invert(renderTransform, null), false);
 		Vector3 direction = ray[1].multiply(0.005F);
+		PooledMutableVector3 rayPos = PooledMutableVector3.get();
+		PooledMutableVector3 rayDir = PooledMutableVector3.get();
 
 		for (float step = 1; step < 5000; step++) {
-			Vector3 rayPos = position.add(direction.multiply(step));
+			rayPos.set(position).add(rayDir.set(direction).multiply(step));
 			Vector3 ledPos = getLEDAtPosition(rayPos);
-			if (ledPos != null) return ledPos;
+			if (ledPos != null) {
+				rayPos.release();
+				rayDir.release();
+				return ledPos;
+			}
 		}
+		rayPos.release();
+		rayDir.release();
 		return null;
 	}
 
@@ -866,23 +904,36 @@ public class LEDCube {
 		reflectZ = z;
 	}
 
-	public Vector3 applyTransform(Vector3 vector) {
+	public Vector3 applyTransform(Vector3 vec) {
 		Dimension3D dim = ledManager.getDimensions();
-		vector = vector.copy();
+		PooledMutableVector3 vector = PooledMutableVector3.get(vec);
 		if (reflectX) vector.setX((dim.x - 1) - vector.getX());
 		if (reflectY) vector.setY((dim.y - 1) - vector.getY());
 		if (reflectZ) vector.setZ((dim.z - 1) - vector.getZ());
-		Vector4f vec = Matrix4f.transform(transform, new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1), null);
-		return new Vector3(Math.round(vec.x), Math.round(vec.y), Math.round(vec.z));
+		Vector4f vec4 = new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1);
+		vector.release();
+		Matrix4f.transform(transform, vec4, vec4);
+		return new Vector3(Math.round(vec4.x), Math.round(vec4.y), Math.round(vec4.z));
+	}
+
+	public MutableVector3 applyTransform(MutableVector3 vector) {
+		Dimension3D dim = ledManager.getDimensions();
+		if (reflectX) vector.setX((dim.x - 1) - vector.getX());
+		if (reflectY) vector.setY((dim.y - 1) - vector.getY());
+		if (reflectZ) vector.setZ((dim.z - 1) - vector.getZ());
+		Vector4f vec4 = new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1);
+		Matrix4f.transform(transform, vec4, vec4);
+		vector.set(Math.round(vec4.x), Math.round(vec4.y), Math.round(vec4.z));
+		return vector;
 	}
 
 	public void setRenderOffset(Vector3 offset) {
-		renderOffset = offset.copy();
+		renderOffset = offset;
 		updateRenderTransform();
 	}
 
 	public void setRenderScale(Vector3 scale) {
-		renderScale = scale.copy();
+		renderScale = scale;
 		updateRenderTransform();
 	}
 
@@ -892,6 +943,16 @@ public class LEDCube {
 		renderTransform.translate(Util.convertVector(renderOffset.add(center)));
 		renderTransform.scale(Util.convertVector(renderScale));
 		renderTransform.translate(Util.convertVector(center.negate()));
+		for (int i = 0; i < instanceItems.length; i++) {
+			InstancedRenderer.InstanceItem item = instanceItems[i];
+			if (item != null) {
+				item.setTransform(Util.transformVector(ledManager.decodeVector(i), renderTransform, false), new Quaternion());
+			}
+			InstancedRenderer.InstanceItem highlightItem = highlightInstanceItems[i];
+			if (highlightItem != null) {
+				highlightItem.setTransform(Util.transformVector(ledManager.decodeVector(i), renderTransform, false), new Quaternion());
+			}
+		}
 	}
 
 	public void loadAnimations() {

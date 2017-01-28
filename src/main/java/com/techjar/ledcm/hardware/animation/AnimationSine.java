@@ -3,8 +3,7 @@ package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Timer;
-import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.vector.Vector3f;
 

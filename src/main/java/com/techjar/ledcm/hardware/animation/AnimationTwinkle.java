@@ -2,11 +2,9 @@
 package com.techjar.ledcm.hardware.animation;
 
 import com.techjar.ledcm.hardware.LEDUtil;
-import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import java.util.Random;
 import org.lwjgl.util.Color;
-import org.lwjgl.util.ReadableColor;
 
 /**
  *

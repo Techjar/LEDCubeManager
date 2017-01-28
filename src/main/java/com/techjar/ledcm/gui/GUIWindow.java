@@ -4,7 +4,8 @@ import com.techjar.ledcm.CursorType;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.MutableVector2;
+import com.techjar.ledcm.util.math.Vector2;
 
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
@@ -29,7 +30,7 @@ public class GUIWindow extends GUIContainer {
 	protected int closeAction = HIDE_ON_CLOSE;
 	protected GUICallback closeHandler;
 
-	protected Vector2 mouseLast;
+	protected MutableVector2 mouseLast;
 	protected CursorType currentCursor;
 	protected boolean hovered;
 	protected boolean dragging;
@@ -104,7 +105,7 @@ public class GUIWindow extends GUIContainer {
 					if (checkMouseIntersect(head)) dragging = true;
 				}
 				if (dragging || isResizing()) {
-					mouseLast = Util.getMousePos();
+					mouseLast.set(Util.getMouseX(), Util.getMouseY());
 					return false;
 				}
 			}
@@ -131,7 +132,7 @@ public class GUIWindow extends GUIContainer {
         if ((canResizeX || canResizeY) && !Util.getMousePos().equals(mouseLast)) {
         	if (isResizing()) {
         		Vector2 mouseDiff = Util.getMousePos().subtract(mouseLast);
-        		Vector2 newPos = position.copy();
+				MutableVector2 newPos = new MutableVector2(position);
         		Dimension newDim = new Dimension(dimension);
         		if (resizeX == 1) {
         			newDim.setWidth(dimension.getWidth() + (int)mouseDiff.getX());
@@ -208,7 +209,7 @@ public class GUIWindow extends GUIContainer {
         }
         if (mouseLockX && !mouseLockY) mouseLast.setY(Util.getMouseY());
         else if (!mouseLockX && mouseLockY) mouseLast.setX(Util.getMouseX());
-        else if (!mouseLockX && !mouseLockY) mouseLast = Util.getMousePos();
+        else if (!mouseLockX && !mouseLockY) mouseLast.set(Util.getMouseX(), Util.getMouseY());
 	}
 
 	@Override

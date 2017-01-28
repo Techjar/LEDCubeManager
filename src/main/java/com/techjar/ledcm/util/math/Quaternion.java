@@ -1,6 +1,7 @@
 
-package com.techjar.ledcm.util;
+package com.techjar.ledcm.util.math;
 
+import com.techjar.ledcm.util.Util;
 import org.lwjgl.util.vector.Matrix3f;
 import org.lwjgl.util.vector.Matrix4f;
 
@@ -134,47 +135,16 @@ public class Quaternion {
 		return w;
 	}
 
-	public void setW(float w) {
-		this.w = w;
-	}
-
 	public float getX() {
 		return x;
-	}
-
-	public void setX(float x) {
-		this.x = x;
 	}
 
 	public float getY() {
 		return y;
 	}
 
-	public void setY(float y) {
-		this.y = y;
-	}
-
 	public float getZ() {
 		return z;
-	}
-
-	public void setZ(float z) {
-		this.z = z;
-	}
-
-	public void normalize() {
-		float norm = (float)Math.sqrt(w * w + x * x + y * y + z * z);
-		if (norm > 0) {
-			w /= norm;
-			x /= norm;
-			y /= norm;
-			z /= norm;
-		} else {
-			w = 1;
-			x = 0;
-			y = 0;
-			z = 0;
-		}
 	}
 
 	public Quaternion normalized() {

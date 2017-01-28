@@ -1,18 +1,15 @@
 
 package com.techjar.ledcm.hardware.animation;
 
-import com.flowpowered.noise.NoiseQuality;
 import com.flowpowered.noise.module.source.Perlin;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
-import com.techjar.ledcm.util.Vector2;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 import java.util.Random;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
-import org.lwjgl.util.vector.Vector3f;
 
 /**
  *

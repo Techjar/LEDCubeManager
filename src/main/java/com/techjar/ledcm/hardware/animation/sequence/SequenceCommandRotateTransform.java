@@ -2,7 +2,7 @@
 package com.techjar.ledcm.hardware.animation.sequence;
 
 import com.techjar.ledcm.LEDCubeManager;
-import com.techjar.ledcm.util.Vector3;
+import com.techjar.ledcm.util.math.Vector3;
 
 /**
  * Args: degrees (axis [x|y|z])

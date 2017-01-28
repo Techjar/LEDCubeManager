@@ -3,7 +3,7 @@ package com.techjar.ledcm.gui;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.render.RenderHelper;
-import com.techjar.ledcm.util.Vector2;
+import com.techjar.ledcm.util.math.Vector2;
 import com.techjar.ledcm.vr.VRInputEvent;
 
 import java.util.ArrayList;
@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.lwjgl.input.Controller;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.Dimension;
 import org.newdawn.slick.UnicodeFont;
