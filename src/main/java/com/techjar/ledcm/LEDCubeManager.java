@@ -113,7 +113,7 @@ import org.lwjgl.util.vector.Vector4f;
  */
 public class LEDCubeManager {
 	@Getter private static LEDCubeManager instance;
-	@Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledcubemanager");
+	@Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledstripmanager");
 	@Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
 	private DisplayMode newDisplayMode;
 	private DisplayMode configDisplayMode;
