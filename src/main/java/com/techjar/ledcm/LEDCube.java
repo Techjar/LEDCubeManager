@@ -799,10 +799,12 @@ public class LEDCube {
 						float xx = x * spaceMult;
 						float yy = y * spaceMult;
 						float zz = z * spaceMult;
-						Vector3 pos = new Vector3(xx, yy, zz);
+						PooledMutableVector3 pos = PooledMutableVector3.get(xx, yy, zz);
 						if (model.getAABB().offset(pos).containsPoint(position) && isLEDWithinIsolation(x, y, z)) {
+							pos.release();
 							return new Vector3(x, y, z);
 						}
+						pos.release();
 					}
 				}
 			}
@@ -830,10 +832,12 @@ public class LEDCube {
 						float xx = x * spaceMult;
 						float yy = y * spaceMult;
 						float zz = z * spaceMult;
-						Vector3 pos = new Vector3(xx, yy, zz);
+						PooledMutableVector3 pos = PooledMutableVector3.get(xx, yy, zz);
 						if (model.getAABB().offset(pos).intersects(aabb) && isLEDWithinIsolation(x, y, z)) {
+							pos.release();
 							return new Vector3(x, y, z);
 						}
+						pos.release();
 					}
 				}
 			}
