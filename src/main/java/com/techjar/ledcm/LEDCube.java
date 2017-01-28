@@ -94,12 +94,12 @@ public class LEDCube {
 		} else {
 			ledManager = new ArduinoLEDManager(4, false);
 			//ledManager = new TLC5940LEDManager(true);
-			//ledManager = new TestLEDManager(true, 32, 32, 32, false, new Color(255, 0, 0));
+			//ledManager = new TestLEDManager(true, 8, 8, 128, false, new Color(255, 0, 0));
 		}
 		Dimension3D dim = ledManager.getDimensions();
 		centerPoint = new Vector3f((dim.x - 1) / 2F, (dim.y - 1) / 2F, (dim.z - 1) / 2F);
-		instanceItems = new InstancedRenderer.InstanceItem[dim.x * dim.y * dim.x];
-		highlightInstanceItems = new InstancedRenderer.InstanceItem[dim.x * dim.y * dim.x];
+		instanceItems = new InstancedRenderer.InstanceItem[dim.x * dim.y * dim.z];
+		highlightInstanceItems = new InstancedRenderer.InstanceItem[dim.x * dim.y * dim.z];
 		//setRenderOffset(Util.convertVector(centerPoint).multiply(ledSpaceMult).negate());
 		model = LEDCubeManager.getModelManager().getModel("led.model");
 		initOctree();
