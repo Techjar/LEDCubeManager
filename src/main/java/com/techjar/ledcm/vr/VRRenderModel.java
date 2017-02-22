@@ -14,15 +14,13 @@ public class VRRenderModel {
 	public boolean visible;
 	public Matrix4f transform;
 	public Matrix4f transformLocal;
-	RenderModel_t renderModel;
 
-	public VRRenderModel(String modelName, String componentName, Model model, RenderModel_t renderModel) {
+	public VRRenderModel(String modelName, String componentName, Model model) {
 		this.modelName = modelName;
 		this.modelNamePtr = VRProvider.pointerFromString(modelName);
 		this.componentName = componentName;
 		this.componentNamePtr = VRProvider.pointerFromString(componentName);
 		this.model = model;
-		this.renderModel = renderModel;
 		this.transform = new Matrix4f();
 		this.transformLocal = new Matrix4f();
 	}

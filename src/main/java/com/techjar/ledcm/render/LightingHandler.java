@@ -21,11 +21,13 @@ public class LightingHandler {
 	@Getter @Setter private Vector3f sceneAmbient = new Vector3f(0.2F, 0.2F, 0.2F);
 
 	public void sendToShader() {
-		glUniform3f(4, sceneAmbient.x, sceneAmbient.y, sceneAmbient.z);
-		glUniform1i(5, lights.size());
+		ShaderProgram program = ShaderProgram.getCurrent();
+		if (program == null) return;
+		glUniform3f(program.getUniformLocation("scene_ambient"), sceneAmbient.x, sceneAmbient.y, sceneAmbient.z);
+		glUniform1i(program.getUniformLocation("num_lights"), lights.size());
 		for (int i = 0; i < lights.size(); i++) {
 			LightSource light = lights.get(i);
-			light.sendToShader(6, i);
+			light.sendToShader("lights[" + i + "]");
 		}
 	}
 

@@ -7,13 +7,16 @@ struct Material {
     float shininess;
 };
 
+// Texture samplers
 layout(binding = 0) uniform sampler2D model_texture;
 //layout(binding = 1) uniform sampler2D model_normalmap;
-layout(location=0) uniform Material front_material;
 
 // The view matrix and the projection matrix are constant across a draw
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
+
+// Material
+uniform Material front_material;
 
 in VERTEX {
     vec3    position;

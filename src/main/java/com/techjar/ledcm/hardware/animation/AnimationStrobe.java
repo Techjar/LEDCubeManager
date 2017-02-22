@@ -44,7 +44,7 @@ public class AnimationStrobe extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(59 - (speed - 1)) / 59F, 1F / 59F, false}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(59 - (speed - 1)) / 59F, 1F / 59F, false}),
 		};
 	}
 

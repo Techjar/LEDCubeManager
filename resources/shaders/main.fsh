@@ -15,17 +15,22 @@ struct Material {
     float shininess;
 };
 
+// Texture samplers
 layout(binding = 0) uniform sampler2D model_texture;
 //layout(binding = 1) uniform sampler2D model_normalmap;
 layout(binding = 2) uniform sampler2D model_specularmap;
-layout(location=0) uniform Material front_material;
-layout(location=4) uniform vec3 scene_ambient;
-layout(location=5) uniform int num_lights;
-layout(location=6) uniform Light lights[10];
 
 // The view matrix and the projection matrix are constant across a draw
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
+
+// Material
+uniform Material front_material;
+
+// Lighting
+uniform vec3 scene_ambient;
+uniform int num_lights;
+uniform Light lights[10];
 
 in VERTEX {
     vec3 position;

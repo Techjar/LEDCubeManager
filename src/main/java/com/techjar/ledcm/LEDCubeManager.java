@@ -17,6 +17,7 @@ import com.techjar.ledcm.gui.screen.Screen;
 import com.techjar.ledcm.gui.screen.ScreenMainControl;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.tcp.packet.Packet;
+import com.techjar.ledcm.render.camera.RenderCamera;
 import com.techjar.ledcm.render.pipeline.RenderPipeline;
 import com.techjar.ledcm.render.pipeline.RenderPipelineGUI;
 import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
@@ -151,6 +152,7 @@ public class LEDCubeManager {
 	private Queue<VRInputEvent> vrInputEvents = new LinkedList<>();
 	private Map<String, Integer> validControllers = new HashMap<>();
 	private List<Tuple<RenderPipeline, Integer>> pipelines = new ArrayList<>();
+	private List<RenderCamera> renderCameras = new ArrayList<>();
 	private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
 	private static List<Tuple<String, Integer>> debugText = new ArrayList<>();
 	private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
@@ -1210,9 +1212,15 @@ public class LEDCubeManager {
 		ledCube.render();
 
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
-			tuple.getA().render3D();
+			RenderPipeline pipeline = tuple.getA();
+			pipeline.preRender3D();
+			for (RenderCamera cam : renderCameras) {
+				cam.setup();
+				pipeline.render3D();
+			}
+			pipeline.postRender3D();
 		}
-		//InstancedRenderer.clearItems();
+		InstancedRenderer.resetVBOIndex();
 
 		glPopMatrix();
 	}
@@ -1449,6 +1457,14 @@ public class LEDCubeManager {
 			}
 		}
 	 }
+
+	 public void addRenderCamera(RenderCamera cam) {
+		 renderCameras.add(cam);
+	 }
+
+	public void removeRenderCamera(RenderCamera cam) {
+		renderCameras.remove(cam);
+	}
 
 	 /**
 	  * Adds the text at the top left of the screen. Lower priority number is higher on the list.

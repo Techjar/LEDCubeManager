@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -57,18 +58,13 @@ public class LEDCharacter {
 			int z = Math.round(vec.getZ());
 			if (Util.isInsideCube(x, y, z)) {
 				Vector3 origVec = transformedVectors == null ? vec : thicknessVectors.get(i);
-				ledManager.setLEDColor(z, y, z, colorizer.getColorAt(origVec));
+				ledManager.setLEDColor(x, y, z, colorizer.getColorAt(origVec));
 			}
 		}
 	}
 
 	public void draw(LEDManager ledManager, final ReadableColor color) {
-		draw(ledManager, new Colorizer() {
-			@Override
-			public ReadableColor getColorAt(Vector3 vector) {
-				return color;
-			}
-		});
+		draw(ledManager, vector -> color);
 	}
 
 	/**
@@ -91,10 +87,7 @@ public class LEDCharacter {
 	 */
 	public void applyTransform(Transformer transformer) {
 		List<Vector3> source = transformedVectors == null ? thicknessVectors : transformedVectors;
-		List<Vector3> dest = new ArrayList<>();
-		for (Vector3 vec : source) {
-			dest.add(transformer.transform(vec));
-		}
+		List<Vector3> dest = source.stream().map(transformer::transform).collect(Collectors.toList());
 		transformedVectors = dest;
 	}
 
@@ -149,14 +142,19 @@ public class LEDCharacter {
 		private int size;
 	}
 
-	public static interface Transformer {
-		public Vector3 transform(Vector3 vector);
+	/**
+	 * Transforms the vectors passed to it. Must be stateless!
+	 */
+	@FunctionalInterface
+	public interface Transformer {
+		Vector3 transform(Vector3 vector);
 	}
 
 	/**
-	 * This is passed vectors which account for the thickness but not the transformation.
+	 * This is passed vectors which account for the thickness but not the transformation. Must be stateless!
 	 */
-	public static interface Colorizer {
-		public ReadableColor getColorAt(Vector3 vector);
+	@FunctionalInterface
+	public interface Colorizer {
+		ReadableColor getColorAt(Vector3 vector);
 	}
 }

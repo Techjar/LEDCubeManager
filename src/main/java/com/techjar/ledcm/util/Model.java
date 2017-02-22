@@ -48,8 +48,8 @@ public class Model {
 	 */
 	public InstancedRenderer.InstanceItem render(Matrix4f transform, Color color, Vector3 scale, boolean lod, boolean instanced, int textureID) {
 		if (instanced && textureID != 0) throw new IllegalArgumentException("textureID cannot be set for instanced render, use non-instanced render instead");
-		float distance = LEDCubeManager.getCamera().getPosition().distance(new Vector3(transform.m30, transform.m31, transform.m32));
-		ModelMesh mesh = lod ? getMeshByDistance(distance - meshes[0].getRadius()) : meshes[0];
+		float distance = LEDCubeManager.getCamera().getPosition().distanceSquared(new Vector3(transform.m30, transform.m31, transform.m32));
+		ModelMesh mesh = lod ? getMeshByDistanceSquared(distance - meshes[0].getRadius()) : meshes[0];
 		if (instanced) return InstancedRenderer.addItem(mesh, transform, color, scale);
 		else InstancedRenderer.draw(mesh, transform, color, scale, textureID);
 		return null;
@@ -98,6 +98,15 @@ public class Model {
 	public ModelMesh getMeshByDistance(float distance) {
 		for (int i = 0; i < meshes.length - 1; i++) {
 			if (distance < meshes[i].getLODDistance()) {
+				return meshes[i];
+			}
+		}
+		return meshes[meshes.length - 1];
+	}
+
+	public ModelMesh getMeshByDistanceSquared(float distance) {
+		for (int i = 0; i < meshes.length - 1; i++) {
+			if (distance < meshes[i].getLODDistance() * meshes[i].getLODDistance()) {
 				return meshes[i];
 			}
 		}

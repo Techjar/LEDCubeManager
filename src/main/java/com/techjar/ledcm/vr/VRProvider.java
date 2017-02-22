@@ -45,8 +45,8 @@ public class VRProvider {
 	@Getter private static boolean initialized;
 	static IntBuffer errorStore;
 	private static Pointer renderModelNamePtr;
-	private static RenderModel_ControllerMode_State_t renderModelModeState = new RenderModel_ControllerMode_State_t();
-	private static RenderModel_ComponentState_t renderModelComponentState = new RenderModel_ComponentState_t();
+	private static RenderModel_ControllerMode_State_t renderModelModeState = new RenderModel_ControllerMode_State_t.ByReference();
+	private static RenderModel_ComponentState_t renderModelComponentState = new RenderModel_ComponentState_t.ByReference();
 
 	@Getter static VRStereoProvider stereoProvider;
 	@Getter static Dimension eyeTextureSize;
@@ -307,6 +307,7 @@ public class VRProvider {
 	 * @return Play area size or null if not valid
 	 */
 	public static Vector2 getPlayAreaSize() {
+		if (vrChaperone == null || vrChaperone.GetPlayAreaSize == null) return null;
 		FloatBuffer bufX = FloatBuffer.allocate(1);
 		FloatBuffer bufZ = FloatBuffer.allocate(1);
 		byte valid = vrChaperone.GetPlayAreaSize.apply(bufX, bufZ);
@@ -343,15 +344,14 @@ public class VRProvider {
 				controller.updatePose(poseMatrices[controller.deviceIndex]);
 				controller.tracking = true;
 
-				if (renderModelNamePtr == null) renderModelNamePtr = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
-				vrSystem.GetStringTrackedDeviceProperty.apply(controller.deviceIndex, JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String, renderModelNamePtr, JOpenVRLibrary.k_unMaxPropertyStringSize - 1, errorStore);
-				String modelName = renderModelNamePtr.getString(0);
-				if (!modelName.equals(controller.renderModelName)) {
+				if (controller.renderModelName == null) {
+					if (renderModelNamePtr == null) renderModelNamePtr = new Memory(JOpenVRLibrary.k_unMaxPropertyStringSize);
+					vrSystem.GetStringTrackedDeviceProperty.apply(controller.deviceIndex, JOpenVRLibrary.ETrackedDeviceProperty.ETrackedDeviceProperty_Prop_RenderModelName_String, renderModelNamePtr, JOpenVRLibrary.k_unMaxPropertyStringSize - 1, errorStore);
+					String modelName = renderModelNamePtr.getString(0);
 					try {
 						if (controller.renderModels != null) {
 							for (VRRenderModel model : controller.renderModels) {
 								model.model.release();
-								vrRenderModels.FreeRenderModel.apply(model.renderModel);
 							}
 							controller.renderModels = null;
 						}
@@ -371,7 +371,7 @@ public class VRProvider {
 							controller.renderModels = renderModels.toArray(new VRRenderModel[renderModels.size()]);
 						} else {
 							VRRenderModel renderModel = loadRenderModel(modelName, modelName, null);
-							controller.renderModels = new VRRenderModel[]{renderModel};
+							if (renderModel != null) controller.renderModels = new VRRenderModel[]{renderModel};
 						}
 						controller.renderModelName = modelName;
 					} catch (Exception ex) {
@@ -393,7 +393,6 @@ public class VRProvider {
 					}
 				}
 			} else {
-				controller.updatePose(new Matrix4f());
 				controller.tracking = false;
 			}
 		}
@@ -525,7 +524,7 @@ public class VRProvider {
 		model.makeImmutable();
 
 		LogHelper.info("Loaded render model: " + modelName + (componentName != null ? " " + componentName : ""));
-		return new VRRenderModel(modelName, componentName, model, renderModel);
+		return new VRRenderModel(modelName, componentName, model);
 	}
 
 	public static boolean setKeyboardShowing(boolean showing) {

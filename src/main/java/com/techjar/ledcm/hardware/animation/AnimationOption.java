@@ -35,14 +35,23 @@ public class AnimationOption {
 	}
 
 	public static enum OptionType {
-		TEXT, // 1+ params: default value, validation regex, max length
-		SLIDER, // 1-3 params: default value, increment, show notches
-		COMBOBOX, // 3+ params: default value, items (id & name interleaved)
-		COMBOBUTTON, // 2+ params: default value, items (id & name interleaved)
-		CHECKBOX, // 1 param: default value
-		RADIOGROUP, // 3+ params: default value, items (id & name interleaved)
-		BUTTON, // 1 param: text
-		SPINNER, // 5 params: default value, min value, max value, increment, decimal places
-		COLORPICKER, // 1 param: default value
+		/** 1+ params: default value, validation regex, max length */
+		TEXT,
+		/** 1-3 params: default value, increment, show notches */
+		SLIDER,
+		/** 3+ params: default value, items (id & name interleaved) */
+		COMBOBOX,
+		/** 2+ params: default value, items (id & name interleaved) */
+		COMBOBUTTON,
+		/** 1 param: default value */
+		CHECKBOX,
+		/** 3+ params: default value, items (id & name interleaved) */
+		RADIOGROUP,
+		/** 1 param: text */
+		BUTTON,
+		/** 5 params: default value, min value, max value, increment, decimal places */
+		SPINNER,
+		/** 1 param: default value */
+		COLORPICKER,
 	}
 }

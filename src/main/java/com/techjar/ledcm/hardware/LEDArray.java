@@ -47,12 +47,13 @@ public class LEDArray {
 			byte[] greenT = new byte[greenArray.length];
 			byte[] blueT = new byte[blueArray.length];
 			Dimension3D dim = manager.getDimensions();
+			PooledMutableVector3 vec = PooledMutableVector3.get();
+			PooledMutableVector3 newVec = PooledMutableVector3.get();
 			for (int x = 0; x < dim.x; x++) {
 				for (int y = 0; y < dim.y; y++) {
 					for (int z = 0; z < dim.z; z++) {
-						PooledMutableVector3 vec = PooledMutableVector3.get(x, y, z);
-						PooledMutableVector3 newVec = PooledMutableVector3.get(x, y, z);
-						LEDCubeManager.getLEDCube().applyTransform(newVec);
+						vec.set(x, y, z);
+						LEDCubeManager.getLEDCube().applyTransform(newVec.set(x, y, z));
 						if (newVec.getX() >= 0 && newVec.getX() < dim.x && newVec.getY() >= 0 && newVec.getY() < dim.y && newVec.getZ() >= 0 && newVec.getZ() < dim.z) {
 							int index = manager.encodeVector(vec);
 							int newIndex = manager.encodeVector(newVec);
@@ -60,10 +61,11 @@ public class LEDArray {
 							greenT[newIndex] = green[index];
 							blueT[newIndex] = blue[index];
 						}
-						vec.release();
 					}
 				}
 			}
+			vec.release();
+			newVec.release();
 			transformed = new LEDArray(manager, redT, greenT, blueT, false, true);
 		} else {
 			transformed = this;

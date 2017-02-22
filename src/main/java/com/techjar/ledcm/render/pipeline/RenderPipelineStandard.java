@@ -4,8 +4,13 @@ package com.techjar.ledcm.render.pipeline;
 import com.hackoeur.jglm.Matrices;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.render.InstancedRenderer;
+import com.techjar.ledcm.render.camera.RenderCamera;
+import com.techjar.ledcm.render.camera.RenderCameraStandard;
 import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -16,6 +21,7 @@ public class RenderPipelineStandard implements RenderPipeline {
 
 	@Override
 	public void init() {
+		LEDCubeManager.getInstance().addRenderCamera(new RenderCameraStandard());
 	}
 
 	@Override
@@ -23,20 +29,27 @@ public class RenderPipelineStandard implements RenderPipeline {
 	}
 
 	@Override
-	public void render3D() {
-		LEDCubeManager.getInstance().faceCount = 0;
+	public void preRender3D() {
 		LEDCubeManager ledcm = LEDCubeManager.getInstance();
+		mainShader.use();
+		ledcm.getLightingHandler().sendToShader();
+		ledcm.faceCount = 0;
+	}
 
-		// Setup projection matrix
-		ledcm.setupView(Util.convertMatrix(Matrices.perspective(ledcm.getFieldOfView(), (float)LEDCubeManager.getDisplayMode().getWidth() / (float)LEDCubeManager.getDisplayMode().getHeight(), ledcm.getNearClip(), ledcm.getViewDistance())), LEDCubeManager.getCamera().getPosition(), LEDCubeManager.getCamera().getAngle());
+	@Override
+	public void render3D() {
+		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 
 		mainShader.use();
 		ledcm.sendMatrixToProgram();
-		ledcm.getLightingHandler().sendToShader();
 
 		InstancedRenderer.prepareItems();
-		LEDCubeManager.getInstance().faceCount += InstancedRenderer.renderAll()[1];
+		ledcm.faceCount += InstancedRenderer.renderAll()[1];
 		ShaderProgram.useNone();
+	}
+
+	@Override
+	public void postRender3D() {
 	}
 
 	@Override

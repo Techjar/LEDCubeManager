@@ -16,9 +16,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.techjar.ledcm.util.math.Quaternion;
@@ -37,8 +39,8 @@ import org.lwjgl.util.vector.Matrix4f;
  * @author Techjar
  */
 public final class InstancedRenderer {
-	private static final Map<ModelMesh, List<InstanceItem>> itemsNormal = new HashMap<>();
-	private static final List<InstanceItem> itemsAlpha = new ArrayList<>();
+	private static final Map<ModelMesh, Set<InstanceItem>> itemsNormal = new HashMap<>();
+	private static final Set<InstanceItem> itemsAlpha = new LinkedHashSet<>();
 	private static final List<Tuple<ModelMesh, List<InstanceItem>>> groupedNormal = new LinkedList<>();
 	private static final List<Tuple<ModelMesh, List<InstanceItem>>> groupedAlpha = new LinkedList<>();
 	private static final List<Tuple<Integer, Integer>> vboIds = new ArrayList<>();
@@ -92,7 +94,7 @@ public final class InstancedRenderer {
 		if (mesh.getModel().isTranslucent() || color.getAlpha() < 255) {
 			itemsAlpha.add(item = new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		} else {
-			if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedList<InstanceItem>());
+			if (!itemsNormal.containsKey(mesh)) itemsNormal.put(mesh, new LinkedHashSet<>());
 			itemsNormal.get(mesh).add(item = new InstanceItem(mesh, new Vector3(transform.m30, transform.m31, transform.m32), transform, color, scale));
 		}
 		return item;
@@ -132,11 +134,14 @@ public final class InstancedRenderer {
 	}
 
 	public static int[] renderAll() {
-		currentVBOIndex = 0;
 		int[] totals1 = renderItems(groupedNormal, false);
 		int[] totals2 = renderItems(groupedAlpha, alphaPolygonFix);
 		//for (int i = 0; i < 8; i++) glDisableVertexAttribArray(i);
 		return new int[]{totals1[0] + totals2[0], totals1[1] + totals2[1]};
+	}
+
+	public static void resetVBOIndex() {
+		currentVBOIndex = 0;
 	}
 
 	private static Tuple<Integer, Integer> getNextVBO() {
@@ -199,7 +204,7 @@ public final class InstancedRenderer {
 						glActiveTexture(GL_TEXTURE2);
 						mesh.getModel().getSpecularMap().bind();
 						glActiveTexture(GL_TEXTURE0);
-						mesh.getModel().getMaterial().sendToShader(0);
+						mesh.getModel().getMaterial().sendToShader("front_material");
 						buffer.rewind();
 						Tuple<Integer, Integer> vbo = getVBO(-1);
 						glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());
@@ -238,7 +243,7 @@ public final class InstancedRenderer {
 				glActiveTexture(GL_TEXTURE2);
 				mesh.getModel().getSpecularMap().bind();
 				glActiveTexture(GL_TEXTURE0);
-				mesh.getModel().getMaterial().sendToShader(0);
+				mesh.getModel().getMaterial().sendToShader("front_material");
 				buffer.rewind();
 				Tuple<Integer, Integer> vbo = getNextVBO();
 				glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());
@@ -284,7 +289,7 @@ public final class InstancedRenderer {
 		glActiveTexture(GL_TEXTURE2);
 		mesh.getModel().getSpecularMap().bind();
 		glActiveTexture(GL_TEXTURE0);
-		mesh.getModel().getMaterial().sendToShader(0);
+		mesh.getModel().getMaterial().sendToShader("front_material");
 		buffer.rewind();
 		Tuple<Integer, Integer> vbo = getVBO(-1);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());

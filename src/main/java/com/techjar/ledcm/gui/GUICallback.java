@@ -9,5 +9,5 @@ import lombok.Setter;
  */
 @FunctionalInterface
 public interface GUICallback<T extends GUI> {
-	public void run(T component);
+	void run(T component);
 }

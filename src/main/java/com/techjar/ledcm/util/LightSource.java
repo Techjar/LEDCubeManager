@@ -21,14 +21,14 @@ public class LightSource {
 	public float quadraticAttenuation = 0.0F;
 	public float brightness = 1.0F;
 
-	public void sendToShader(int index, int arrayIndex) {
-		index += arrayIndex * 6;
+	public void sendToShader(String uniform) {
+		ShaderProgram program = ShaderProgram.getCurrent();
 		brightness = Math.max(brightness, Float.MIN_VALUE);
-		glUniform3f(index++, diffuse.x, diffuse.y, diffuse.z);
-		glUniform3f(index++, specular.x, specular.y, specular.z);
-		glUniform4f(index++, position.x, position.y, position.z, position.w);
-		glUniform3f(index++, spotDirection.x, spotDirection.y, spotDirection.z);
-		glUniform2f(index++, spotExponent, spotCutoff);
-		glUniform3f(index++, constantAttenuation / brightness, linearAttenuation / brightness, quadraticAttenuation / brightness);
+		glUniform3f(program.getUniformLocation(uniform + ".diffuse"), diffuse.x, diffuse.y, diffuse.z);
+		glUniform3f(program.getUniformLocation(uniform + ".specular"), specular.x, specular.y, specular.z);
+		glUniform4f(program.getUniformLocation(uniform + ".position"), position.x, position.y, position.z, position.w);
+		glUniform3f(program.getUniformLocation(uniform + ".spotDirection"), spotDirection.x, spotDirection.y, spotDirection.z);
+		glUniform2f(program.getUniformLocation(uniform + ".spotParams"), spotExponent, spotCutoff);
+		glUniform3f(program.getUniformLocation(uniform + ".attenuation"), constantAttenuation / brightness, linearAttenuation / brightness, quadraticAttenuation / brightness);
 	}
 }

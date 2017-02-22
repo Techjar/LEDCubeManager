@@ -195,8 +195,7 @@ public class Quaternion {
 		return conjugate().scale(1 / norm());
 	}
 
-	public Matrix4f getMatrix() {
-		Matrix4f matrix = new Matrix4f();
+	public Matrix4f getMatrix(Matrix4f matrix) {
 		float sqw = w * w;
 		float sqx = x * x;
 		float sqy = y * y;
@@ -224,6 +223,10 @@ public class Quaternion {
 		matrix.m12 = 2 * (tmp1 - tmp2) * invs;
 
 		return matrix;
+	}
+
+	public Matrix4f getMatrix() {
+		return getMatrix(new Matrix4f());
 	}
 
 	public Vector3 forward() {
