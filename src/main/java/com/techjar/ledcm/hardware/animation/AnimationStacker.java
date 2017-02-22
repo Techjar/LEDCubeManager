@@ -4,12 +4,13 @@ package com.techjar.ledcm.hardware.animation;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Timer;
 import com.techjar.ledcm.util.Util;
+
 import java.util.Random;
+
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
 /**
- *
  * @author Techjar
  */
 public class AnimationStacker extends Animation {
@@ -76,10 +77,10 @@ public class AnimationStacker extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("color1", "Color 1", AnimationOption.OptionType.COLORPICKER, new Object[]{color1}),
-				new AnimationOption("color2", "Color 2", AnimationOption.OptionType.COLORPICKER, new Object[]{color2}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Alternate", 2, "Rainbow", 3, "Random"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("color1", "Color 1", AnimationOption.OptionType.COLORPICKER, new Object[]{color1}),
+			new AnimationOption("color2", "Color 2", AnimationOption.OptionType.COLORPICKER, new Object[]{color2}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Alternate", 2, "Rainbow", 3, "Random"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
 		};
 	}
 

@@ -7,10 +7,17 @@ import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL32.*;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import com.techjar.ledcm.hardware.LEDArray;
 import com.techjar.ledcm.render.LightingHandler;
 import com.techjar.ledcm.render.RenderHelper;
+import com.techjar.ledcm.render.camera.RenderCamera;
+import com.techjar.ledcm.render.camera.RenderCameraVR;
 import com.techjar.ledcm.util.*;
 import com.techjar.ledcm.util.math.Dimension3D;
 import com.techjar.ledcm.util.math.Quaternion;
@@ -51,11 +58,17 @@ public class RenderPipelineVR implements RenderPipeline {
 	private int texGui;
 	private RenderPipeline guiPipeline;
 	private Vector3 cubePos = new Vector3(0, 1, 0);
-	Timer timer = new Timer();
+	InstancedRenderer.InstanceItem playAreaInstance;
+	InstancedRenderer.InstanceItem roomModelInstance;
+	private Map<VRRenderModel, InstancedRenderer.InstanceItem> leftModels;
+	private Map<VRRenderModel, InstancedRenderer.InstanceItem> rightModels;
 
 	@Override
 	public void init() {
 		guiPipeline = new RenderPipelineGUI();
+		leftModels = new HashMap<>();
+		rightModels = new HashMap<>();
+
 		setupFramebuffers();
 		//VRProvider.getStereoProvider().setRenderScale(new Vector3(100, 100, 100));
 		LEDCubeManager ledcm = LEDCubeManager.getInstance();
@@ -63,7 +76,11 @@ public class RenderPipelineVR implements RenderPipeline {
 		ledCube.setRenderOffset(Util.convertVector(ledCube.getCenterPoint()).negate().multiply(ledCube.getSpaceMult()).add(cubePos));
 		guiModel = LEDCubeManager.getModelManager().getModel("gui.model");
 
-		ledcm.addResizeHandler(() -> setupGUIFramebuffer());
+		ledcm.addRenderCamera(new RenderCameraVR(EyeType.LEFT, fboLeftEye));
+		ledcm.addRenderCamera(new RenderCameraVR(EyeType.RIGHT, fboRightEye));
+		ledcm.addRenderCamera(new RenderCameraVR(EyeType.CENTER, 0));
+
+		ledcm.addResizeHandler(this::setupGUIFramebuffer);
 
 		LightingHandler lightingHandler = ledcm.getLightingHandler();
 		LightSource light = lightingHandler.getLight(0);
@@ -112,16 +129,11 @@ public class RenderPipelineVR implements RenderPipeline {
 	}
 
 	@Override
-	public void render2D() {
-	}
-
-	@Override
-	public void render3D() {
-		Dimension texSize = VRProvider.getEyeTextureSize();
+	public void preRender3D() {
+		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 		DisplayMode displayMode = LEDCubeManager.getDisplayMode();
 		Vector2 playArea = VRProvider.getPlayAreaSize();
 		VRStereoProvider stereoProvider = VRProvider.getStereoProvider();
-		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 		VRTrackedController leftController = VRProvider.getController(ControllerType.LEFT);
 		VRTrackedController rightController = VRProvider.getController(ControllerType.RIGHT);
 
@@ -156,97 +168,56 @@ public class RenderPipelineVR implements RenderPipeline {
 			glEnable(GL_DEPTH_TEST);
 		}
 
-		if (leftController.isTracking()) {
-			//controllerModel.render(leftController.getPosition(), leftController.getRotation(), new Color(255, 255, 255), stereoProvider.getWorldScale());
-			VRRenderModel[] models = leftController.getRenderModels();
-			if (models != null) {
-				Vector3 controllerPos = leftController.getPosition();
-				Quaternion controllerRot = leftController.getRotation();
-				for (VRRenderModel model : models) {
-					if (model.visible) {
-						Matrix4f matrix = new Matrix4f();
-						matrix.translate(Util.convertVector(controllerPos));
-						Matrix4f.mul(matrix, controllerRot.getMatrix(), matrix);
-						Matrix4f.mul(matrix, model.transform, matrix);
-						model.model.render(matrix, new Color(255, 255, 255), stereoProvider.getWorldScale());
-					}
-				}
+		renderController(leftController, leftModels);
+		renderController(rightController, rightModels);
+		if (playArea != null) {
+			if (playAreaInstance == null) {
+				playAreaInstance = LEDCubeManager.getModelManager().getModel("playarea.model").render(VRProvider.getRoomPosition().add(VRProvider.getRoomRotation().up().multiply(0.001F)), VRProvider.getRoomRotation(), new Color(255, 255, 255, 100), new Vector3(playArea.getX(), 1, playArea.getY()).multiply(stereoProvider.getWorldScale()));
+			} else {
+				playAreaInstance.setTransform(VRProvider.getRoomPosition().add(VRProvider.getRoomRotation().up().multiply(0.001F)), VRProvider.getRoomRotation());
+				playAreaInstance.setScale(new Vector3(playArea.getX(), 1, playArea.getY()).multiply(stereoProvider.getWorldScale()));
 			}
+		} else if (playAreaInstance != null) {
+			InstancedRenderer.removeItem(playAreaInstance);
+			playAreaInstance = null;
 		}
-		if (rightController.isTracking()) {
-			//controllerModel.render(rightController.getPosition(), rightController.getRotation(), new Color(255, 255, 255), stereoProvider.getWorldScale());
-			VRRenderModel[] models = rightController.getRenderModels();
-			if (models != null) {
-				Vector3 controllerPos = rightController.getPosition();
-				Quaternion controllerRot = rightController.getRotation();
-				for (VRRenderModel model : models) {
-					if (model.visible) {
-						Matrix4f matrix = new Matrix4f();
-						matrix.translate(Util.convertVector(controllerPos));
-						Matrix4f.mul(matrix, controllerRot.getMatrix(), matrix);
-						Matrix4f.mul(matrix, model.transform, matrix);
-						model.model.render(matrix, new Color(255, 255, 255), stereoProvider.getWorldScale());
-					}
-				}
-			}
+		if (roomModelInstance == null) {
+			roomModelInstance = roomModel.render(new Vector3(), new Quaternion(), new Color(200, 200, 200), stereoProvider.getWorldScale());
 		}
-		if (playArea != null)
-			LEDCubeManager.getModelManager().getModel("playarea.model").render(VRProvider.getRoomPosition().add(VRProvider.getRoomRotation().up().multiply(0.001F)), VRProvider.getRoomRotation(), new Color(255, 255, 255, 100), new Vector3(playArea.getX(), 1, playArea.getY()).multiply(stereoProvider.getWorldScale()));
-		roomModel.render(new Vector3(), new Quaternion(), new Color(200, 200, 200), stereoProvider.getWorldScale());
-
-		Matrix4f view = getView(EyeType.CENTER);
-		Matrix4f leftView = getView(EyeType.LEFT);
-		Matrix4f rightView = getView(EyeType.RIGHT);
-		LEDCubeManager.getInstance().faceCount = 0;
 
 		mainShader.use();
 		ledcm.getLightingHandler().sendToShader();
-		ledcm.resizeGL(texSize.getWidth(), texSize.getHeight());
+		ledcm.faceCount = 0;
+	}
+
+	@Override
+	public void render3D() {
+		LEDCubeManager ledcm = LEDCubeManager.getInstance();
+		VRTrackedController leftController = VRProvider.getController(ControllerType.LEFT);
+
+		mainShader.use();
+		ledcm.sendMatrixToProgram();
+
 		glClearColor(0, 0, 0, 1);
-
-		ledcm.setupView(stereoProvider.getProjectionMatrix(0, ledcm.getNearClip(), ledcm.getViewDistance()), leftView);
-		ledcm.sendMatrixToProgram();
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboLeftEye);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glEnable(GL_STENCIL_TEST);
-		InstancedRenderer.prepareItems();
-		LEDCubeManager.getInstance().faceCount += InstancedRenderer.renderAll()[1];
-		if (ledcm.isShowingVRGUI() && leftController.isTracking()) {
-			noLightingShader.use();
-			ledcm.sendMatrixToProgram();
-			drawGUI(leftController);
-			mainShader.use();
-		}
-
-		ledcm.setupView(stereoProvider.getProjectionMatrix(1, ledcm.getNearClip(), ledcm.getViewDistance()), rightView);
-		ledcm.sendMatrixToProgram();
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboRightEye);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		InstancedRenderer.prepareItems();
-		LEDCubeManager.getInstance().faceCount += InstancedRenderer.renderAll()[1];
+		ledcm.faceCount += InstancedRenderer.renderAll()[1];
+
 		if (ledcm.isShowingVRGUI() && leftController.isTracking()) {
 			noLightingShader.use();
 			ledcm.sendMatrixToProgram();
 			drawGUI(leftController);
-			mainShader.use();
 		}
+	}
 
-		ledcm.resizeGL(displayMode.getWidth(), displayMode.getHeight());
-		ledcm.setupView(Util.convertMatrix(Matrices.perspective(ledcm.getFieldOfView(), (float)LEDCubeManager.getDisplayMode().getWidth() / (float)LEDCubeManager.getDisplayMode().getHeight(), ledcm.getNearClip(), ledcm.getViewDistance())), view);
-		ledcm.sendMatrixToProgram();
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ledcm.isAntiAliasing() ? ledcm.getMultisampleFBO() : 0);
-		glDisable(GL_STENCIL_TEST);
-		InstancedRenderer.prepareItems();
-		LEDCubeManager.getInstance().faceCount += InstancedRenderer.renderAll()[1];
-		if (ledcm.isShowingVRGUI() && leftController.isTracking()) {
-			noLightingShader.use();
-			ledcm.sendMatrixToProgram();
-			drawGUI(leftController);
-			mainShader.use();
-		}
-
+	@Override
+	public void postRender3D() {
 		ShaderProgram.useNone();
-		stereoProvider.submitFrame();
+		VRProvider.getStereoProvider().submitFrame();
+	}
+
+	@Override
+	public void render2D() {
 	}
 
 	@Override
@@ -320,15 +291,6 @@ public class RenderPipelineVR implements RenderPipeline {
 		LogHelper.info("Set up GUI framebuffer.");
 	}
 
-	protected Matrix4f getView(EyeType eye) {
-		Matrix4f view = new Matrix4f();
-		Matrix4f.mul(view, VRProvider.getHMDRotationRoom().getMatrix(), view);
-		view.translate(Util.convertVector(VRProvider.getStereoProvider().getEyePosition(eye).negate()));
-		Matrix4f.mul(view, VRProvider.getRoomRotation().getMatrix(), view);
-		view.translate(Util.convertVector(VRProvider.getRoomPosition().negate()));
-		return view;
-	}
-
 	protected void drawStencil(EyeType eye) {
 		Dimension texSize = VRProvider.getEyeTextureSize();
 		Vector2[] vertices = VRProvider.getStereoProvider().getStencilMask(eye);
@@ -367,7 +329,7 @@ public class RenderPipelineVR implements RenderPipeline {
 	protected void drawGUI(VRTrackedController controller) {
 		Vector2 size = LEDCubeManager.getInstance().getVRGUISize();
 		glDisable(GL_CULL_FACE);
-		guiModel.render(controller.getPosition().add(controller.getRotation().inverse().forward().multiply(0.5F * size.getY() + 0.05F)), controller.getRotation(), new Color(255, 255, 255), new Vector3(size.getX(), 1, size.getY()), true, false, texGui);
+		guiModel.render(controller.getPosition().add(controller.getRotation().inverse().forward().multiply(0.5F * size.getY() + 0.05F)), controller.getRotation(), new Color(255, 255, 255), new Vector3(size.getX(), 1, size.getY()), false, false, texGui);
 		glEnable(GL_CULL_FACE);
 	}
 
@@ -390,6 +352,35 @@ public class RenderPipelineVR implements RenderPipeline {
 		float count = LEDCubeManager.getLEDCube().getLEDManager().getLEDCount();
 		float gamma = 1.0F / 2.2F;
 		return new Vector3f((float)Math.pow(totalRed / count, gamma), (float)Math.pow(totalGreen / count, gamma), (float)Math.pow(totalBlue / count, gamma));
+	}
+
+	protected void renderController(VRTrackedController controller, Map<VRRenderModel, InstancedRenderer.InstanceItem> modelsMap) {
+		VRStereoProvider stereoProvider = VRProvider.getStereoProvider();
+		VRRenderModel[] models = controller.getRenderModels();
+		if (controller.isTracking() && models != null) {
+			Vector3 controllerPos = controller.getPosition();
+			Quaternion controllerRot = controller.getRotation();
+			for (VRRenderModel model : models) {
+				if (model.visible) {
+					Matrix4f matrix = new Matrix4f();
+					matrix.translate(Util.convertVector(controllerPos));
+					Matrix4f.mul(matrix, controllerRot.getMatrix(), matrix);
+					Matrix4f.mul(matrix, model.transform, matrix);
+					if (modelsMap.containsKey(model)) {
+						InstancedRenderer.InstanceItem item = modelsMap.get(model);
+						item.setTransform(matrix);
+						item.setScale(stereoProvider.getWorldScale());
+					} else {
+						modelsMap.put(model, model.model.render(matrix, new Color(255, 255, 255), stereoProvider.getWorldScale()));
+					}
+				} else if (modelsMap.containsKey(model)) {
+					InstancedRenderer.removeItem(modelsMap.remove(model));
+				}
+			}
+		} else {
+			modelsMap.values().forEach(InstancedRenderer::removeItem);
+			modelsMap.clear();
+		}
 	}
 
 	/*protected Model pickRoomModel() {

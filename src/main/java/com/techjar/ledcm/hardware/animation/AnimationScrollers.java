@@ -122,11 +122,11 @@ public class AnimationScrollers extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("posmode", "Position", AnimationOption.OptionType.COMBOBOX, new Object[]{posMode, 0, "Opposite", 1, "Random", 2, "O/R Mix"}),
-				new AnimationOption("movemode", "Movement", AnimationOption.OptionType.COMBOBOX, new Object[]{moveMode, 0, "Random", 1, "Sequential", 2, "Simultaneous"}),
-				new AnimationOption("directionmode", "Direction", AnimationOption.OptionType.COMBOBOX, new Object[]{directionMode, 0, "Individual", 1, "Global"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
-				new AnimationOption("delay", "Sim. Delay", AnimationOption.OptionType.SLIDER, new Object[]{(delay - 1) / 299F, 1F / 299F, false}),
+			new AnimationOption("posmode", "Position", AnimationOption.OptionType.COMBOBOX, new Object[]{posMode, 0, "Opposite", 1, "Random", 2, "O/R Mix"}),
+			new AnimationOption("movemode", "Movement", AnimationOption.OptionType.COMBOBOX, new Object[]{moveMode, 0, "Random", 1, "Sequential", 2, "Simultaneous"}),
+			new AnimationOption("directionmode", "Direction", AnimationOption.OptionType.COMBOBOX, new Object[]{directionMode, 0, "Individual", 1, "Global"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("delay", "Sim. Delay", AnimationOption.OptionType.SLIDER, new Object[]{(delay - 1) / 299F, 1F / 299F, false}),
 		};
 	}
 

@@ -21,9 +21,6 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 	private final int size;
 	private final int bandIncrement;
 	private final int bandRepeat;
-	// Used to make the sensitivity inversely proportional to the index.
-	// Should be slightly higher than the highest possible index.
-	private final float indexDivisor;
 	private int colorMode = 0;
 	private float holdUp = 7;
 
@@ -31,7 +28,6 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 		size = dimension.x * dimension.z;
 		bandIncrement = Math.max(Math.round(256F / size), 1);
 		bandRepeat = Math.max(Math.round(size / 256F), 1);
-		indexDivisor = size + 6;
 	}
 
 	@Override
@@ -42,12 +38,12 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 	@Override
 	public synchronized void refresh() {
 		for (int i = 0; i < size; i++) {
-			float amplitude = amplitudes[i] - 2;
+			float amplitude = (float)MathHelper.log(amplitudes[i], 2); // Huh?
 			if (colorMode == 3 && (amplitude <= 0 || randomColors[i].equals(new Color()))) randomColors[i] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
 			Vector2 pos = spiralPosition(i);
 			pos = new Vector2(pos.getX() + ((dimension.x / 2) - 1), pos.getY() + ((dimension.z / 2) - 1));
 			for (int j = 0; j < dimension.y; j++) {
-				float increment = ((5.0F / (dimension.y / 8)) * (j + 1)) * (1 - (i / indexDivisor));
+				float increment = 1.1F; // What?
 				ledManager.setLEDColor((int)pos.getX(), j, (int)pos.getY(), amplitude > 0 ? getColor(i, j, MathHelper.clamp(amplitude / increment, 0, 1)) : new Color());
 				amplitude -= increment;
 			}
@@ -66,8 +62,8 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Classic", 1, "Rainbow 1", 2, "Rainbow 2", 3, "Random", 4, "Picker"}),
-				new AnimationOption("holdUp", "Hold Up", AnimationOption.OptionType.SLIDER, new Object[]{holdUp / 29F}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Classic", 1, "Rainbow 1", 2, "Rainbow 2", 3, "Random", 4, "Picker"}),
+			new AnimationOption("holdUp", "Hold Up", AnimationOption.OptionType.SLIDER, new Object[]{holdUp / 29F}),
 		};
 	}
 
@@ -108,6 +104,23 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 			}
 			if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
 			else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / holdUp, 1F);
+		}
+		if (bandRepeat > 1) {
+			float[] amplitudesRef = new float[amplitudes.length];
+			System.arraycopy(amplitudes, 0, amplitudesRef, 0, amplitudes.length);
+			float bandRepeatHalf = bandRepeat / 2F;
+			for (int i = 0; i < size; i += bandRepeat) {
+				float amplitudeLower = i > 0 ? amplitudesRef[i - bandRepeat] : amplitudesRef[i];
+				float amplitudeUpper = i + bandRepeat < size ? amplitudesRef[i + bandRepeat] : amplitudesRef[i];
+				for (int j = 0; j < bandRepeat && j + i < size; j++) {
+					float jHalf = j + 0.5F;
+					if (jHalf < bandRepeatHalf) {
+						amplitudes[j + i] = MathHelper.lerp(amplitudeLower, amplitudes[j + i], jHalf / bandRepeatHalf);
+					} else {
+						amplitudes[j + i] = MathHelper.lerp(amplitudes[j + i], amplitudeUpper, (jHalf - bandRepeatHalf) / bandRepeatHalf);
+					}
+				}
+			}
 		}
 	}
 

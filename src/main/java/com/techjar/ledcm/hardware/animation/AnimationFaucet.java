@@ -92,8 +92,8 @@ public class AnimationFaucet extends Animation {
 	public synchronized void reset() {
 		colorSeed = random.nextInt();
 		timer.restart();
-		faucets = new MutableVector2[faucetCount];
-		for (int i = 0; i < faucetCount; i++) {
+		faucets = new MutableVector2[Math.min(faucetCount, dimension.x * dimension.z)];
+		for (int i = 0; i < faucets.length; i++) {
 			do {
 				faucets[i] = new MutableVector2(random.nextInt(dimension.x), random.nextInt(dimension.z));
 			} while (isFaucetAt(faucets[i], true));
@@ -115,10 +115,10 @@ public class AnimationFaucet extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("faucetcount", "Count", AnimationOption.OptionType.SPINNER, new Object[]{faucetCount, 1, (dimension.x * dimension.z) / 4, 1, 0}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Random", 3, "Static Random"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
-				new AnimationOption("fill", "Fill", AnimationOption.OptionType.CHECKBOX, new Object[]{fill}),
+			new AnimationOption("faucetcount", "Count", AnimationOption.OptionType.SPINNER, new Object[]{faucetCount, 1, (dimension.x * dimension.z) / 4, 1, 0}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Random", 3, "Static Random"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("fill", "Fill", AnimationOption.OptionType.CHECKBOX, new Object[]{fill}),
 		};
 	}
 
@@ -161,7 +161,7 @@ public class AnimationFaucet extends Animation {
 	}
 
 	private boolean isFaucetAt(Vector2 pos, boolean otherOnly) {
-		for (int i = 0; i < faucetCount; i++) {
+		for (int i = 0; i < faucets.length; i++) {
 			Vector2 faucet = faucets[i];
 			if (faucet == null) continue;
 			if ((!otherOnly || faucet != pos) && (int)faucet.getX() == (int)pos.getX() && (int)faucet.getY() == (int)pos.getY()) return true;

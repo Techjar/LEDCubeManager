@@ -73,9 +73,9 @@ public class AnimationBalls extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("ballcount", "Ball Count", AnimationOption.OptionType.SPINNER, new Object[]{ballCount, 1, ledManager.getLEDCount() / 8, 1, 0}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Random", 2, "Hue Cycle"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("ballcount", "Ball Count", AnimationOption.OptionType.SPINNER, new Object[]{ballCount, 1, ledManager.getLEDCount() / 8, 1, 0}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Random", 2, "Hue Cycle"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
 		};
 	}
 

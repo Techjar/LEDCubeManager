@@ -204,7 +204,7 @@ public final class InstancedRenderer {
 						glActiveTexture(GL_TEXTURE2);
 						mesh.getModel().getSpecularMap().bind();
 						glActiveTexture(GL_TEXTURE0);
-						mesh.getModel().getMaterial().sendToShader(0);
+						mesh.getModel().getMaterial().sendToShader("front_material");
 						buffer.rewind();
 						Tuple<Integer, Integer> vbo = getVBO(-1);
 						glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());
@@ -243,7 +243,7 @@ public final class InstancedRenderer {
 				glActiveTexture(GL_TEXTURE2);
 				mesh.getModel().getSpecularMap().bind();
 				glActiveTexture(GL_TEXTURE0);
-				mesh.getModel().getMaterial().sendToShader(0);
+				mesh.getModel().getMaterial().sendToShader("front_material");
 				buffer.rewind();
 				Tuple<Integer, Integer> vbo = getNextVBO();
 				glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());
@@ -289,7 +289,7 @@ public final class InstancedRenderer {
 		glActiveTexture(GL_TEXTURE2);
 		mesh.getModel().getSpecularMap().bind();
 		glActiveTexture(GL_TEXTURE0);
-		mesh.getModel().getMaterial().sendToShader(0);
+		mesh.getModel().getMaterial().sendToShader("front_material");
 		buffer.rewind();
 		Tuple<Integer, Integer> vbo = getVBO(-1);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo.getA());

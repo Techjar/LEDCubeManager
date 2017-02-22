@@ -1,6 +1,8 @@
 
 package com.techjar.ledcm.render.pipeline;
 
+import com.techjar.ledcm.render.camera.RenderCamera;
+import com.techjar.ledcm.render.camera.RenderCameraStandard;
 import org.newdawn.slick.UnicodeFont;
 
 import com.hackoeur.jglm.Matrices;
@@ -10,6 +12,10 @@ import com.techjar.ledcm.render.InstancedRenderer;
 import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Tuple;
 import com.techjar.ledcm.util.Util;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
@@ -25,7 +31,15 @@ public class RenderPipelineGUI implements RenderPipeline {
 	}
 
 	@Override
+	public void preRender3D() {
+	}
+
+	@Override
 	public void render3D() {
+	}
+
+	@Override
+	public void postRender3D() {
 	}
 
 	@Override

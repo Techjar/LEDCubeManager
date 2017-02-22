@@ -112,10 +112,10 @@ public class AnimationSlidingBoxes extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("boxcount", "Box Count", AnimationOption.OptionType.SPINNER, new Object[]{boxCount, 1, ledManager.getLEDCount() - 1, 1, 0}),
-				new AnimationOption("boxsize", "Box Size", AnimationOption.OptionType.SPINNER, new Object[]{boxSize, 1, Math.min(Math.min(dimension.x, dimension.y), dimension.z) / 2, 1, 0}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Random After 7", 2, "Hue Cycle"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("boxcount", "Box Count", AnimationOption.OptionType.SPINNER, new Object[]{boxCount, 1, ledManager.getLEDCount() - 1, 1, 0}),
+			new AnimationOption("boxsize", "Box Size", AnimationOption.OptionType.SPINNER, new Object[]{boxSize, 1, Math.min(Math.min(dimension.x, dimension.y), dimension.z) / 2, 1, 0}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Random After 7", 2, "Hue Cycle"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
 		};
 	}
 

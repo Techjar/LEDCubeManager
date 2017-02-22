@@ -55,8 +55,8 @@ public class AnimationWipe extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("type", "Type", AnimationOption.OptionType.COMBOBOX, new Object[]{type, 0, "Solid", 1, "Hollow"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("type", "Type", AnimationOption.OptionType.COMBOBOX, new Object[]{type, 0, "Solid", 1, "Hollow"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
 		};
 	}
 

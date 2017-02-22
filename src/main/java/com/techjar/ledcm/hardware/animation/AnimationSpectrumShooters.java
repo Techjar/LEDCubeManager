@@ -69,8 +69,8 @@ public class AnimationSpectrumShooters extends AnimationSpectrumAnalyzer {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Random"}),
-				new AnimationOption("sensitivity", "Sensitivity", AnimationOption.OptionType.SLIDER, new Object[]{(50 - sensitivity) / 50F}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Random"}),
+			new AnimationOption("sensitivity", "Sensitivity", AnimationOption.OptionType.SLIDER, new Object[]{(50 - sensitivity) / 50F}),
 		};
 	}
 

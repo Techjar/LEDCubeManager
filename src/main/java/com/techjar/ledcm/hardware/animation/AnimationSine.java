@@ -75,9 +75,9 @@ public class AnimationSine extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("type", "Type", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Standard", 1, "Dual (Cosine)", 2, "Dual (Inverted)", 3, "Circle"}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 19F}),
+			new AnimationOption("type", "Type", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Standard", 1, "Dual (Cosine)", 2, "Dual (Inverted)", 3, "Circle"}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 19F}),
 		};
 	}
 

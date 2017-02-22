@@ -56,11 +56,11 @@ public class AnimationSlidingPanels  extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("xpanel", "X Panel", AnimationOption.OptionType.CHECKBOX, new Object[]{(panels & 1) != 0}),
-				new AnimationOption("ypanel", "Y Panel", AnimationOption.OptionType.CHECKBOX, new Object[]{((panels >> 1) & 1) != 0}),
-				new AnimationOption("zpanel", "Z Panel", AnimationOption.OptionType.CHECKBOX, new Object[]{((panels >> 2) & 1) != 0}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "RGB", 2, "Picker"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("xpanel", "X Panel", AnimationOption.OptionType.CHECKBOX, new Object[]{(panels & 1) != 0}),
+			new AnimationOption("ypanel", "Y Panel", AnimationOption.OptionType.CHECKBOX, new Object[]{((panels >> 1) & 1) != 0}),
+			new AnimationOption("zpanel", "Z Panel", AnimationOption.OptionType.CHECKBOX, new Object[]{((panels >> 2) & 1) != 0}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "RGB", 2, "Picker"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
 		};
 	}
 

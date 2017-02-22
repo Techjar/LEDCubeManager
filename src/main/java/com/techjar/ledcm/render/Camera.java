@@ -5,6 +5,7 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.math.Angle;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
+import com.techjar.ledcm.util.math.MutableVector3;
 import com.techjar.ledcm.util.math.Vector2;
 import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.util.input.InputBinding;
@@ -24,12 +25,14 @@ public class Camera {
 	@Getter @Setter private float rotateMultiplier;
 	@Getter @Setter private Vector3 position;
 	@Getter private Angle angle;
-	private float moveSpeedMult;
+	private float moveSpeedMult = 1;
+	private MutableVector3 velocity;
 
 	public Camera() {
 		this.moveSpeed = 0.2F;
 		this.rotateMultiplier = 0.2F;
 		this.position = new Vector3();
+		this.velocity = new MutableVector3();
 		this.angle = new Angle(Angle.Order.YXZ);
 
 		if (!LEDCubeManager.getInstance().isVrMode()) {
@@ -41,7 +44,7 @@ public class Camera {
 
 				@Override
 				public void whilePressed() {
-					position = position.add(angle.forward().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+					velocity.add(angle.forward());
 				}
 
 				@Override
@@ -57,7 +60,7 @@ public class Camera {
 
 				@Override
 				public void whilePressed() {
-					position = position.subtract(angle.forward().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+					velocity.subtract(angle.forward());
 				}
 
 				@Override
@@ -73,7 +76,7 @@ public class Camera {
 
 				@Override
 				public void whilePressed() {
-					position = position.subtract(angle.right().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+					velocity.subtract(angle.right());
 				}
 
 				@Override
@@ -89,7 +92,7 @@ public class Camera {
 
 				@Override
 				public void whilePressed() {
-					position = position.add(angle.right().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+					velocity.add(angle.right());
 				}
 
 				@Override
@@ -105,7 +108,7 @@ public class Camera {
 
 				@Override
 				public void whilePressed() {
-					position = position.subtract(angle.up().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+					velocity.subtract(angle.up());
 				}
 
 				@Override
@@ -121,7 +124,7 @@ public class Camera {
 
 				@Override
 				public void whilePressed() {
-					position = position.add(angle.up().multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta()));
+					velocity.add(angle.up());
 				}
 
 				@Override
@@ -155,6 +158,12 @@ public class Camera {
 			angle = angle.add(new Angle(-offset.getY() * rotateMultiplier, -offset.getX() * rotateMultiplier));
 			angle.setPitch(MathHelper.clamp(angle.getPitch(), -90, 90));
 			Mouse.setCursorPosition(LEDCubeManager.getWidth() / 2, LEDCubeManager.getHeight() / 2);
+		}
+		if (velocity.length() > 0) {
+			velocity.normalized();
+			velocity.multiply(moveSpeed * moveSpeedMult * LEDCubeManager.getFrameDelta());
+			position = position.add(velocity);
+			velocity.set(0, 0, 0);
 		}
 	}
 

@@ -121,12 +121,12 @@ public class AnimationGradient extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("color1", "Start Color", AnimationOption.OptionType.COLORPICKER, new Object[]{color1}),
-				new AnimationOption("color2", "End Color", AnimationOption.OptionType.COLORPICKER, new Object[]{color2}),
-				new AnimationOption("animmode", "Animation", AnimationOption.OptionType.COMBOBOX, new Object[]{animMode, 0, "Static", 1, "Scroll", 2, "Fade", 3, "Radiate In", 4, "Radiate Out", 5, "Fire"}),
-				new AnimationOption("colormode", "Color Mode", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Bicolor", 1, "Rainbow"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 149F}),
-				new AnimationOption("scale", "Scale", AnimationOption.OptionType.SLIDER, new Object[]{(29 - (scale - 1)) / 29F}),
+			new AnimationOption("color1", "Start Color", AnimationOption.OptionType.COLORPICKER, new Object[]{color1}),
+			new AnimationOption("color2", "End Color", AnimationOption.OptionType.COLORPICKER, new Object[]{color2}),
+			new AnimationOption("animmode", "Animation", AnimationOption.OptionType.COMBOBOX, new Object[]{animMode, 0, "Static", 1, "Scroll", 2, "Fade", 3, "Radiate In", 4, "Radiate Out", 5, "Fire"}),
+			new AnimationOption("colormode", "Color Mode", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Bicolor", 1, "Rainbow"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(speed - 1) / 149F}),
+			new AnimationOption("scale", "Scale", AnimationOption.OptionType.SLIDER, new Object[]{(29 - (scale - 1)) / 29F}),
 		};
 	}
 

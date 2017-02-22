@@ -25,6 +25,7 @@ import lombok.Setter;
 public class VRStereoProvider {
 	@Getter private int eyeTextureIdLeft;
 	@Getter private int eyeTextureIdRight;
+	private int[] eyeTextureSize;
 	private boolean stencilMask;
 	@Getter @Setter protected Vector3 worldScale = new Vector3(1, 1, 1);
 
@@ -38,15 +39,19 @@ public class VRStereoProvider {
 	}
 
 	public int[] getEyeTextureSize() {
-		IntBuffer rtx = IntBuffer.allocate(1);
-		IntBuffer rty = IntBuffer.allocate(1);
-		VRProvider.vrSystem.GetRecommendedRenderTargetSize.apply(rtx, rty);
+		if (eyeTextureSize == null) {
+			IntBuffer rtx = IntBuffer.allocate(1);
+			IntBuffer rty = IntBuffer.allocate(1);
+			VRProvider.vrSystem.GetRecommendedRenderTargetSize.apply(rtx, rty);
 
-		int[] size = new int[]{rtx.get(0), rty.get(0)};
-		if (size[0] % 2 != 0) size[0]++;
-		if (size[1] % 2 != 0) size[1]++;
+			int[] size = new int[]{rtx.get(0), rty.get(0)};
+			if (size[0] % 2 != 0) size[0]++;
+			if (size[1] % 2 != 0) size[1]++;
 
-		return size;
+			eyeTextureSize = size;
+		}
+
+		return eyeTextureSize;
 	}
 
 	public void setupStencilMask(int width, int height) {
@@ -107,13 +112,19 @@ public class VRStereoProvider {
 
 	public Matrix4f getProjectionMatrix(int eye, float nearClip, float farClip) {
 		if (eye == 0) {
-			HmdMatrix44_t mat = VRProvider.vrSystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
-			VRProvider.hmdProjectionLeftEye = new Matrix4f();
-			return OpenVRUtil.convertSteamVRMatrix4ToMatrix4f(mat, VRProvider.hmdProjectionLeftEye).transpose(null);
+			if (VRProvider.hmdProjectionLeftEye == null) {
+				HmdMatrix44_t mat = VRProvider.vrSystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Left, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
+				VRProvider.hmdProjectionLeftEye = new Matrix4f();
+				OpenVRUtil.convertSteamVRMatrix4ToMatrix4f(mat, VRProvider.hmdProjectionLeftEye).transpose(VRProvider.hmdProjectionLeftEye);
+			}
+			return VRProvider.hmdProjectionLeftEye;
 		} else if (eye == 1) {
-			HmdMatrix44_t mat = VRProvider.vrSystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Right, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
-			VRProvider.hmdProjectionRightEye = new Matrix4f();
-			return OpenVRUtil.convertSteamVRMatrix4ToMatrix4f(mat, VRProvider.hmdProjectionRightEye).transpose(null);
+			if (VRProvider.hmdProjectionRightEye == null) {
+				HmdMatrix44_t mat = VRProvider.vrSystem.GetProjectionMatrix.apply(JOpenVRLibrary.EVREye.EVREye_Eye_Right, nearClip, farClip, JOpenVRLibrary.EGraphicsAPIConvention.EGraphicsAPIConvention_API_OpenGL);
+				VRProvider.hmdProjectionRightEye = new Matrix4f();
+				OpenVRUtil.convertSteamVRMatrix4ToMatrix4f(mat, VRProvider.hmdProjectionRightEye).transpose(VRProvider.hmdProjectionRightEye);
+			}
+			return VRProvider.hmdProjectionRightEye;
 		}
 		throw new IllegalArgumentException("Unknown eye type: " + eye);
 	}

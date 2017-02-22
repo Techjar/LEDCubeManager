@@ -79,10 +79,10 @@ public class AnimationFireworks extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("rocketcolor", "R. Color", AnimationOption.OptionType.COLORPICKER, new Object[]{rocketColor}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Random Hue", 2, "Picker"}),
-				new AnimationOption("chance", "Chance", AnimationOption.OptionType.SLIDER, new Object[]{(199 - (chance - 1)) / 199F, 1F / 199F, false}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("rocketcolor", "R. Color", AnimationOption.OptionType.COLORPICKER, new Object[]{rocketColor}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Random", 1, "Random Hue", 2, "Picker"}),
+			new AnimationOption("chance", "Chance", AnimationOption.OptionType.SLIDER, new Object[]{(199 - (chance - 1)) / 199F, 1F / 199F, false}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
 		};
 	}
 

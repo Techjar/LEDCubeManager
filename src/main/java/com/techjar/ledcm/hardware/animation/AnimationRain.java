@@ -107,15 +107,15 @@ public class AnimationRain extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("topcolor", "Top", AnimationOption.OptionType.COLORPICKER, new Object[]{topColor}),
-				new AnimationOption("bottomcolor", "Bottom", AnimationOption.OptionType.COLORPICKER, new Object[]{bottomColor}),
-				new AnimationOption("lightningcolor", "Lightning", AnimationOption.OptionType.COLORPICKER, new Object[]{lightningColor}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Gradient", 1, "Rainbow Up", 2, "Rainbow Down"}),
-				new AnimationOption("dropfreq", "Drop Freq", AnimationOption.OptionType.SLIDER, new Object[]{(98 - (dropFreq - 2)) / 98F, 1F / 98F, false}),
-				new AnimationOption("lightningfreq", "L. Freq", AnimationOption.OptionType.SLIDER, new Object[]{(29950 - (lightningFreq - 50)) / 29950F}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
-				new AnimationOption("lightningenable", "L. Enable", AnimationOption.OptionType.CHECKBOX, new Object[]{lightningEnable}),
-				new AnimationOption("floorcollect", "Floor Coll.", AnimationOption.OptionType.CHECKBOX, new Object[]{floorCollect}),
+			new AnimationOption("topcolor", "Top", AnimationOption.OptionType.COLORPICKER, new Object[]{topColor}),
+			new AnimationOption("bottomcolor", "Bottom", AnimationOption.OptionType.COLORPICKER, new Object[]{bottomColor}),
+			new AnimationOption("lightningcolor", "Lightning", AnimationOption.OptionType.COLORPICKER, new Object[]{lightningColor}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Gradient", 1, "Rainbow Up", 2, "Rainbow Down"}),
+			new AnimationOption("dropfreq", "Drop Freq", AnimationOption.OptionType.SLIDER, new Object[]{(98 - (dropFreq - 2)) / 98F, 1F / 98F, false}),
+			new AnimationOption("lightningfreq", "L. Freq", AnimationOption.OptionType.SLIDER, new Object[]{(29950 - (lightningFreq - 50)) / 29950F}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("lightningenable", "L. Enable", AnimationOption.OptionType.CHECKBOX, new Object[]{lightningEnable}),
+			new AnimationOption("floorcollect", "Floor Coll.", AnimationOption.OptionType.CHECKBOX, new Object[]{floorCollect}),
 		};
 	}
 

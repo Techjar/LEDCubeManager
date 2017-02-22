@@ -38,19 +38,11 @@ public class AnimationCharTest extends Animation {
 		matrix.rotate((float)Math.PI * 2 * (((float)timer.getSeconds() / 2) % 1), new Vector3f(0, -1, 0));
 		matrix.translate(new Vector3f(-(ch.getThickness() - 1) / 2F, 0, -(ch.getFontSize() - 1) / 2F));
 		matrix2.translate(new Vector3f(4 - (ch.getThickness() / 2F), 0, 0));
-		ch.applyTransform(new LEDCharacter.Transformer() {
-			@Override
-			public Vector3 transform(Vector3 vector) {
-				return Util.transformVector(Util.transformVector(vector, matrix, false), matrix2, true);
-			}
-		});
-		ch.draw(ledManager, new LEDCharacter.Colorizer() {
-			@Override
-			public ReadableColor getColorAt(Vector3 vector) {
-				Color color = new Color();
-				color.fromHSB((vector.getY() / (ch.getFontSize() - 1)) * (300F / 360F), 1, 1 - (vector.getX() / ch.getThickness()));
-				return color;
-			}
+		ch.applyTransform(vector -> Util.transformVector(Util.transformVector(vector, matrix, false), matrix2, true));
+		ch.draw(ledManager, vector -> {
+			Color color = new Color();
+			color.fromHSB((vector.getY() / (ch.getFontSize() - 1)) * (300F / 360F), 1, 1 - (vector.getX() / ch.getThickness()));
+			return color;
 		});
 	}
 

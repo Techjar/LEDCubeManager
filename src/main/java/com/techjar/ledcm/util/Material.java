@@ -26,10 +26,11 @@ public class Material {
 		this.shininess = shininess;
 	}
 
-	public void sendToShader(int index) {
-		glUniform3f(index++, ambient.x, ambient.y, ambient.z);
-		glUniform3f(index++, diffuse.x, diffuse.y, diffuse.z);
-		glUniform3f(index++, specular.x, specular.y, specular.z);
-		glUniform1f(index++, shininess);
+	public void sendToShader(String uniform) {
+		ShaderProgram program = ShaderProgram.getCurrent();
+		glUniform3f(program.getUniformLocation(uniform + ".ambient"), ambient.x, ambient.y, ambient.z);
+		glUniform3f(program.getUniformLocation(uniform + ".diffuse"), diffuse.x, diffuse.y, diffuse.z);
+		glUniform3f(program.getUniformLocation(uniform + ".specular"), specular.x, specular.y, specular.z);
+		glUniform1f(program.getUniformLocation(uniform + ".shininess"), shininess);
 	}
 }

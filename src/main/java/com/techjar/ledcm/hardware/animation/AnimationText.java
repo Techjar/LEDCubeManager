@@ -55,70 +55,56 @@ public class AnimationText extends Animation {
 					switch (animMode) {
 						case 0:
 						case 1:
-							ch.applyTransform(new LEDCharacter.Transformer() {
-								@Override
-								public Vector3 transform(Vector3 vector) {
-									return vector.add(new Vector3(0, 0, (ch.getFontSize() + hSpace) * index));
-								}
-							});
+							ch.applyTransform(vector -> vector.add(new Vector3(0, 0, (ch.getFontSize() + hSpace) * index)));
 							switch (animMode) {
 								case 0:
-									ch.applyTransform(new LEDCharacter.Transformer() {
-										@Override
-										public Vector3 transform(Vector3 vec) {
-											PooledMutableVector3 vector = PooledMutableVector3.get(vec);
-											vector.add(new Vector3(0, 0, (dimension.z - 1) + dimension.x)).add(new Vector3(0, 0, scrollOffset));
-											if (vector.getZ() > dimension.z - 1) {
-												int z = (int)vector.getZ() - (dimension.z - 1);
-												vector.setZ(dimension.z - 1);
-												vector.setX(z);
-											} else if (vector.getZ() < 0) {
-												int z = -(int)vector.getZ();
-												vector.setZ(0);
-												vector.setX(z);
-												if (index == characters.length - 1) {
-													if (vector.getX() > dimension.x * 2) {
-														scrollOffset = 0;
-														finished = true;
-													}
-												}
-											}
-											Vector3 retVec = vector.toImmutable();
-											vector.release();
-											return retVec;
-										}
-									});
-									break;
-								case 1:
-									ch.applyTransform(new LEDCharacter.Transformer() {
-										@Override
-										public Vector3 transform(Vector3 vector) {
-											vector = vector.add(new Vector3(0, 0, dimension.z)).add(new Vector3(0, 0, scrollOffset));
+									ch.applyTransform(vec -> {
+										PooledMutableVector3 vector = PooledMutableVector3.get(vec);
+										vector.add(new Vector3(0, 0, (dimension.z - 1) + dimension.x)).add(new Vector3(0, 0, scrollOffset));
+										if (vector.getZ() > dimension.z - 1) {
+											int z = (int)vector.getZ() - (dimension.z - 1);
+											vector.setZ(dimension.z - 1);
+											vector.setX(z);
+										} else if (vector.getZ() < 0) {
+											int z = -(int)vector.getZ();
+											vector.setZ(0);
+											vector.setX(z);
 											if (index == characters.length - 1) {
-												if (vector.getZ() < -dimension.z) {
+												if (vector.getX() > dimension.x * 2) {
 													scrollOffset = 0;
 													finished = true;
 												}
 											}
-											return vector;
 										}
+										Vector3 retVec = vector.toImmutable();
+										vector.release();
+										return retVec;
+									});
+									break;
+								case 1:
+									ch.applyTransform(vector -> {
+										vector = vector.add(new Vector3(0, 0, dimension.z)).add(new Vector3(0, 0, scrollOffset));
+										if (index == characters.length - 1) {
+											if (vector.getZ() < -dimension.z) {
+												scrollOffset = 0;
+												finished = true;
+											}
+										}
+										return vector;
 									});
 									break;
 							}
 							break;
 						case 2:
-							ch.applyTransform(new LEDCharacter.Transformer() {
-								@Override
-								public Vector3 transform(Vector3 vector) {
-									vector = vector.add(new Vector3((dimension.x + (ch.getThickness() - 1)) * index + dimension.x + ch.getThickness() + scrollOffset, 0, 0));
-									if (index == characters.length - 1) {
-										if (vector.getX() < -ch.getThickness()) {
-											scrollOffset = 0;
-											finished = true;
-										}
+							ch.applyTransform(vector -> {
+								vector = vector.add(new Vector3((dimension.x + (ch.getThickness() - 1)) * index + dimension.x + ch.getThickness() + scrollOffset, 0, 0));
+								if (index == characters.length - 1) {
+									if (vector.getX() < -ch.getThickness()) {
+										scrollOffset = 0;
+										finished = true;
 									}
-									return vector;
 								}
+								return vector;
 							});
 							break;
 					}
@@ -140,22 +126,12 @@ public class AnimationText extends Animation {
 					matrix.translate(new Vector3f((ch.getThickness() - 1) / 2F, 0, (ch.getFontSize() - 1) / 2F));
 					matrix.rotate((float)Math.PI * 2 * rotation, new Vector3f(0, -1, 0));
 					matrix.translate(new Vector3f(-(ch.getThickness() - 1) / 2F, 0, -(ch.getFontSize() - 1) / 2F));
-					ch.applyTransform(new LEDCharacter.Transformer() {
-						@Override
-						public Vector3 transform(Vector3 vector) {
-							return Util.transformVector(vector, matrix, true);
-						}
-					});
+					ch.applyTransform(vector -> Util.transformVector(vector, matrix, true));
 					rotation += 0.05F;
 				} else {
 					scrollOffset--;
 				}
-				ch.applyTransform(new LEDCharacter.Transformer() {
-					@Override
-					public Vector3 transform(Vector3 vector) {
-						return vector.add(new Vector3(dimension.x + scrollOffset, 0, 0));
-					}
-				});
+				ch.applyTransform(vector -> vector.add(new Vector3(dimension.x + scrollOffset, 0, 0)));
 				drawCharacter(ch);
 			}
 		}
@@ -182,12 +158,12 @@ public class AnimationText extends Animation {
 	@Override
 	public AnimationOption[] getOptions() {
 		return new AnimationOption[]{
-				new AnimationOption("topcolor", "Grad. Top", AnimationOption.OptionType.COLORPICKER, new Object[]{topColor}),
-				new AnimationOption("bottomcolor", "Grad. Btm.", AnimationOption.OptionType.COLORPICKER, new Object[]{bottomColor}),
-				new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Gradient"}),
-				new AnimationOption("animmode", "Animation", AnimationOption.OptionType.COMBOBOX, new Object[]{animMode, 0, "Depth Scroll", 1, "Scroll", 2, "Fly Through", 3, "Fly In, Spin, Fly Out"}),
-				new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
-				new AnimationOption("text", "Text", AnimationOption.OptionType.TEXT, new Object[]{text, "^[\u0020-\u007E]*$", 100}),
+			new AnimationOption("topcolor", "Grad. Top", AnimationOption.OptionType.COLORPICKER, new Object[]{topColor}),
+			new AnimationOption("bottomcolor", "Grad. Btm.", AnimationOption.OptionType.COLORPICKER, new Object[]{bottomColor}),
+			new AnimationOption("colormode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Gradient"}),
+			new AnimationOption("animmode", "Animation", AnimationOption.OptionType.COMBOBOX, new Object[]{animMode, 0, "Depth Scroll", 1, "Scroll", 2, "Fly Through", 3, "Fly In, Spin, Fly Out"}),
+			new AnimationOption("speed", "Speed", AnimationOption.OptionType.SLIDER, new Object[]{(19 - (speed - 1)) / 19F, 1F / 19F}),
+			new AnimationOption("text", "Text", AnimationOption.OptionType.TEXT, new Object[]{text, "^[\u0020-\u007E]*$", 100}),
 		};
 	}
 
@@ -228,22 +204,14 @@ public class AnimationText extends Animation {
 				ch.draw(ledManager, LEDCubeManager.getPaintColor());
 				break;
 			case 1:
-				ch.draw(ledManager, new LEDCharacter.Colorizer() {
-					@Override
-					public ReadableColor getColorAt(Vector3 vector) {
-						Color color = new Color();
-						color.fromHSB((vector.getY() / (ch.getFontSize() - 1)) * (300F / 360F), 1, 1);
-						return color;
-					}
+				ch.draw(ledManager, vector -> {
+					Color color = new Color();
+					color.fromHSB((vector.getY() / (ch.getFontSize() - 1)) * (300F / 360F), 1, 1);
+					return color;
 				});
 				break;
 			case 2:
-				ch.draw(ledManager, new LEDCharacter.Colorizer() {
-					@Override
-					public ReadableColor getColorAt(Vector3 vector) {
-						return MathHelper.lerpLab(bottomColor, topColor, vector.getY() / (ch.getFontSize() - 1));
-					}
-				});
+				ch.draw(ledManager, vector -> MathHelper.lerpLab(bottomColor, topColor, vector.getY() / (ch.getFontSize() - 1)));
 				break;
 		}
 	}
