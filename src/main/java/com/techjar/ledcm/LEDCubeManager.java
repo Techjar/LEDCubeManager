@@ -323,7 +323,7 @@ public class LEDCubeManager {
 				validControllers.put(con.getName(), i);
 				config.defaultProperty("controls.controller", con.getName());
 				if (defaultController.isEmpty()) defaultController = con.getName();
-				LogHelper.config("Found controller: %s (%d Rumblers)", con.getName(), con.getRumblerCount());
+				LogHelper.config("Found controller: %s (%d buttons, %d axes, %d rumblers)", con.getName(), con.getButtonCount(), con.getAxisCount(), con.getRumblerCount());
 			}
 		}
 		if (validControllers.size() < 1) config.setProperty("controls.controller", "");
@@ -561,7 +561,13 @@ public class LEDCubeManager {
 		this.processController();
 		this.processVRInput();
 		this.update(delta);
-		if (vrMode || Display.isActive() || (frame.isVisible() && frame.getState() != Frame.ICONIFIED) || frameServer.numClients > 0) this.render();
+
+		boolean shouldRender = false, renderWindow = false;
+		for (RenderCamera cam : renderCameras) {
+			shouldRender |= cam.shouldRender();
+			renderWindow |= cam.shouldRender() && cam.usesMainWindow();
+		}
+		if (shouldRender) this.render(renderWindow);
 		else Thread.sleep(20);
 		Display.update();
 	}
@@ -1132,8 +1138,9 @@ public class LEDCubeManager {
 	}
 
 	@SneakyThrows(IOException.class)
-	public void render() {
+	public void render(boolean window) {
 		renderStart = System.nanoTime();
+		//System.out.println(new Vector2(0, 0).angle(new Vector2(0, -1)));
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, multisampleFBO);
 
 		// Setup and render 3D
@@ -1155,53 +1162,55 @@ public class LEDCubeManager {
 		render3D();
 		checkGLError("Post render 3D");
 
-		// Setup and render 2D
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, displayMode.getWidth(), displayMode.getHeight(), 0, -1, 1);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		//glClear(GL_DEPTH_BUFFER_BIT);
-		glDisable(GL_LIGHTING);
-		glDisable(GL_DEPTH_TEST);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		checkGLError("Pre render 2D");
-		render2D();
-		checkGLError("Post render 2D");
+		if (window) {
+			// Setup and render 2D
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrtho(0, displayMode.getWidth(), displayMode.getHeight(), 0, -1, 1);
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			//glClear(GL_DEPTH_BUFFER_BIT);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_DEPTH_TEST);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			checkGLError("Pre render 2D");
+			render2D();
+			checkGLError("Post render 2D");
 
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
-		glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
-		boolean frameServe = frameServer.numClients > 0 && frameServeTimer.getMilliseconds() >= 1000D / 60D;
-		if (screenshot || frameServe) {
-			frameServeTimer.restart();
-			ByteBuffer buffer = BufferUtils.createByteBuffer(displayMode.getWidth() * displayMode.getHeight() * 3);
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-			glReadPixels(0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
-			BufferedImage image = new BufferedImage(displayMode.getWidth(), displayMode.getHeight(), BufferedImage.TYPE_INT_RGB);
-			int[] pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
-			buffer.rewind();
-			for (int y = displayMode.getHeight() - 1; y >= 0; y--) {
-				for (int x = 0; x < displayMode.getWidth(); x++) {
-					pixels[x + (y * displayMode.getWidth())] = (buffer.get() & 0xFF) << 16 | (buffer.get() & 0xFF) << 8 | (buffer.get() & 0xFF);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampleFBO);
+			glBlitFramebuffer(0, 0, displayMode.getWidth(), displayMode.getHeight(), 0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
+			boolean frameServe = frameServer.numClients > 0 && frameServeTimer.getMilliseconds() >= 1000D / 60D;
+			if (screenshot || frameServe) {
+				frameServeTimer.restart();
+				ByteBuffer buffer = BufferUtils.createByteBuffer(displayMode.getWidth() * displayMode.getHeight() * 3);
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+				glReadPixels(0, 0, displayMode.getWidth(), displayMode.getHeight(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
+				BufferedImage image = new BufferedImage(displayMode.getWidth(), displayMode.getHeight(), BufferedImage.TYPE_INT_RGB);
+				int[] pixels = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
+				buffer.rewind();
+				for (int y = displayMode.getHeight() - 1; y >= 0; y--) {
+					for (int x = 0; x < displayMode.getWidth(); x++) {
+						pixels[x + (y * displayMode.getWidth())] = (buffer.get() & 0xFF) << 16 | (buffer.get() & 0xFF) << 8 | (buffer.get() & 0xFF);
+					}
 				}
-			}
 
-			if (screenshot) {
-				screenshot = false;
-				SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-				File screenshotDir = new File(dataDirectory, "screenshots");
-				screenshotDir.mkdirs();
-				File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
-				for (int i = 2; file.exists(); i++) {
-					file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + "_" + i + ".png");
+				if (screenshot) {
+					screenshot = false;
+					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
+					File screenshotDir = new File(dataDirectory, "screenshots");
+					screenshotDir.mkdirs();
+					File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
+					for (int i = 2; file.exists(); i++) {
+						file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + "_" + i + ".png");
+					}
+					ImageIO.write(image, "png", file);
 				}
-				ImageIO.write(image, "png", file);
-			}
 
-			if (frameServe) {
-				frameServer.queueFrame(image);
+				if (frameServe) {
+					frameServer.queueFrame(image);
+				}
 			}
 		}
 	}

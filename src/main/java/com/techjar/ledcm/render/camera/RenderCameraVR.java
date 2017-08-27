@@ -5,9 +5,12 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.vr.VRProvider;
 import com.techjar.ledcm.vr.VRStereoProvider;
+import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.util.Dimension;
 import org.lwjgl.util.vector.Matrix4f;
+
+import java.awt.*;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -19,6 +22,20 @@ public class RenderCameraVR implements RenderCamera {
 	public RenderCameraVR(VRStereoProvider.EyeType eye, int fboId) {
 		this.eye = eye;
 		this.fboId = fboId;
+	}
+
+	@Override
+	public boolean shouldRender() {
+		if (eye == VRStereoProvider.EyeType.CENTER) {
+			return Display.isActive() || (LEDCubeManager.getFrame().isVisible() && LEDCubeManager.getFrame().getState() != Frame.ICONIFIED) || LEDCubeManager.getFrameServer().numClients > 0;
+		} else {
+			return true;
+		}
+	}
+
+	@Override
+	public boolean usesMainWindow() {
+		return eye == VRStereoProvider.EyeType.CENTER;
 	}
 
 	@Override

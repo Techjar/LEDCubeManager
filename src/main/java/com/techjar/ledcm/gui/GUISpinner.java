@@ -58,7 +58,22 @@ public class GUISpinner extends GUI {
 			} catch (NumberFormatException ex) {
 			}
 		});
-		updateRegex();
+		textField.setValidationFunction(str -> {
+			try {
+				if (str.isEmpty()) return true;
+				if (str.toLowerCase().contains("f") || str.toLowerCase().contains("d")) return false;
+				float f = Float.parseFloat(str);
+				if (f >= minValue && f <= maxValue) {
+					if (decimalPlaces > 0) {
+						return str.indexOf('.') == -1 || str.substring(str.indexOf('.') + 1).length() <= decimalPlaces;
+					}
+					return str.indexOf('.') == -1 && Math.floor(f) == f;
+				}
+				return false;
+			} catch (NumberFormatException ex) {
+				return false;
+			}
+		});
 	}
 
 	@Override
@@ -148,12 +163,6 @@ public class GUISpinner extends GUI {
 		textField.setDimension(dimension.getWidth() - buttonWidth - 2, dimension.getHeight());
 	}
 
-	protected void updateRegex() {
-		String maxStr = Integer.toString((int)Math.max(Math.abs(minValue), Math.abs(maxValue)));
-		if (decimalPlaces > 0) textField.setValidationRegex("^" + (minValue < 0 ? "-?" : "") + "[0-9]{0," + maxStr.length() + "}(\\.[0-9]{0," + decimalPlaces + "})?$");
-		else textField.setValidationRegex("^" + (minValue < 0 ? "-?" : "") + "[0-9]{0," + maxStr.length() + "}$");
-	}
-
 	protected void updateValue(float value) {
 		this.value = MathHelper.clamp(Float.parseFloat(formatDecimal(value)), minValue, maxValue);
 		setTextField(this.value);
@@ -207,7 +216,6 @@ public class GUISpinner extends GUI {
 
 	public void setMinValue(float minValue) {
 		this.minValue = minValue;
-		updateRegex();
 		updateValue(value);
 	}
 
@@ -217,7 +225,6 @@ public class GUISpinner extends GUI {
 
 	public void setMaxValue(float maxValue) {
 		this.maxValue = maxValue;
-		updateRegex();
 		updateValue(value);
 	}
 
@@ -227,7 +234,6 @@ public class GUISpinner extends GUI {
 
 	public void setDecimalPlaces(int decimalPlaces) {
 		this.decimalPlaces = decimalPlaces;
-		updateRegex();
 		updateValue(value);
 	}
 
