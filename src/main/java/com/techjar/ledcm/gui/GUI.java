@@ -22,6 +22,7 @@ public abstract class GUI {
 	protected Vector2 position = new Vector2();
 	protected Vector2 relativePosition = new Vector2();
 	protected Vector2 cachedParentPos = null;
+	protected Dimension cachedParentDim = null;
 	protected Dimension dimension = new Dimension();
 	protected Rectangle baseBox = new Rectangle(0, 0, 0, 0);
 	protected GUICallback dimensionChangeHandler;
@@ -76,10 +77,11 @@ public abstract class GUI {
 	 */
 	protected Vector2 getPosition() {
 		if (parent != null) {
+			// TODO: abstract this rather than hard-coding it
 			boolean realParent = this instanceof GUIBackground || (this instanceof GUIButton && ((GUIButton)this).windowClose);
 			Vector2 parentPos = realParent ? parent.getPosition() : parent.getContainerPosition();
-			if (!parentPos.equals(cachedParentPos)) {
-				Dimension parentDim = realParent ? parent.getDimension() : parent.getContainerDimension();
+			Dimension parentDim = realParent ? parent.getDimension() : parent.getContainerDimension();
+			if (!parentPos.equals(cachedParentPos) || !parentDim.equals(cachedParentDim)) {
 				switch (parentAlign) {
 					case TOP_LEFT:
 						relativePosition = position.add(parentPos);
@@ -112,6 +114,7 @@ public abstract class GUI {
 						throw new RuntimeException("Illegal value for parentAlign (this should never happen!)");
 				}
 				cachedParentPos = parentPos.copy();
+				cachedParentDim = new Dimension(parentDim.getWidth(), parentDim.getHeight());
 			}
 			return relativePosition;
 		}
