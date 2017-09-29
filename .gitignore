@@ -45,6 +45,7 @@ config.yml
 
 # Keep This Shit
 !/lib/*.jar
+!/gradle/wrapper/gradle-wrapper.jar
 
 # Gradle junk
 .gradle
