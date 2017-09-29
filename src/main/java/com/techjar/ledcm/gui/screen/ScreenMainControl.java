@@ -1,6 +1,7 @@
 
 package com.techjar.ledcm.gui.screen;
 
+import com.google.common.collect.Lists;
 import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.gui.*;
 import com.techjar.ledcm.render.RenderHelper;
@@ -98,8 +99,7 @@ public class ScreenMainControl extends Screen {
 	public final GUILabel rotateZLabel;
 	public final GUICheckBox previewTransform;
 	public final GUILabel previewTransformLabel;
-	public final GUILabel fullscreenLabel;
-	public final GUICheckBox fullscreenCheckbox;
+	public final GUIComboBox windowModeComboBox;
 	public final GUILabel limitFramerateLabel;
 	public final GUICheckBox limitFramerateCheckbox;
 	public final GUISlider fovSlider;
@@ -551,26 +551,21 @@ public class ScreenMainControl extends Screen {
 		resolutionComboBox.setPosition(0, 10);
 		resolutionComboBox.setVisibleItems(5);
 		for (DisplayMode displayMode : LEDCubeManager.getInstance().getDisplayModeList()) {
-			resolutionComboBox.addItem(displayMode.getWidth() + "x" + displayMode.getHeight());
+			resolutionComboBox.addItem(displayMode.getWidth() + "x" + displayMode.getHeight() + " @ " + displayMode.getFrequency() + "Hz");
 		}
-		resolutionComboBox.setSelectedItem(LEDCubeManager.getWidth() + "x" + LEDCubeManager.getHeight());
+		resolutionComboBox.setSelectedItem(LEDCubeManager.getWidth() + "x" + LEDCubeManager.getHeight() + " @ " + LEDCubeManager.getDisplayMode().getFrequency() + "Hz");
 		settingsScrollBox.addComponent(resolutionComboBox);
-		fullscreenLabel = new GUILabel(font, new Color(255, 255, 255), "Fullscreen");
-		fullscreenLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
-		fullscreenLabel.setDimension(font.getWidth(fullscreenLabel.getText()), 30);
-		fullscreenLabel.setPosition(-165 + (fullscreenLabel.getWidth() / 2), 55);
-		settingsScrollBox.addComponent(fullscreenLabel);
-		fullscreenCheckbox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-		fullscreenCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
-		fullscreenCheckbox.setDimension(30, 30);
-		fullscreenCheckbox.setPosition(-185, 55);
-		fullscreenCheckbox.setLabel(fullscreenLabel);
-		fullscreenCheckbox.setChecked(LEDCubeManager.getInstance().isFullscreen());
-		settingsScrollBox.addComponent(fullscreenCheckbox);
+		windowModeComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		windowModeComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
+		windowModeComboBox.setDimension(400, 35);
+		windowModeComboBox.setPosition(0, 55);
+		windowModeComboBox.addAllItems(Lists.newArrayList("Windowed", "Fullscreen", "Borderless"));
+		windowModeComboBox.setSelectedItem(LEDCubeManager.getInstance().isFullscreen() ? (LEDCubeManager.getInstance().isBorderless() ? "Borderless" : "Fullscreen") : "Windowed");
+		settingsScrollBox.addComponent(windowModeComboBox);
 		audioInputComboBox = new GUIComboBox(font, new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		audioInputComboBox.setParentAlignment(GUIAlignment.TOP_CENTER);
 		audioInputComboBox.setDimension(400, 35);
-		audioInputComboBox.setPosition(0, 95);
+		audioInputComboBox.setPosition(0, 100);
 		audioInputComboBox.setVisibleItems(5);
 		audioInputComboBox.addAllItems(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getMixers().keySet());
 		audioInputComboBox.setSelectedItem(LEDCubeManager.getLEDCube().getSpectrumAnalyzer().getCurrentMixerName());
@@ -578,7 +573,7 @@ public class ScreenMainControl extends Screen {
 		antiAliasingComboBtn = new GUIComboButton(font, new Color(255, 255, 255), new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		antiAliasingComboBtn.setParentAlignment(GUIAlignment.TOP_CENTER);
 		antiAliasingComboBtn.setDimension(400, 35);
-		antiAliasingComboBtn.setPosition(0, 140);
+		antiAliasingComboBtn.setPosition(0, 145);
 		antiAliasingComboBtn.addItem("Off");
 		for (int i = 2; i <= LEDCubeManager.getInstance().antiAliasingMaxSamples; i *= 2) {
 			antiAliasingComboBtn.addItem(i + "x");
@@ -588,7 +583,7 @@ public class ScreenMainControl extends Screen {
 		fovSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
 		fovSlider.setParentAlignment(GUIAlignment.TOP_CENTER);
 		fovSlider.setDimension(400, 30);
-		fovSlider.setPosition(0, 185);
+		fovSlider.setPosition(0, 190);
 		fovSlider.setValue((LEDCubeManager.getInstance().getFieldOfView() - 30) / 60);
 		fovSlider.setChangeHandler(component -> {
 			LEDCubeManager.getInstance().setFieldOfView(fovSlider.getValue() * 60 + 30);
@@ -598,12 +593,12 @@ public class ScreenMainControl extends Screen {
 		limitFramerateLabel = new GUILabel(font, new Color(255, 255, 255), "Limit Framerate");
 		limitFramerateLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
 		limitFramerateLabel.setDimension(font.getWidth(limitFramerateLabel.getText()), 30);
-		limitFramerateLabel.setPosition(-165 + (limitFramerateLabel.getWidth() / 2), 230);
+		limitFramerateLabel.setPosition(-165 + (limitFramerateLabel.getWidth() / 2), 235);
 		settingsScrollBox.addComponent(limitFramerateLabel);
 		limitFramerateCheckbox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
 		limitFramerateCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
 		limitFramerateCheckbox.setDimension(30, 30);
-		limitFramerateCheckbox.setPosition(-185, 230);
+		limitFramerateCheckbox.setPosition(-185, 235);
 		limitFramerateCheckbox.setLabel(limitFramerateLabel);
 		limitFramerateCheckbox.setChecked(LEDCubeManager.getInstance().isLimitFramerate());
 		if (LEDCubeManager.getInstance().isVrMode()) limitFramerateCheckbox.setEnabled(false);
@@ -616,12 +611,14 @@ public class ScreenMainControl extends Screen {
 			settingsWindow.setVisible(false);
 			Object item = resolutionComboBox.getSelectedItem();
 			if (item != null) {
-				String[] split = item.toString().split("x");
-				if (split.length == 2) {
-					LEDCubeManager.getInstance().setDisplayMode(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+				String[] split = item.toString().split(" @ ");
+				String[] split2 = split[0].split("x");
+				if (split.length == 2 && split2.length == 2) {
+					LEDCubeManager.getInstance().setDisplayMode(Integer.parseInt(split2[0]), Integer.parseInt(split2[1]), Integer.parseInt(split[1].substring(0, split[1].length() - 2)));
 				}
 			}
-			LEDCubeManager.getInstance().setFullscreen(fullscreenCheckbox.isChecked());
+			LEDCubeManager.getInstance().setFullscreen(windowModeComboBox.getSelectedItem().equals("Fullscreen") || windowModeComboBox.getSelectedItem().equals("Borderless"));
+			LEDCubeManager.getInstance().setBorderless(windowModeComboBox.getSelectedItem().equals("Borderless"));
 			LEDCubeManager.getInstance().setLimitFramerate(limitFramerateCheckbox.isChecked());
 			item = audioInputComboBox.getSelectedItem();
 			if (item != null) {

@@ -32,6 +32,9 @@ local.properties
 out/
 .idea/
 generated/
+*.iml
+*.ipr
+*.iws
 
 # Misc
 logs/
@@ -49,3 +52,9 @@ config.yml
 
 # Gradle junk
 .gradle
+
+# OS Junk
+.directory
+.DS_Store
+__MACOSX
+Thumbs.db

@@ -10,8 +10,10 @@ import java.util.Comparator;
 public class ResolutionSorter implements Comparator<DisplayMode> {
 	@Override
 	public int compare(DisplayMode o1, DisplayMode o2) {
-		if(o1.getWidth() * o1.getHeight() > o2.getWidth() * o2.getHeight()) return 1;
-		if(o1.getWidth() * o1.getHeight() < o2.getWidth() * o2.getHeight()) return -1;
+		if (o1.getWidth() * o1.getHeight() > o2.getWidth() * o2.getHeight()) return 1;
+		if (o1.getWidth() * o1.getHeight() < o2.getWidth() * o2.getHeight()) return -1;
+		if (o1.getFrequency() > o2.getFrequency()) return 1;
+		if (o1.getFrequency() < o2.getFrequency()) return -1;
 		return 0;
 	}
 }

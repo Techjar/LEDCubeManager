@@ -120,9 +120,12 @@ public class LEDCubeManager {
 	private DisplayMode configDisplayMode;
 	private ByteBuffer[] icons;
 	private boolean fullscreen;
+	private boolean borderless;
 	private boolean newFullscreen;
+	private boolean newBorderless;
 	@Getter private static ConfigManager config;
 	@Getter private static JFrame frame;
+	private static TrayIcon trayIcon;
 	@Getter private List<DisplayMode> displayModeList;
 	private Canvas canvas;
 	private boolean closeRequested = false;
@@ -434,13 +437,13 @@ public class LEDCubeManager {
 		});
 
 		frame.add(canvas, BorderLayout.CENTER);
-		resizeFrame(fullscreen);
+		resizeFrame(fullscreen, borderless);
 	}
 
-	private void resizeFrame(boolean fullscreen) throws LWJGLException {
+	private void resizeFrame(boolean fullscreen, boolean borderless) throws LWJGLException {
 		Display.setParent(null);
 		frame.dispose();
-		if (fullscreen) {
+		if (fullscreen && !borderless) {
 			Display.setDisplayMode(displayMode);
 			Display.setFullscreen(true);
 		} else {
@@ -488,6 +491,7 @@ public class LEDCubeManager {
 		if (modelManager != null) modelManager.cleanup();
 		if (ledCube != null) ledCube.cleanup();
 		if (VRProvider.isInitialized()) VRProvider.destroy();
+		if (frame != null) frame.dispose();
 		ShaderProgram.cleanup();
 		Keyboard.destroy();
 		Mouse.destroy();
@@ -528,14 +532,17 @@ public class LEDCubeManager {
 
 	private void runGameLoop() throws InterruptedException {
 		//if (fullscreen && !frame.isFocused()) setFullscreen(false);
-		if (newDisplayMode != null || newFullscreen != fullscreen) {
+		if (newDisplayMode != null || newFullscreen != fullscreen || newBorderless != borderless) {
 			fullscreen = newFullscreen;
+			borderless = newBorderless;
 			if (newDisplayMode != null) {
 				displayMode = newDisplayMode;
 				configDisplayMode = newDisplayMode;
 				config.setProperty("display.width", configDisplayMode.getWidth());
 				config.setProperty("display.height", configDisplayMode.getHeight());
+				config.setProperty("display.frequency", configDisplayMode.getFrequency());
 				config.setProperty("display.fullscreen", fullscreen);
+				config.setProperty("display.fullscreenborderless", borderless);
 				config.setProperty("display.antialiasing", antiAliasing);
 				config.setProperty("display.antialiasingsamples", antiAliasingSamples);
 				config.save();
@@ -650,6 +657,8 @@ public class LEDCubeManager {
 			LogHelper.warning("System tray is not supported.");
 			return;
 		}
+		if (trayIcon != null) systemTray.remove(trayIcon);
+		if (!config.getBoolean("misc.trayicon")) return;
 
 		systemTray = SystemTray.getSystemTray();
 		Image image = Toolkit.getDefaultToolkit().getImage("resources/textures/icon16.png");
@@ -659,7 +668,7 @@ public class LEDCubeManager {
 			shutdown();
 		});
 		menu.add(item);
-		TrayIcon trayIcon = new TrayIcon(image, Constants.APP_TITLE, menu);
+		trayIcon = new TrayIcon(image, Constants.APP_TITLE, menu);
 		trayIcon.setImageAutoSize(true);
 		trayIcon.addMouseListener(new MouseListener() {
 			@Override
@@ -694,7 +703,8 @@ public class LEDCubeManager {
 		displayModeList = new ArrayList<>();
 		DisplayMode desktop = Display.getDesktopDisplayMode();
 		for (DisplayMode mode : Display.getAvailableDisplayModes()) {
-			if(mode.getBitsPerPixel() == desktop.getBitsPerPixel() && mode.getFrequency() == desktop.getFrequency()) {
+			System.out.println(mode);
+			if(mode.getBitsPerPixel() == desktop.getBitsPerPixel()) {
 				displayModeList.add(mode);
 				if (mode.getWidth() == 1024 && mode.getHeight() == 768) displayMode = mode;
 			}
@@ -708,7 +718,9 @@ public class LEDCubeManager {
 		config.load();
 		config.defaultProperty("display.width", displayMode.getWidth());
 		config.defaultProperty("display.height", displayMode.getHeight());
+		config.defaultProperty("display.frequency", displayMode.getFrequency());
 		config.defaultProperty("display.fullscreen", false);
+		config.defaultProperty("display.fullscreenborderless", false);
 		config.defaultProperty("display.fieldofview", 45F);
 		config.defaultProperty("display.viewdistance", 100F);
 		config.defaultProperty("display.antialiasing", true);
@@ -719,18 +731,22 @@ public class LEDCubeManager {
 		config.defaultProperty("sound.inputdevice", "");
 		config.defaultProperty("sound.inputgain", 0.05F);
 		config.defaultProperty("misc.ffmpegpath", "ffmpeg");
+		config.defaultProperty("misc.trayicon", false);
 
-		if (!internalSetDisplayMode(config.getInteger("display.width"), config.getInteger("display.height"))) {
+		if (!internalSetDisplayMode(config.getInteger("display.width"), config.getInteger("display.height"), config.getInteger("display.frequency"))) {
 			config.setProperty("display.width", displayMode.getWidth());
 			config.setProperty("display.height", displayMode.getHeight());
+			config.setProperty("display.height", displayMode.getFrequency());
 		}
 		antiAliasing = config.getBoolean("display.antialiasing");
 		antiAliasingSamples = config.getInteger("display.antialiasingsamples");
 		fieldOfView = config.getFloat("display.fieldofview");
 		viewDistance = config.getFloat("display.viewdistance");
 		fullscreen = config.getBoolean("display.fullscreen");
+		borderless = config.getBoolean("display.fullscreenborderless");
 		limitFramerate = config.getBoolean("display.limitframerate");
 		newFullscreen = fullscreen;
+		newBorderless = borderless;
 
 		if (!antiAliasingSupported) {
 			antiAliasing = false;
@@ -1330,9 +1346,9 @@ public class LEDCubeManager {
 		return index != null ? Controllers.getController(index) : null;
 	}
 
-	public DisplayMode findDisplayMode(int width, int height) {
+	public DisplayMode findDisplayMode(int width, int height, int frequency) {
 		for (DisplayMode mode : displayModeList) {
-			if(mode.getWidth() == width && mode.getHeight() == height) {
+			if(mode.getWidth() == width && mode.getHeight() == height && mode.getFrequency() == frequency) {
 				return mode;
 			}
 		}
@@ -1348,7 +1364,7 @@ public class LEDCubeManager {
                 displayMode = desktopMode;
             } else displayMode = configDisplayMode;*/
 			displayMode = configDisplayMode;
-			resizeFrame(fullscreen);
+			resizeFrame(fullscreen, borderless);
 			resizeGL(displayMode.getWidth(), displayMode.getHeight());
 			setupAntiAliasing();
 			for (Runnable callback : resizeHandlers) {
@@ -1365,8 +1381,8 @@ public class LEDCubeManager {
 		this.newDisplayMode = displayMode;
 	}
 
-	public boolean setDisplayMode(int width, int height) {
-		DisplayMode mode = findDisplayMode(width, height);
+	public boolean setDisplayMode(int width, int height, int frequency) {
+		DisplayMode mode = findDisplayMode(width, height, frequency);
 		if (mode != null) {
 			setDisplayMode(mode);
 			return true;
@@ -1374,8 +1390,8 @@ public class LEDCubeManager {
 		return false;
 	}
 
-	private boolean internalSetDisplayMode(int width, int height) {
-		DisplayMode mode = findDisplayMode(width, height);
+	private boolean internalSetDisplayMode(int width, int height, int frequency) {
+		DisplayMode mode = findDisplayMode(width, height, frequency);
 		if (mode != null) {
 			displayMode = mode;
 			configDisplayMode = mode;
@@ -1388,8 +1404,16 @@ public class LEDCubeManager {
 		return fullscreen;
 	}
 
+	public boolean isBorderless() {
+		return fullscreen;
+	}
+
 	public void setFullscreen(boolean fullscreen) {
 		this.newFullscreen = fullscreen;
+	}
+
+	public void setBorderless(boolean borderless) {
+		this.newBorderless = borderless;
 	}
 
 	public void setAntiAliasing(boolean enabled, int samples) {
