@@ -158,6 +158,9 @@ public class VRTrackedController {
 			case SPLIT_LR:
 				if (axis.getX() > 0) return ButtonType.TOUCHPAD_R;
 				else return ButtonType.TOUCHPAD_L;
+			case SPLIT_QUAD_CENTER:
+				if (Math.abs(axis.getX()) < 0.3F && Math.abs(axis.getY()) < 0.3F)
+					return ButtonType.TOUCHPAD_C;
 			case SPLIT_QUAD:
 				if (axis.getX() > 0) {
 					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UR;
@@ -166,17 +169,20 @@ public class VRTrackedController {
 					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UL;
 					else return ButtonType.TOUCHPAD_LL;
 				}
-			case SPLIT_QUAD_CENTER:
-				if (Math.abs(axis.getX()) < 0.3F && Math.abs(axis.getY()) < 0.3F) {
+			case SPLIT_CROSS_CENTER:
+				if (Math.abs(axis.getX()) < 0.3F && Math.abs(axis.getY()) < 0.3F)
 					return ButtonType.TOUCHPAD_C;
-				}
-				if (axis.getX() > 0) {
-					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UR;
-					else return ButtonType.TOUCHPAD_LR;
-				} else {
-					if (axis.getY() > 0) return ButtonType.TOUCHPAD_UL;
-					else return ButtonType.TOUCHPAD_LL;
-				}
+			case SPLIT_CROSS:
+				float angle = new Vector2(0, 0).angle(axis);
+				if (angle == Float.NaN) angle = 0;
+				if (angle >= 45 && angle <= 135)
+					return ButtonType.TOUCHPAD_U;
+				if (angle <= -45 && angle >= -135)
+					return ButtonType.TOUCHPAD_D;
+				if (angle >= 135 || angle <= -135)
+					return ButtonType.TOUCHPAD_L;
+				if (angle <= 45 && angle >= -45)
+					return ButtonType.TOUCHPAD_R;
 			default:
 				return null;
 		}
@@ -317,6 +323,8 @@ public class VRTrackedController {
 		SPLIT_UD,
 		SPLIT_LR,
 		SPLIT_QUAD,
-		SPLIT_QUAD_CENTER;
+		SPLIT_QUAD_CENTER,
+		SPLIT_CROSS,
+		SPLIT_CROSS_CENTER;
 	}
 }

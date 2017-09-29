@@ -32,6 +32,9 @@ local.properties
 out/
 .idea/
 generated/
+*.iml
+*.ipr
+*.iws
 
 # Misc
 logs/
@@ -45,6 +48,13 @@ config.yml
 
 # Keep This Shit
 !/lib/*.jar
+!/gradle/wrapper/gradle-wrapper.jar
 
 # Gradle junk
 .gradle
+
+# OS Junk
+.directory
+.DS_Store
+__MACOSX
+Thumbs.db

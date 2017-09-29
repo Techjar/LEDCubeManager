@@ -4,6 +4,7 @@ import com.techjar.ledcm.LEDCubeManager;
 import com.techjar.ledcm.util.MathHelper;
 
 import com.techjar.ledcm.vr.VRProvider;
+import lombok.NonNull;
 import org.lwjgl.util.Color;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -31,6 +32,7 @@ public class GUITextField extends GUIText {
 	protected GUIBackground guiBg;
 	protected int maxLength = Short.MAX_VALUE;
 	protected String validationRegex = ".*";
+	protected ValidationFunction validationFunction = str -> {return true;};
 	protected boolean focused;
 	protected boolean canLoseFocus = true;
 	protected int cursorPosition;
@@ -83,7 +85,7 @@ public class GUITextField extends GUIText {
 										return false;
 									}
 								}
-								if ((text.substring(0, cursorPosition) + str + text.substring(cursorPosition)).matches(validationRegex)) {
+								if (validate(text.substring(0, cursorPosition) + str + text.substring(cursorPosition))) {
 									text.insert(cursorPosition, str);
 									for (int i = 0; i < str.length(); i++) {
 										moveCursor(true);
@@ -189,7 +191,7 @@ public class GUITextField extends GUIText {
 	}
 
 	protected void handleKeyOrCharacter(int key, char ch) {
-		if (text.length() < maxLength && Util.isPrintableCharacter(ch) && (text.substring(0, cursorPosition) + ch + text.substring(cursorPosition)).matches(validationRegex)) {
+		if (text.length() < maxLength && Util.isPrintableCharacter(ch) && validate(text.substring(0, cursorPosition) + ch + text.substring(cursorPosition))) {
 			text.insert(cursorPosition, ch);
 			moveCursor(true);
 			if (changeHandler != null) {
@@ -197,7 +199,7 @@ public class GUITextField extends GUIText {
 			}
 			repeatState = true;
 		} else if (key == Keyboard.KEY_BACK && text.length() > 0) {
-			if (cursorPosition > 0 && (text.substring(0, cursorPosition - 1) + text.substring(cursorPosition)).matches(validationRegex)) {
+			if (cursorPosition > 0 && validate(text.substring(0, cursorPosition - 1) + text.substring(cursorPosition))) {
 				text.deleteCharAt(cursorPosition - 1);
 				moveCursor(false);
 				if (cursorPosition == textPosition && textPosition > 0) textPosition--;
@@ -277,6 +279,10 @@ public class GUITextField extends GUIText {
 		return text.substring(range[0], range[1] < text.length() ? range[1] + 1 : range[1]);
 	}
 
+	protected boolean validate(String str) {
+		return str.matches(validationRegex) && validationFunction.isValid(str);
+	}
+
 	public GUIBackground getGuiBackground() {
 		return guiBg;
 	}
@@ -297,8 +303,16 @@ public class GUITextField extends GUIText {
 		return validationRegex;
 	}
 
-	public void setValidationRegex(String validationRegex) {
+	public void setValidationRegex(@NonNull String validationRegex) {
 		this.validationRegex = validationRegex;
+	}
+
+	public ValidationFunction getValidationFunction() {
+		return validationFunction;
+	}
+
+	public void setValidationFunction(@NonNull ValidationFunction function) {
+		this.validationFunction = function;
 	}
 
 	public GUICallback getChangeHandler() {
@@ -328,6 +342,7 @@ public class GUITextField extends GUIText {
 	@Override
 	public void setText(String text) {
 		super.setText(text);
+		if (cursorPosition > text.length()) cursorPosition = text.length();
 		if (changeHandler != null) {
 			changeHandler.run(this);
 		}
@@ -337,5 +352,10 @@ public class GUITextField extends GUIText {
 	public void setDimension(Dimension dimension) {
 		super.setDimension(dimension);
 		guiBg.setDimension(dimension);
+	}
+
+	@FunctionalInterface
+	public interface ValidationFunction {
+		boolean isValid(String str);
 	}
 }
