@@ -703,8 +703,8 @@ public class LEDCubeManager {
 		displayModeList = new ArrayList<>();
 		DisplayMode desktop = Display.getDesktopDisplayMode();
 		for (DisplayMode mode : Display.getAvailableDisplayModes()) {
-			System.out.println(mode);
 			if(mode.getBitsPerPixel() == desktop.getBitsPerPixel()) {
+				LogHelper.config("Valid display mode: %dx%d @ %dHz", mode.getWidth(), mode.getHeight(), mode.getFrequency());
 				displayModeList.add(mode);
 				if (mode.getWidth() == 1024 && mode.getHeight() == 768) displayMode = mode;
 			}
