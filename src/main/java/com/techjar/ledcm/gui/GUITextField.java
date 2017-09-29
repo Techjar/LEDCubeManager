@@ -342,6 +342,7 @@ public class GUITextField extends GUIText {
 	@Override
 	public void setText(String text) {
 		super.setText(text);
+		if (cursorPosition > text.length()) cursorPosition = text.length();
 		if (changeHandler != null) {
 			changeHandler.run(this);
 		}
