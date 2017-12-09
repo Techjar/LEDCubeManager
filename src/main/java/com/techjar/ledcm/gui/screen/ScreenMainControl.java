@@ -3,6 +3,7 @@ package com.techjar.ledcm.gui.screen;
 
 import com.google.common.collect.Lists;
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.gui.*;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.hardware.manager.LEDManager;
@@ -152,7 +153,7 @@ public class ScreenMainControl extends Screen {
 		chooseFileBtn.setPosition(320, -5);
 		chooseFileBtn.setClickHandler(component -> {
 			if (LEDCubeManager.isConvertingAudio()) return;
-			if (LEDCubeManager.getInstance().isVrMode() || LEDCubeManager.getInstance().isFullscreen()) {
+			if (Main.isVrMode() || LEDCubeManager.getInstance().isFullscreen()) {
 				fileChooser.showOpenDialog(component2 -> {
 					final File file = fileChooser.getSelectedFile();
 					new Thread(() -> {
@@ -601,7 +602,7 @@ public class ScreenMainControl extends Screen {
 		limitFramerateCheckbox.setPosition(-185, 235);
 		limitFramerateCheckbox.setLabel(limitFramerateLabel);
 		limitFramerateCheckbox.setChecked(LEDCubeManager.getInstance().isLimitFramerate());
-		if (LEDCubeManager.getInstance().isVrMode()) limitFramerateCheckbox.setEnabled(false);
+		if (Main.isVrMode()) limitFramerateCheckbox.setEnabled(false);
 		settingsScrollBox.addComponent(limitFramerateCheckbox);
 		settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);

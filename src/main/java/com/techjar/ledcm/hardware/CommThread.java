@@ -1,6 +1,7 @@
 
 package com.techjar.ledcm.hardware;
 
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.hardware.manager.LEDManager;
 import com.techjar.ledcm.hardware.handler.PortHandler;
 import com.techjar.ledcm.ControlUtil;
@@ -45,7 +46,7 @@ public class CommThread extends Thread {
 		this.portHandler = portHandler;
 		ledManager = LEDCubeManager.getLEDCube().getLEDManager();
 		updateTime = System.nanoTime();
-		tcpServer = new TCPServer(LEDCubeManager.getServerPort());
+		tcpServer = new TCPServer(Main.getServerPort());
 		tcpServer.setConnectHandler(new TCPServer.ConnectHandler() {
 			@Override
 			public boolean onClientConnected(TCPClient client) {

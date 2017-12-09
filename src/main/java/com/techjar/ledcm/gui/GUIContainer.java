@@ -3,6 +3,7 @@ package com.techjar.ledcm.gui;
 import static org.lwjgl.opengl.GL11.*;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.util.Util;
 import com.techjar.ledcm.vr.VRInputEvent;
@@ -115,7 +116,7 @@ public abstract class GUIContainer extends GUI {
 					if (gui.isEnabled()) glStencilMask(0x00);
 					else glStencilMask(0x01);
 					gui.render();
-					if (LEDCubeManager.getInstance().debugGUI) {
+					if (Main.debugGUI) {
 						glStencilMask(0x00);
 						glColor4f(1, 1, 1, 1);
 						ShapeRenderer.draw(gui.getComponentBox());
@@ -128,7 +129,7 @@ public abstract class GUIContainer extends GUI {
 		RenderHelper.drawSquare(containerBox.getX(), containerBox.getY(), containerBox.getWidth(), containerBox.getHeight(), new Color(40, 40, 40, 150));
 		glPopAttrib();
 		RenderHelper.endScissor();
-		if (LEDCubeManager.getInstance().debugGUI) {
+		if (Main.debugGUI) {
 			glColor4f(1, 0, 0, 1);
 			ShapeRenderer.draw(getContainerBox());
 			glColor4f(0, 1, 0, 1);

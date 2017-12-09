@@ -114,7 +114,6 @@ import org.lwjgl.util.vector.Vector4f;
  */
 public class LEDCubeManager {
 	@Getter private static LEDCubeManager instance;
-	@Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledcubemanager");
 	@Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
 	private DisplayMode newDisplayMode;
 	private DisplayMode configDisplayMode;
@@ -137,11 +136,6 @@ public class LEDCubeManager {
 	@Getter private static Camera camera;
 	@Getter private static Frustum frustum;
 	@Getter private static JFileChooser fileChooser;
-	@Getter private static String serialPortName = "COM3";
-	@Getter private static String portHandlerName = "SerialPortHandler";
-	@Getter private static String ledManagerName = null;
-	@Getter private static String[] ledManagerArgs = new String[0];
-	@Getter private static int serverPort = 7545;
 	@Getter private static FrameServer frameServer;
 	@Getter private static SystemTray systemTray;
 	@Getter @Setter private static boolean convertingAudio;
@@ -169,12 +163,6 @@ public class LEDCubeManager {
 	public long faceCount;
 	private boolean screenshot;
 	private boolean regrab;
-	public boolean renderFPS;
-	public boolean debugMode;
-	public boolean debugGL;
-	public boolean debugGUI;
-	public boolean wireframe;
-	@Getter private boolean vrMode;
 	@Getter @Setter private boolean showingVRGUI;
 	@Getter @Setter private boolean showingGUI = true;
 	@Getter @Setter private Vector2 mouseOverride;
@@ -208,82 +196,11 @@ public class LEDCubeManager {
 	@Getter private LightingHandler lightingHandler;
 	private ShaderProgram spDepthDraw; // TODO
 
-	public LEDCubeManager(String[] args) throws LWJGLException {
+	public LEDCubeManager() throws LWJGLException {
 		instance = this;
 		System.setProperty("sun.java2d.noddraw", "true");
-		ArgumentParser.parse(args, new ArgumentParser.Argument(true, "\nSpecify logging detail level", "--loglevel") {
-			@Override
-			public void runAction(String parameter) {
-				LogHelper.setLevel(Level.parse(parameter));
-			}
-		}, new ArgumentParser.Argument(false, "\nDisplay frames per second", "--showfps") {
-			@Override
-			public void runAction(String parameter) {
-				renderFPS = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nDisplay debug output", "--debug") {
-			@Override
-			public void runAction(String parameter) {
-				debugMode = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nDisplay OpenGL errors", "--debug-gl") {
-			@Override
-			public void runAction(String parameter) {
-				debugGL = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nRender GUI boxes", "--debug-gui") {
-			@Override
-			public void runAction(String parameter) {
-				debugGUI = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nEnable wireframe rendering", "--wireframe") {
-			@Override
-			public void runAction(String parameter) {
-				wireframe = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nEnable virtual reality render mode", "--vr") {
-			@Override
-			public void runAction(String parameter) {
-				vrMode = true;
-			}
-		}, new ArgumentParser.Argument(true, "<name>\nSpecify serial port name", "--serialport") {
-			@Override
-			public void runAction(String parameter) {
-				serialPortName = parameter;
-			}
-		}, new ArgumentParser.Argument(true, "<port number>\nSpecify internal TCP server port", "--serverport") {
-			@Override
-			public void runAction(String parameter) {
-				serverPort = Integer.parseInt(parameter);
-			}
-		}, new ArgumentParser.Argument(true, "<class name>\nSpecify PortHandler class", "--porthandler") {
-			@Override
-			public void runAction(String parameter) {
-				portHandlerName = parameter;
-			}
-		}, new ArgumentParser.Argument(true, "<class name and constructor parameters (comma-separated)>\nSpecify LEDManager class", "--ledmanager") {
-			@Override
-			public void runAction(String parameter) {
-				String[] split = parameter.split("(?<!,),");
-				for (int i = 0; i < split.length; i++) split[i] = split[i].replaceAll(",,", ",");
-				ledManagerName = split[0];
-				ledManagerArgs = new String[split.length - 1];
-				System.arraycopy(split, 1, ledManagerArgs, 0, split.length - 1);
-			}
-		}, new ArgumentParser.Argument(true, "<directory path>\nSpecify a custom directory for config/logs/etc.", "--datadir") {
-			@Override
-			public void runAction(String parameter) {
-				dataDirectory = new File(parameter);
-				if (!dataDirectory.exists()) {
-					if (!dataDirectory.mkdirs()) {
-						System.out.println("Failed to create directory: " + dataDirectory);
-						System.exit(0);
-					}
-				}
-			}
-		});
 
-		LogHelper.init(new File(dataDirectory, "logs"));
+		LogHelper.init(new File(Main.getDataDirectory(), "logs"));
 		LongSleeperThread.startSleeper();
 
 		Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
@@ -333,7 +250,7 @@ public class LEDCubeManager {
 		else if (!validControllers.containsKey(config.getString("controls.controller"))) config.setProperty("controls.controller", defaultController);
 		if (config.hasChanged()) config.save();
 
-		if (vrMode) { // Kick all this shit off...
+		if (Main.isVrMode()) { // Kick all this shit off...
 			VRProvider.init();
 		}
 
@@ -349,7 +266,7 @@ public class LEDCubeManager {
 		fileChooser.setMultiSelectionEnabled(false);
 		if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
 
-		if (vrMode) {
+		if (Main.isVrMode()) {
 			addRenderPipeline(new RenderPipelineVR(), 10);
 			addRenderPipeline(new RenderPipelineGUI(), 20);
 		} else {
@@ -516,7 +433,7 @@ public class LEDCubeManager {
 	public void run() {
 		while (!Display.isCloseRequested() && !closeRequested) {
 			try {
-				if (!limitFramerate || vrMode || rateCapTimer.getMilliseconds() >= 1000D / 300D) {
+				if (!limitFramerate || Main.isVrMode() || rateCapTimer.getMilliseconds() >= 1000D / 300D) {
 					rateCapTimer.restart();
 					runGameLoop();
 				} else if (1000D / 300D - rateCapTimer.getMilliseconds() > 1) {
@@ -561,7 +478,7 @@ public class LEDCubeManager {
 		updateFrameDelta();
 		float delta = getFrameDelta();
 		soundManager.update();
-		if (vrMode) VRProvider.poll(delta);
+		if (Main.isVrMode()) VRProvider.poll(delta);
 		this.preProcess();
 		this.processKeyboard();
 		this.processMouse();
@@ -714,7 +631,7 @@ public class LEDCubeManager {
 
 	private void initConfig() {
 		if (displayMode == null) displayMode = new DisplayMode(1024, 768);
-		config = new ConfigManager(new File(dataDirectory, "options.yml"), false);
+		config = new ConfigManager(new File(Main.getDataDirectory(), "options.yml"), false);
 		config.load();
 		config.defaultProperty("display.width", displayMode.getWidth());
 		config.defaultProperty("display.height", displayMode.getHeight());
@@ -821,7 +738,7 @@ public class LEDCubeManager {
 		InputBindingManager.addBinding(new InputBinding("wireframe", "Wireframe", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F6)) {
 			@Override
 			public boolean onPressed() {
-				wireframe = !wireframe;
+				Main.wireframe = !Main.wireframe;
 				return false;
 			}
 
@@ -834,7 +751,7 @@ public class LEDCubeManager {
 				return true;
 			}
 		});
-		if (!vrMode) {
+		if (!Main.isVrMode()) {
 			InputBindingManager.addBinding(new InputBinding("movecamera", "Toggle Movement", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
 				@Override
 				public boolean onPressed() {
@@ -1048,7 +965,7 @@ public class LEDCubeManager {
 	}
 
 	private void computeVRMouseAim() {
-		if (vrMode && showingVRGUI) {
+		if (Main.isVrMode() && showingVRGUI) {
 			VRTrackedController leftController = VRProvider.getController(ControllerType.LEFT);
 			VRTrackedController rightController = VRProvider.getController(ControllerType.RIGHT);
 			Quaternion leftControllerRot = leftController.getRotation().inverse();
@@ -1097,13 +1014,13 @@ public class LEDCubeManager {
 			}
 		});
 
-		if (vrMode) VRProvider.getController(ControllerType.RIGHT).setScrolling(showingVRGUI && mouseOverride != null);
+		if (Main.isVrMode()) VRProvider.getController(ControllerType.RIGHT).setScrolling(showingVRGUI && mouseOverride != null);
 
 		camera.update(delta);
 		textureManager.update(delta);
 		ledCube.update(delta);
 
-		if (!vrMode)
+		if (!Main.isVrMode())
 			lightingHandler.getLight(0).position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
 
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
@@ -1133,7 +1050,7 @@ public class LEDCubeManager {
 			ex.printStackTrace();
 		}
 
-		if (debugMode) {
+		if (Main.debugMode) {
 			Runtime runtime = Runtime.getRuntime();
 			addInfoText("Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), 1010);
 			Vector3 vector = camera.getAngle().forward();
@@ -1173,7 +1090,7 @@ public class LEDCubeManager {
 		glEnable(GL_DEPTH_TEST);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		//wireframe = true;
-		if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		if (Main.wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		checkGLError("Pre render 3D");
 		render3D();
 		checkGLError("Post render 3D");
@@ -1189,7 +1106,7 @@ public class LEDCubeManager {
 			glDisable(GL_LIGHTING);
 			glDisable(GL_DEPTH_TEST);
 			glBindTexture(GL_TEXTURE_2D, 0);
-			if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			if (Main.wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			checkGLError("Pre render 2D");
 			render2D();
 			checkGLError("Post render 2D");
@@ -1215,7 +1132,7 @@ public class LEDCubeManager {
 				if (screenshot) {
 					screenshot = false;
 					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-					File screenshotDir = new File(dataDirectory, "screenshots");
+					File screenshotDir = new File(Main.getDataDirectory(), "screenshots");
 					screenshotDir.mkdirs();
 					File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
 					for (int i = 2; file.exists(); i++) {
@@ -1261,7 +1178,7 @@ public class LEDCubeManager {
 	}
 
 	private void checkGLError(String stage) {
-		if (debugGL) {
+		if (Main.debugGL) {
 			for (int error = glGetError(); error != GL_NO_ERROR; error = glGetError()) {
 				LogHelper.severe("########## GL ERROR ##########");
 				LogHelper.severe("@ %s", stage);

@@ -2,6 +2,7 @@
 package com.techjar.ledcm.render;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.util.math.Angle;
 import com.techjar.ledcm.util.MathHelper;
 import com.techjar.ledcm.util.Util;
@@ -35,7 +36,7 @@ public class Camera {
 		this.velocity = new MutableVector3();
 		this.angle = new Angle(Angle.Order.YXZ);
 
-		if (!LEDCubeManager.getInstance().isVrMode()) {
+		if (!Main.isVrMode()) {
 			InputBindingManager.addBinding(new InputBinding("camforward", "Forward", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_W)) {
 				@Override
 				public boolean onPressed() {

@@ -89,8 +89,8 @@ public class LEDCube {
 
 	@SneakyThrows(Exception.class)
 	public LEDCube() {
-		if (LEDCubeManager.getLedManagerName() != null) {
-			ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + LEDCubeManager.getLedManagerName()).getConstructor(String[].class).newInstance((Object)LEDCubeManager.getLedManagerArgs());
+		if (Main.getLedManagerName() != null) {
+			ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + Main.getLedManagerName()).getConstructor(String[].class).newInstance((Object)Main.getLedManagerArgs());
 		} else {
 			ledManager = new ArduinoLEDManager(4, false);
 			//ledManager = new TLC5940LEDManager(true);
@@ -115,10 +115,10 @@ public class LEDCube {
 		if (postInited) throw new IllegalStateException();
 		postInited = true;
 		spectrumAnalyzer = new SpectrumAnalyzer();
-		commThread = new CommThread((PortHandler)Class.forName("com.techjar.ledcm.hardware.handler." + LEDCubeManager.getPortHandlerName()).newInstance());
+		commThread = new CommThread((PortHandler)Class.forName("com.techjar.ledcm.hardware.handler." + Main.getPortHandlerName()).newInstance());
 		commThread.start();
 		resetCameraPosition();
-		if (LEDCubeManager.getInstance().isVrMode()) {
+		if (Main.isVrMode()) {
 			VRProvider.getController(ControllerType.RIGHT).setTouchpadMode(TouchpadMode.SPLIT_UD);
 		}
 	}
@@ -188,7 +188,7 @@ public class LEDCube {
 	}
 
 	public void update(float delta) {
-		if (LEDCubeManager.getInstance().isVrMode()) {
+		if (Main.isVrMode()) {
 			for (ControllerType type : ControllerType.values()) {
 				VRTrackedController controller = VRProvider.getController(type);
 				if (controller.getType() == ControllerType.LEFT) {
@@ -336,7 +336,7 @@ public class LEDCube {
 	}
 
 	private void initBindings() {
-		if (!LEDCubeManager.getInstance().isVrMode()) {
+		if (!Main.isVrMode()) {
 			InputBindingManager.addBinding(new InputBinding("resetcamera", "Reset Position", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F)) {
 				@Override
 				public boolean onPressed() {
@@ -530,7 +530,7 @@ public class LEDCube {
 				return true;
 			}
 		});
-		if (LEDCubeManager.getInstance().isVrMode()) {
+		if (Main.isVrMode()) {
 			InputBindingManager.addBinding(new InputBinding("vrreloadanimation", "Reload Animation", "VR", true, new InputInfo(InputInfo.Type.VR, ButtonType.MENU.ordinal(), ControllerType.RIGHT)) {
 				@Override
 				public boolean onPressed() {
@@ -767,7 +767,7 @@ public class LEDCube {
 
 	public List<LEDSelection> getLEDSelection() {
 		List<LEDSelection> list = new ArrayList<>();
-		if (LEDCubeManager.getInstance().isVrMode()) {
+		if (Main.isVrMode()) {
 			float area = 0.02F;
 			for (ControllerType type : ControllerType.values()) {
 				VRTrackedController controller = VRProvider.getController(type);

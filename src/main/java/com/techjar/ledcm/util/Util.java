@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.hackoeur.jglm.Mat3;
 import com.hackoeur.jglm.Mat4;
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.gui.GUI;
 import com.techjar.ledcm.gui.GUIBox;
 import com.techjar.ledcm.gui.GUICheckBox;
@@ -449,7 +450,7 @@ public final class Util {
 	}
 
 	public static Shape getMouseHitbox() {
-		if (LEDCubeManager.getInstance().getMouseOverride() != null && LEDCubeManager.getInstance().isVrMode())
+		if (LEDCubeManager.getInstance().getMouseOverride() != null && Main.isVrMode())
 			return new Rectangle(getMouseX() - 5, getMouseY() - 5, 10, 10);
 		return new Rectangle(getMouseX(), getMouseY(), 1, 1);
 	}
