@@ -264,7 +264,10 @@ public class LEDCubeManager {
 		fileChooser = new JFileChooser();
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac, *.m4a, *.aac)", "wav", "mp3", "ogg", "flac", "m4a", "aac"));
 		fileChooser.setMultiSelectionEnabled(false);
-		if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
+		if (config.propertyExists("misc.filechooserpath") && new File(config.getString("misc.filechooserpath")).exists())
+			fileChooser.setCurrentDirectory(new File(config.getString("misc.filechooserpath")));
+		else if (new File(System.getProperty("user.home"), "Music").exists())
+			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
 
 		if (Main.isVrMode()) {
 			addRenderPipeline(new RenderPipelineVR(), 10);

@@ -118,7 +118,10 @@ public class ScreenMainControl extends Screen {
 		fileChooser.setDimension(700, 500);
 		fileChooser.addFileFilter(new FileNameExtensionFilter("Audio Files (*.wav, *.mp3, *.ogg, *.flac, *.m4a, *.aac)", "wav", "mp3", "ogg", "flac", "m4a", "aac"));
 		fileChooser.setMultiSelectionEnabled(false);
-		if (OperatingSystem.isWindows() && new File(System.getProperty("user.home"), "Music").exists()) fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
+		if (LEDCubeManager.getConfig().propertyExists("misc.filechooserpath") && new File(LEDCubeManager.getConfig().getString("misc.filechooserpath")).exists())
+			fileChooser.setCurrentDirectory(new File(LEDCubeManager.getConfig().getString("misc.filechooserpath")));
+		else if (new File(System.getProperty("user.home"), "Music").exists())
+			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
 		container.addComponent(fileChooser);
 
 		playBtn = new GUIButton(font, new Color(255, 255, 255), "Play", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
@@ -158,6 +161,7 @@ public class ScreenMainControl extends Screen {
 					final File file = fileChooser.getSelectedFile();
 					new Thread(() -> {
 						try {
+							LEDCubeManager.getConfig().setProperty("misc.filechooserpath", file.getParentFile().getAbsolutePath());
 							LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
 						} catch (Exception ex) {
 							ex.printStackTrace();
@@ -170,6 +174,7 @@ public class ScreenMainControl extends Screen {
 					if (option == JFileChooser.APPROVE_OPTION) {
 						try {
 							File file = LEDCubeManager.getFileChooser().getSelectedFile();
+							LEDCubeManager.getConfig().setProperty("misc.filechooserpath", file.getParentFile().getAbsolutePath());
 							LEDCubeManager.getLEDCube().getSpectrumAnalyzer().loadFile(file);
 						} catch (Exception ex) {
 							ex.printStackTrace();
