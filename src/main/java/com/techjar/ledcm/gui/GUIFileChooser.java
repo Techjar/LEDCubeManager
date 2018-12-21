@@ -17,11 +17,7 @@ import org.newdawn.slick.geom.Shape;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GUIFileChooser extends GUIWindow {
 	public static final int FILES_ONLY = 0;
@@ -230,6 +226,13 @@ public class GUIFileChooser extends GUIWindow {
 		}
 		File[] files = currentDir.listFiles();
 		if (files != null) {
+			Arrays.sort(files, (File f1, File f2) -> {
+				if (f1.isDirectory() && !f2.isDirectory())
+					return -1;
+				if (!f1.isDirectory() && f2.isDirectory())
+					return 1;
+				return f1.compareTo(f2);
+			});
 			for (int i = 0; i < files.length; i++) {
 				File file = files[i];
 				if (selectionMode == FILES_ONLY && file.isDirectory()) {
