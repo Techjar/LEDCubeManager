@@ -36,8 +36,8 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     @Override
     public synchronized void refresh() {
         for (int i = 0; i < amplitudes.length; i++) {
-            float amplitude = (float)MathHelper.log(amplitudes[i], 2); // Huh?
-            float increment = 7.0F; // What?
+            float amplitude = (float)MathHelper.log(amplitudes[i], 1.45F); // Huh?
+            float increment = 10.0F - (i * 0.045F); // What?
             float brightness = MathHelper.clamp(amplitude / increment, 0, 1);
             Color color = new Color();
             if (colorMode == 1) color.fromHSB(i / (float)amplitudes.length, 1, brightness);
@@ -98,7 +98,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
                 if (band > amplitude) amplitude = band;
             }
             if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
-            else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / holdUp, 1F);
+            else if (amplitudes[i] > 0) amplitudes[i] -= amplitudes[i] / Math.max(holdUp * MathHelper.log(i, 10), 12F);
         }
     }
 

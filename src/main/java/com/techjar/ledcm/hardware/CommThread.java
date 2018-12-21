@@ -102,6 +102,7 @@ public class CommThread extends Thread {
 				synchronized (lock) {
 					try {
 						if (portHandler.isOpened()) {
+							portHandler.writeByte((byte)0x55); // start indicator
 							portHandler.writeBytes(data);
 						}
 					} catch (Exception ex) {
