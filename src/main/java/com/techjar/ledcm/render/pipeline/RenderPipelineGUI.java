@@ -28,6 +28,10 @@ public class RenderPipelineGUI implements RenderPipeline {
 	}
 
 	@Override
+	public void changeDisplayMode() {
+	}
+
+	@Override
 	public void update(float delta) {
 	}
 

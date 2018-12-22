@@ -1,3 +1,4 @@
 render led.obj 0.8 led_lod1.obj 1.8 led_lod2.obj 6 led_lod3.obj
 scale 1.1
 collision mesh led_collision.obj
+material 0,0,0 0,0,0 default default 50

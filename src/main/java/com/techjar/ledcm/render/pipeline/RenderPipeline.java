@@ -11,6 +11,7 @@ import java.util.List;
  */
 public interface RenderPipeline {
 	public void init();
+	public void changeDisplayMode();
 	public void update(float delta);
 	public void preRender3D();
 	public void render3D();

@@ -82,21 +82,24 @@ public class ModelManager {
 						specularMap = textureManager.getTexture(split[1]);
 						break;
 					case "material":
-						for (int i = 0; i < Math.min(subsplit.length, 4); i++) {
+						for (int i = 0; i < Math.min(subsplit.length, 5); i++) {
 							if ("default".equalsIgnoreCase(subsplit[i])) continue;
 							String[] subsubsplit = subsplit[i].split(",", 3);
 							switch (i) {
 								case 0:
-									material = new Material(new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.diffuse, material.specular, material.shininess);
+									material = new Material(new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.diffuse, material.specular, material.shininess, material.emissivity);
 									break;
 								case 1:
-									material = new Material(material.ambient, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.specular, material.shininess);
+									material = new Material(material.ambient, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.specular, material.shininess, material.emissivity);
 									break;
 								case 2:
-									material = new Material(material.ambient, material.diffuse, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.shininess);
+									material = new Material(material.ambient, material.diffuse, new Vector3f(Float.parseFloat(subsubsplit[0]), Float.parseFloat(subsubsplit[1]), Float.parseFloat(subsubsplit[2])), material.shininess, material.emissivity);
 									break;
 								case 3:
-									material = new Material(material.ambient, material.diffuse, material.specular, Float.parseFloat(subsplit[i]));
+									material = new Material(material.ambient, material.diffuse, material.specular, Float.parseFloat(subsplit[i]), material.emissivity);
+									break;
+								case 4:
+									material = new Material(material.ambient, material.diffuse, material.specular, material.shininess, Float.parseFloat(subsplit[i]));
 									break;
 							}
 						}

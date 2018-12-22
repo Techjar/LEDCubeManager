@@ -281,14 +281,16 @@ public final class InstancedRenderer {
 		matrix.scale(Util.convertVector(scale));
 		Util.storeMatrixInBuffer(matrix, buffer);
 
-		glActiveTexture(GL_TEXTURE0);
-		if (textureID != 0) glBindTexture(GL_TEXTURE_2D, textureID);
-		else mesh.getModel().getTexture().bind();
-		//glActiveTexture(GL_TEXTURE1);
-		//mesh.getModel().getNormalMap().bind();
-		glActiveTexture(GL_TEXTURE2);
-		mesh.getModel().getSpecularMap().bind();
-		glActiveTexture(GL_TEXTURE0);
+		if (textureID != -1) {
+			glActiveTexture(GL_TEXTURE0);
+			if (textureID != 0) glBindTexture(GL_TEXTURE_2D, textureID);
+			else mesh.getModel().getTexture().bind();
+			//glActiveTexture(GL_TEXTURE1);
+			//mesh.getModel().getNormalMap().bind();
+			glActiveTexture(GL_TEXTURE2);
+			mesh.getModel().getSpecularMap().bind();
+			glActiveTexture(GL_TEXTURE0);
+		}
 		mesh.getModel().getMaterial().sendToShader("front_material");
 		buffer.rewind();
 		Tuple<Integer, Integer> vbo = getVBO(-1);
