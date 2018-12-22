@@ -3,6 +3,7 @@ package com.techjar.ledcm.gui.screen;
 
 import com.google.common.collect.Lists;
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.gui.*;
 import com.techjar.ledcm.render.RenderHelper;
 import com.techjar.ledcm.hardware.manager.LEDManager;
@@ -101,8 +102,11 @@ public class ScreenMainControl extends Screen {
 	public final GUILabel previewTransformLabel;
 	public final GUIComboBox windowModeComboBox;
 	public final GUILabel limitFramerateLabel;
-	public final GUICheckBox limitFramerateCheckbox;
+	public final GUISlider limitFramerateSlider;
+	public final GUILabel fovLabel;
 	public final GUISlider fovSlider;
+	public final GUILabel bloomLabel;
+	public final GUICheckBox bloomCheckbox;
 	public final GUIButton exitBtn;
 	public final GUIFileChooser fileChooser;
 
@@ -155,7 +159,7 @@ public class ScreenMainControl extends Screen {
 		chooseFileBtn.setPosition(320, -5);
 		chooseFileBtn.setClickHandler(component -> {
 			if (LEDCubeManager.isConvertingAudio()) return;
-			if (LEDCubeManager.getInstance().isVrMode() || LEDCubeManager.getInstance().isFullscreen()) {
+			if (Main.isVrMode() || LEDCubeManager.getInstance().isFullscreen()) {
 				fileChooser.showOpenDialog(component2 -> {
 					final File file = fileChooser.getSelectedFile();
 					new Thread(() -> {
@@ -585,29 +589,51 @@ public class ScreenMainControl extends Screen {
 		}
 		antiAliasingComboBtn.setSelectedItem(LEDCubeManager.getInstance().isAntiAliasing() ? LEDCubeManager.getInstance().getAntiAliasingSamples() + "x" : "Off");
 		settingsScrollBox.addComponent(antiAliasingComboBtn);
+		fovLabel = new GUILabel(font, new Color(255, 255, 255), "FOV");
+		fovLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
+		fovLabel.setDimension(font.getWidth(fovLabel.getText()), 30);
+		fovLabel.setPosition(-200 + (fovLabel.getWidth() / 2), 190);
+		settingsScrollBox.addComponent(fovLabel);
 		fovSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
 		fovSlider.setParentAlignment(GUIAlignment.TOP_CENTER);
-		fovSlider.setDimension(400, 30);
-		fovSlider.setPosition(0, 190);
+		fovSlider.setDimension(400 - fovLabel.getWidth() - 10, 30);
+		fovSlider.setPosition(fovLabel.getWidth() / 2 + 5, 190);
 		fovSlider.setValue((LEDCubeManager.getInstance().getFieldOfView() - 30) / 60);
 		fovSlider.setChangeHandler(component -> {
 			LEDCubeManager.getInstance().setFieldOfView(fovSlider.getValue() * 60 + 30);
 			LEDCubeManager.getConfig().setProperty("display.fieldofview", LEDCubeManager.getInstance().getFieldOfView());
 		});
 		settingsScrollBox.addComponent(fovSlider);
-		limitFramerateLabel = new GUILabel(font, new Color(255, 255, 255), "Limit Framerate");
+		limitFramerateLabel = new GUILabel(font, new Color(255, 255, 255), "Max FPS");
 		limitFramerateLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
 		limitFramerateLabel.setDimension(font.getWidth(limitFramerateLabel.getText()), 30);
-		limitFramerateLabel.setPosition(-165 + (limitFramerateLabel.getWidth() / 2), 235);
+		limitFramerateLabel.setPosition(-200 + (limitFramerateLabel.getWidth() / 2), 235);
 		settingsScrollBox.addComponent(limitFramerateLabel);
-		limitFramerateCheckbox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
-		limitFramerateCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
-		limitFramerateCheckbox.setDimension(30, 30);
-		limitFramerateCheckbox.setPosition(-185, 235);
-		limitFramerateCheckbox.setLabel(limitFramerateLabel);
-		limitFramerateCheckbox.setChecked(LEDCubeManager.getInstance().isLimitFramerate());
-		if (LEDCubeManager.getInstance().isVrMode()) limitFramerateCheckbox.setEnabled(false);
-		settingsScrollBox.addComponent(limitFramerateCheckbox);
+		limitFramerateSlider = new GUISlider(new Color(255, 0, 0), new Color(50, 50, 50));
+		limitFramerateSlider.setParentAlignment(GUIAlignment.TOP_CENTER);
+		limitFramerateSlider.setDimension(400 - limitFramerateLabel.getWidth() - 10, 30);
+		limitFramerateSlider.setPosition(limitFramerateLabel.getWidth() / 2 + 5, 235);
+		limitFramerateSlider.setValue(LEDCubeManager.getInstance().getFramerateCap() == 0 ? 0 : (LEDCubeManager.getInstance().getFramerateCap() - 29) / 171F);
+		limitFramerateSlider.setChangeHandler(component -> {
+			if (limitFramerateSlider.getValue() > 0)
+				LEDCubeManager.getInstance().setFramerateCap(Math.round(limitFramerateSlider.getValue() * 171) + 29);
+			else
+				LEDCubeManager.getInstance().setFramerateCap(0);
+		});
+		if (Main.isVrMode()) limitFramerateSlider.setEnabled(false);
+		settingsScrollBox.addComponent(limitFramerateSlider);
+		bloomLabel = new GUILabel(font, new Color(255, 255, 255), "Bloom");
+		bloomLabel.setParentAlignment(GUIAlignment.TOP_CENTER);
+		bloomLabel.setDimension(font.getWidth(bloomLabel.getText()), 30);
+		bloomLabel.setPosition(-165 + (bloomLabel.getWidth() / 2), 280);
+		settingsScrollBox.addComponent(bloomLabel);
+		bloomCheckbox = new GUICheckBox(new Color(255, 255, 255), new GUIBackground(new Color(0, 0, 0), new Color(255, 0, 0), 2));
+		bloomCheckbox.setParentAlignment(GUIAlignment.TOP_CENTER);
+		bloomCheckbox.setDimension(30, 30);
+		bloomCheckbox.setPosition(-185, 280);
+		bloomCheckbox.setLabel(bloomLabel);
+		bloomCheckbox.setChecked(LEDCubeManager.getInstance().isEnableBloom());
+		settingsScrollBox.addComponent(bloomCheckbox);
 		settingsApplyBtn = new GUIButton(font, new Color(255, 255, 255), "Apply", new GUIBackground(new Color(255, 0, 0), new Color(50, 50, 50), 2));
 		settingsApplyBtn.setParentAlignment(GUIAlignment.BOTTOM_CENTER);
 		settingsApplyBtn.setDimension(200, 40);
@@ -624,7 +650,7 @@ public class ScreenMainControl extends Screen {
 			}
 			LEDCubeManager.getInstance().setFullscreen(windowModeComboBox.getSelectedItem().equals("Fullscreen") || windowModeComboBox.getSelectedItem().equals("Borderless"));
 			LEDCubeManager.getInstance().setBorderless(windowModeComboBox.getSelectedItem().equals("Borderless"));
-			LEDCubeManager.getInstance().setLimitFramerate(limitFramerateCheckbox.isChecked());
+			LEDCubeManager.getInstance().setEnableBloom(bloomCheckbox.isChecked());
 			item = audioInputComboBox.getSelectedItem();
 			if (item != null) {
 				LEDCubeManager.getLEDCube().getSpectrumAnalyzer().setMixer(item.toString());

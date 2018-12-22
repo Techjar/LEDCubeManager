@@ -1,6 +1,7 @@
 package com.techjar.ledcm.gui;
 
 import com.techjar.ledcm.LEDCubeManager;
+import com.techjar.ledcm.Main;
 import com.techjar.ledcm.util.MathHelper;
 
 import com.techjar.ledcm.vr.VRProvider;
@@ -150,12 +151,12 @@ public class GUITextField extends GUIText {
 				focused = true;
 				cursorState = true;
 				cursorTimer.restart();
-				if (LEDCubeManager.getInstance().isVrMode()) {
+				if (Main.isVrMode()) {
 					VRProvider.setKeyboardShowing(true);
 				}
 			} else if(focused && canLoseFocus) {
 				focused = false;
-				if (LEDCubeManager.getInstance().isVrMode()) {
+				if (Main.isVrMode()) {
 					VRProvider.setKeyboardShowing(false);
 				}
 			}

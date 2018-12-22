@@ -3,6 +3,8 @@ package com.techjar.ledcm.hardware.handler;
 
 import com.techjar.ledcm.LEDCubeManager;
 import java.io.IOException;
+
+import com.techjar.ledcm.Main;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
@@ -15,7 +17,7 @@ public class SerialPortHandler implements PortHandler {
 	private final SerialPort port;
 
 	public SerialPortHandler() {
-		port = new SerialPort(LEDCubeManager.getSerialPortName());
+		port = new SerialPort(Main.getSerialPortName());
 	}
 
 	@Override

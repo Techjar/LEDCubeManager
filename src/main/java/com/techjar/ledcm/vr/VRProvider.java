@@ -517,7 +517,7 @@ public class VRProvider {
 		Vector3 maxVertex = maxVertexM.toImmutable();
 		Vector3 center = minVertex.add(maxVertex).divide(2);
 		float radius = minVertex.distance(maxVertex) / 2;
-		Material material = new Material(null, null, new Vector3f(0.2F, 0.2F, 0.2F), 20.0F);
+		Material material = new Material(null, null, new Vector3f(0.2F, 0.2F, 0.2F), 20.0F, 0.0F);
 		Model model = new Model(1, texture, LEDCubeManager.getTextureManager().getTexture("white.png"), material, false);
 		model.loadMesh(0, 0, indices.length, vertices, normals, texCoords, center, radius, renderModel.unTriangleCount);
 		if (model.getAABB() == null) model.setAABB(new AxisAlignedBB(minVertex, maxVertex));

@@ -19,10 +19,10 @@ uniform mat4 projection_matrix;
 
 // The output of the vertex shader (matched to the fragment shader)
 out VERTEX {
-    vec3    position;
-    vec3    normal;
-    vec2    texcoord;
-    vec4    color;
+    vec3 position;
+    vec3 normal;
+    vec2 texcoord;
+    vec4 color;
 } vertex;
 
 // Ok, go!

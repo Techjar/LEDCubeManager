@@ -13,6 +13,7 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
+    float emissivity;
 };
 
 // Texture samplers
@@ -40,7 +41,8 @@ in VERTEX {
 	vec3 viewDirection;
 } vertex;
 
-out vec4 out_Color;
+layout(location = 0) out vec4 out_Color;
+layout(location = 1) out vec4 bloom_Color;
 
 void main(void) {
     vec4 color = texture2D(model_texture, vertex.texcoord) * vertex.color;
@@ -96,8 +98,14 @@ void main(void) {
 
     float specularLuminance = 0.2126 * totalSpecular.r + 0.7152 * totalSpecular.g + 0.0722 * totalSpecular.b;
     vec3 ambient = scene_ambient * front_material.ambient;
-    vec3 linearColor = color.rgb * (ambient + totalDiffuse) + totalSpecular;
+    vec3 linearColor = color.rgb * (ambient + totalDiffuse) + totalSpecular + (color.rgb * clamp(front_material.emissivity, 0, 1));
     out_Color = vec4(linearColor, color.a + specularLuminance);
+
+    float brightness = dot(out_Color.rgb * front_material.emissivity, vec3(0.2126, 0.7152, 0.0722));
+    if (brightness > 1.0)
+        bloom_Color = vec4(out_Color.rgb * out_Color.a, 1.0);
+    else
+        bloom_Color = vec4(0.0, 0.0, 0.0, 1.0);
     
     // Gamma correction (turns out to be useless garbage, as modern displays are already gamma corrected)
     //vec3 gamma = vec3(1.0 / 2.2);

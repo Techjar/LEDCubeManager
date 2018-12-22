@@ -23,12 +23,10 @@ import com.techjar.ledcm.render.pipeline.RenderPipelineGUI;
 import com.techjar.ledcm.render.pipeline.RenderPipelineStandard;
 import com.techjar.ledcm.render.pipeline.RenderPipelineVR;
 import com.techjar.ledcm.util.math.Angle;
-import com.techjar.ledcm.util.ArgumentParser;
 import com.techjar.ledcm.util.ConfigManager;
 import com.techjar.ledcm.util.Constants;
 import com.techjar.ledcm.util.KeyPress;
 import com.techjar.ledcm.util.LightSource;
-import com.techjar.ledcm.util.OperatingSystem;
 import com.techjar.ledcm.util.math.Quaternion;
 import com.techjar.ledcm.util.ShaderProgram;
 import com.techjar.ledcm.util.Timer;
@@ -50,7 +48,6 @@ import com.techjar.ledcm.vr.VRTrackedController.ButtonType;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
-import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.MenuItem;
@@ -68,6 +65,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -79,7 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -114,7 +111,6 @@ import org.lwjgl.util.vector.Vector4f;
  */
 public class LEDCubeManager {
 	@Getter private static LEDCubeManager instance;
-	@Getter private static File dataDirectory = OperatingSystem.getDataDirectory("ledstripmanager");
 	@Getter private static DisplayMode displayMode /*= new DisplayMode(1024, 768)*/;
 	private DisplayMode newDisplayMode;
 	private DisplayMode configDisplayMode;
@@ -137,11 +133,6 @@ public class LEDCubeManager {
 	@Getter private static Camera camera;
 	@Getter private static Frustum frustum;
 	@Getter private static JFileChooser fileChooser;
-	@Getter private static String serialPortName = "COM3";
-	@Getter private static String portHandlerName = "SerialPortHandler";
-	@Getter private static String ledManagerName = null;
-	@Getter private static String[] ledManagerArgs = new String[0];
-	@Getter private static int serverPort = 7545;
 	@Getter private static FrameServer frameServer;
 	@Getter private static SystemTray systemTray;
 	@Getter @Setter private static boolean convertingAudio;
@@ -159,7 +150,7 @@ public class LEDCubeManager {
 	private Queue<Packet> packetProcessQueue = new ConcurrentLinkedQueue<>();
 	private static List<Tuple<String, Integer>> debugText = new ArrayList<>();
 	private FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4);
-	private FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
+	private static FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
 	private int fpsCounter;
 	@Getter private int fpsRender;
 	private long timeCounter;
@@ -169,12 +160,6 @@ public class LEDCubeManager {
 	public long faceCount;
 	private boolean screenshot;
 	private boolean regrab;
-	public boolean renderFPS;
-	public boolean debugMode;
-	public boolean debugGL;
-	public boolean debugGUI;
-	public boolean wireframe;
-	@Getter private boolean vrMode;
 	@Getter @Setter private boolean showingVRGUI;
 	@Getter @Setter private boolean showingGUI = true;
 	@Getter @Setter private Vector2 mouseOverride;
@@ -185,15 +170,18 @@ public class LEDCubeManager {
 	@Getter @Setter private float fieldOfView;
 	@Getter private float nearClip = 0.001F;
 	@Getter @Setter private float viewDistance;
-	@Getter private boolean limitFramerate;
+	@Getter private int framerateCap;
 	@Getter private int multisampleFBO;
-	private int multisampleTexture;
+	@Getter private int multisampleTexture;
 	private int multisampleDepthTexture;
-	private int multisampleRenderbuffer;
 	private int multisampleDepthRenderbuffer;
 	private int shadowMapSize = 1024;
 	private int depthFBO;
 	private int depthTexture;
+	@Getter private int bloomTexture;
+	@Getter @Setter private boolean enableBloom;
+	@Getter @Setter private int bloomAmount = 5;
+	@Getter private RenderCamera currentCamera;
 	private final Timer frameServeTimer = new Timer();
 	private final Timer rateCapTimer = new Timer();
 	private final Timer vrScrollTimer = new Timer();
@@ -208,87 +196,17 @@ public class LEDCubeManager {
 	@Getter private LightingHandler lightingHandler;
 	private ShaderProgram spDepthDraw; // TODO
 
-	public LEDCubeManager(String[] args) throws LWJGLException {
+	public LEDCubeManager() throws LWJGLException {
 		instance = this;
 		System.setProperty("sun.java2d.noddraw", "true");
-		ArgumentParser.parse(args, new ArgumentParser.Argument(true, "\nSpecify logging detail level", "--loglevel") {
-			@Override
-			public void runAction(String parameter) {
-				LogHelper.setLevel(Level.parse(parameter));
-			}
-		}, new ArgumentParser.Argument(false, "\nDisplay frames per second", "--showfps") {
-			@Override
-			public void runAction(String parameter) {
-				renderFPS = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nDisplay debug output", "--debug") {
-			@Override
-			public void runAction(String parameter) {
-				debugMode = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nDisplay OpenGL errors", "--debug-gl") {
-			@Override
-			public void runAction(String parameter) {
-				debugGL = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nRender GUI boxes", "--debug-gui") {
-			@Override
-			public void runAction(String parameter) {
-				debugGUI = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nEnable wireframe rendering", "--wireframe") {
-			@Override
-			public void runAction(String parameter) {
-				wireframe = true;
-			}
-		}, new ArgumentParser.Argument(false, "\nEnable virtual reality render mode", "--vr") {
-			@Override
-			public void runAction(String parameter) {
-				vrMode = true;
-			}
-		}, new ArgumentParser.Argument(true, "<name>\nSpecify serial port name", "--serialport") {
-			@Override
-			public void runAction(String parameter) {
-				serialPortName = parameter;
-			}
-		}, new ArgumentParser.Argument(true, "<port number>\nSpecify internal TCP server port", "--serverport") {
-			@Override
-			public void runAction(String parameter) {
-				serverPort = Integer.parseInt(parameter);
-			}
-		}, new ArgumentParser.Argument(true, "<class name>\nSpecify PortHandler class", "--porthandler") {
-			@Override
-			public void runAction(String parameter) {
-				portHandlerName = parameter;
-			}
-		}, new ArgumentParser.Argument(true, "<class name and constructor parameters (comma-separated)>\nSpecify LEDManager class", "--ledmanager") {
-			@Override
-			public void runAction(String parameter) {
-				String[] split = parameter.split("(?<!,),");
-				for (int i = 0; i < split.length; i++) split[i] = split[i].replaceAll(",,", ",");
-				ledManagerName = split[0];
-				ledManagerArgs = new String[split.length - 1];
-				System.arraycopy(split, 1, ledManagerArgs, 0, split.length - 1);
-			}
-		}, new ArgumentParser.Argument(true, "<directory path>\nSpecify a custom directory for config/logs/etc.", "--datadir") {
-			@Override
-			public void runAction(String parameter) {
-				dataDirectory = new File(parameter);
-				if (!dataDirectory.exists()) {
-					if (!dataDirectory.mkdirs()) {
-						System.out.println("Failed to create directory: " + dataDirectory);
-						System.exit(0);
-					}
-				}
-			}
-		});
 
-		LogHelper.init(new File(dataDirectory, "logs"));
+		LogHelper.init(new File(Main.getDataDirectory(), "logs"));
 		LongSleeperThread.startSleeper();
 
 		Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
 		pb.makeCurrent();
-		antiAliasingMaxSamples = glGetInteger(GL_MAX_SAMPLES);
+		// Can't use AA with bloom
+		antiAliasingMaxSamples = 0;//glGetInteger(GL_MAX_SAMPLES);
 		antiAliasingSupported = antiAliasingMaxSamples > 0;
 		pb.destroy();
 		LogHelper.config("AA Supported: %s / Max Samples: %d", antiAliasingSupported ? "yes" : "no", antiAliasingMaxSamples);
@@ -333,7 +251,7 @@ public class LEDCubeManager {
 		else if (!validControllers.containsKey(config.getString("controls.controller"))) config.setProperty("controls.controller", defaultController);
 		if (config.hasChanged()) config.save();
 
-		if (vrMode) { // Kick all this shit off...
+		if (Main.isVrMode()) { // Kick all this shit off...
 			VRProvider.init();
 		}
 
@@ -352,7 +270,7 @@ public class LEDCubeManager {
 		else if (new File(System.getProperty("user.home"), "Music").exists())
 			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home"), "Music"));
 
-		if (vrMode) {
+		if (Main.isVrMode()) {
 			addRenderPipeline(new RenderPipelineVR(), 10);
 			addRenderPipeline(new RenderPipelineGUI(), 20);
 		} else {
@@ -519,10 +437,10 @@ public class LEDCubeManager {
 	public void run() {
 		while (!Display.isCloseRequested() && !closeRequested) {
 			try {
-				if (!limitFramerate || vrMode || rateCapTimer.getMilliseconds() >= 1000D / 300D) {
+				if (framerateCap < 1 || Main.isVrMode() || rateCapTimer.getMilliseconds() >= 1000D / framerateCap) {
 					rateCapTimer.restart();
 					runGameLoop();
-				} else if (1000D / 300D - rateCapTimer.getMilliseconds() > 1) {
+				} else if (1000D / framerateCap - rateCapTimer.getMilliseconds() > 1) {
 					Thread.sleep(1);
 				}
 			} catch (Exception ex) {
@@ -564,7 +482,7 @@ public class LEDCubeManager {
 		updateFrameDelta();
 		float delta = getFrameDelta();
 		soundManager.update();
-		if (vrMode) VRProvider.poll(delta);
+		if (Main.isVrMode()) VRProvider.poll(delta);
 		this.preProcess();
 		this.processKeyboard();
 		this.processMouse();
@@ -589,15 +507,15 @@ public class LEDCubeManager {
 		}
 		if (multisampleTexture != 0) {
 			glDeleteTextures(multisampleTexture);
-			glDeleteTextures(multisampleDepthTexture);
 			multisampleTexture = 0;
+		}
+		if (multisampleDepthTexture != 0) {
+			glDeleteTextures(multisampleDepthTexture);
 			multisampleDepthTexture = 0;
 		}
-		if (multisampleRenderbuffer != 0) {
-			glDeleteRenderbuffers(multisampleRenderbuffer);
-			glDeleteRenderbuffers(multisampleRenderbuffer);
-			multisampleRenderbuffer = 0;
-			multisampleRenderbuffer = 0;
+		if (multisampleDepthRenderbuffer != 0) {
+			glDeleteRenderbuffers(multisampleDepthRenderbuffer);
+			multisampleDepthRenderbuffer = 0;
 		}
 		if (antiAliasing) {
 			multisampleTexture = glGenTextures();
@@ -611,22 +529,22 @@ public class LEDCubeManager {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampleTexture, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture, 0);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-				throw new RuntimeException("Anti-aliasing framebuffer is invalid.");
+				throw new RuntimeException("Main framebuffer is invalid.");
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		} else {
-			multisampleRenderbuffer = glGenRenderbuffers();
+			multisampleTexture = glGenTextures();
 			multisampleDepthRenderbuffer = glGenRenderbuffers();
-			glBindRenderbuffer(GL_RENDERBUFFER, multisampleRenderbuffer);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, displayMode.getWidth(), displayMode.getHeight());
+			glBindTexture(GL_TEXTURE_2D, multisampleTexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, displayMode.getWidth(), displayMode.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer)null);
 			glBindRenderbuffer(GL_RENDERBUFFER, multisampleDepthRenderbuffer);
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, displayMode.getWidth(), displayMode.getHeight());
 			multisampleFBO = glGenFramebuffers();
 			glBindFramebuffer(GL_FRAMEBUFFER, multisampleFBO);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, multisampleRenderbuffer);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, multisampleTexture, 0);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multisampleDepthRenderbuffer);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-				throw new RuntimeException("Anti-aliasing framebuffer is invalid.");
+				throw new RuntimeException("Main framebuffer is invalid.");
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
@@ -653,6 +571,31 @@ public class LEDCubeManager {
 			throw new RuntimeException("Depth texture framebuffer is invalid.");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	private void setupBloomTexture() {
+		if (bloomTexture != 0) {
+			glDeleteTextures(bloomTexture);
+			bloomTexture = 0;
+		}
+		bloomTexture = glGenTextures();
+		glBindTexture(GL_TEXTURE_2D, bloomTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, displayMode.getWidth(), displayMode.getHeight(), 0, GL_RGB, GL_FLOAT, (ByteBuffer)null);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindFramebuffer(GL_FRAMEBUFFER, multisampleFBO);
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, bloomTexture, 0);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			throw new RuntimeException("Main framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
+		}
+
+		IntBuffer buf = BufferUtils.createIntBuffer(2);
+		buf.put(GL_COLOR_ATTACHMENT0);
+		buf.put(GL_COLOR_ATTACHMENT1);
+		buf.flip();
+		glDrawBuffers(buf);
 	}
 
 	private void setupSystemTray() throws AWTException {
@@ -717,7 +660,7 @@ public class LEDCubeManager {
 
 	private void initConfig() {
 		if (displayMode == null) displayMode = new DisplayMode(1024, 768);
-		config = new ConfigManager(new File(dataDirectory, "options.yml"), false);
+		config = new ConfigManager(new File(Main.getDataDirectory(), "options.yml"), false);
 		config.load();
 		config.defaultProperty("display.width", displayMode.getWidth());
 		config.defaultProperty("display.height", displayMode.getHeight());
@@ -728,7 +671,8 @@ public class LEDCubeManager {
 		config.defaultProperty("display.viewdistance", 100F);
 		config.defaultProperty("display.antialiasing", true);
 		config.defaultProperty("display.antialiasingsamples", 4);
-		config.defaultProperty("display.limitframerate", true);
+		config.defaultProperty("display.frameratecap", 60);
+		config.defaultProperty("display.bloom", true);
 		config.defaultProperty("sound.effectvolume", 1.0F);
 		config.defaultProperty("sound.musicvolume", 1.0F);
 		config.defaultProperty("sound.inputdevice", "");
@@ -747,7 +691,8 @@ public class LEDCubeManager {
 		viewDistance = config.getFloat("display.viewdistance");
 		fullscreen = config.getBoolean("display.fullscreen");
 		borderless = config.getBoolean("display.fullscreenborderless");
-		limitFramerate = config.getBoolean("display.limitframerate");
+		framerateCap = config.getInteger("display.frameratecap");
+		enableBloom = config.getBoolean("display.bloom");
 		newFullscreen = fullscreen;
 		newBorderless = borderless;
 
@@ -824,7 +769,7 @@ public class LEDCubeManager {
 		InputBindingManager.addBinding(new InputBinding("wireframe", "Wireframe", "General", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_F6)) {
 			@Override
 			public boolean onPressed() {
-				wireframe = !wireframe;
+				Main.wireframe = !Main.wireframe;
 				return false;
 			}
 
@@ -837,7 +782,7 @@ public class LEDCubeManager {
 				return true;
 			}
 		});
-		if (!vrMode) {
+		if (!Main.isVrMode()) {
 			InputBindingManager.addBinding(new InputBinding("movecamera", "Toggle Movement", "Camera", true, new InputInfo(InputInfo.Type.KEYBOARD, Keyboard.KEY_ESCAPE)) {
 				@Override
 				public boolean onPressed() {
@@ -863,6 +808,7 @@ public class LEDCubeManager {
 		initGL();
 		resizeGL(displayMode.getWidth(), displayMode.getHeight());
 		setupAntiAliasing();
+		setupBloomTexture();
 	}
 
 	private void initGL() {
@@ -1051,7 +997,7 @@ public class LEDCubeManager {
 	}
 
 	private void computeVRMouseAim() {
-		if (vrMode && showingVRGUI) {
+		if (Main.isVrMode() && showingVRGUI) {
 			VRTrackedController leftController = VRProvider.getController(ControllerType.LEFT);
 			VRTrackedController rightController = VRProvider.getController(ControllerType.RIGHT);
 			Quaternion leftControllerRot = leftController.getRotation().inverse();
@@ -1100,13 +1046,13 @@ public class LEDCubeManager {
 			}
 		});
 
-		if (vrMode) VRProvider.getController(ControllerType.RIGHT).setScrolling(showingVRGUI && mouseOverride != null);
+		if (Main.isVrMode()) VRProvider.getController(ControllerType.RIGHT).setScrolling(showingVRGUI && mouseOverride != null);
 
 		camera.update(delta);
 		textureManager.update(delta);
 		ledCube.update(delta);
 
-		if (!vrMode)
+		if (!Main.isVrMode())
 			lightingHandler.getLight(0).position = new Vector4f(camera.getPosition().getX(), camera.getPosition().getY(), camera.getPosition().getZ(), 1);
 
 		for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
@@ -1136,7 +1082,7 @@ public class LEDCubeManager {
 			ex.printStackTrace();
 		}
 
-		if (debugMode) {
+		if (Main.debugMode) {
 			Runtime runtime = Runtime.getRuntime();
 			addInfoText("Memory: " + Util.bytesToMBString(runtime.totalMemory() - runtime.freeMemory()) + " / " + Util.bytesToMBString(runtime.maxMemory()), 1010);
 			Vector3 vector = camera.getAngle().forward();
@@ -1172,11 +1118,20 @@ public class LEDCubeManager {
 		//glLoadIdentity();
 		// State stuff
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		{ // Clear bloom buffer with black
+			FloatBuffer buf = BufferUtils.createFloatBuffer(4);
+			buf.put(0);
+			buf.put(0);
+			buf.put(0);
+			buf.put(1);
+			buf.flip();
+			glClearBuffer(GL_COLOR, 1, buf);
+		}
 		glEnable(GL_LIGHTING);
 		glEnable(GL_DEPTH_TEST);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		//wireframe = true;
-		if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		if (Main.wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		checkGLError("Pre render 3D");
 		render3D();
 		checkGLError("Post render 3D");
@@ -1192,7 +1147,7 @@ public class LEDCubeManager {
 			glDisable(GL_LIGHTING);
 			glDisable(GL_DEPTH_TEST);
 			glBindTexture(GL_TEXTURE_2D, 0);
-			if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			if (Main.wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			checkGLError("Pre render 2D");
 			render2D();
 			checkGLError("Post render 2D");
@@ -1218,7 +1173,7 @@ public class LEDCubeManager {
 				if (screenshot) {
 					screenshot = false;
 					SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
-					File screenshotDir = new File(dataDirectory, "screenshots");
+					File screenshotDir = new File(Main.getDataDirectory(), "screenshots");
 					screenshotDir.mkdirs();
 					File file = new File(screenshotDir, dateFormat.format(Calendar.getInstance().getTime()) + ".png");
 					for (int i = 2; file.exists(); i++) {
@@ -1243,9 +1198,11 @@ public class LEDCubeManager {
 			RenderPipeline pipeline = tuple.getA();
 			pipeline.preRender3D();
 			for (RenderCamera cam : renderCameras) {
+				currentCamera = cam;
 				cam.setup();
 				pipeline.render3D();
 			}
+			currentCamera = null;
 			pipeline.postRender3D();
 		}
 		InstancedRenderer.resetVBOIndex();
@@ -1264,7 +1221,7 @@ public class LEDCubeManager {
 	}
 
 	private void checkGLError(String stage) {
-		if (debugGL) {
+		if (Main.debugGL) {
 			for (int error = glGetError(); error != GL_NO_ERROR; error = glGetError()) {
 				LogHelper.severe("########## GL ERROR ##########");
 				LogHelper.severe("@ %s", stage);
@@ -1298,16 +1255,20 @@ public class LEDCubeManager {
 	}
 
 	public void sendMatrixToProgram() {
+		sendMatrixToProgram(projectionMatrix, viewMatrix);
+	}
+
+	public static void sendMatrixToProgram(Matrix4f projection, Matrix4f view) {
 		ShaderProgram program = ShaderProgram.getCurrent();
 		if (program == null) return;
 		int projectionMatrixLoc = program.getUniformLocation("projection_matrix");
 		int viewMatrixLoc = program.getUniformLocation("view_matrix");
 		matrixBuffer.rewind();
-		projectionMatrix.store(matrixBuffer);
+		projection.store(matrixBuffer);
 		matrixBuffer.rewind();
 		glUniformMatrix4(projectionMatrixLoc, false, matrixBuffer);
 		matrixBuffer.rewind();
-		viewMatrix.store(matrixBuffer);
+		view.store(matrixBuffer);
 		matrixBuffer.rewind();
 		glUniformMatrix4(viewMatrixLoc, false, matrixBuffer);
 	}
@@ -1370,6 +1331,11 @@ public class LEDCubeManager {
 			resizeFrame(fullscreen, borderless);
 			resizeGL(displayMode.getWidth(), displayMode.getHeight());
 			setupAntiAliasing();
+			setupBloomTexture();
+			for (Tuple<RenderPipeline, Integer> tuple : pipelines) {
+				RenderPipeline pipeline = tuple.getA();
+				pipeline.changeDisplayMode();
+			}
 			for (Runnable callback : resizeHandlers) {
 				callback.run();
 			}
@@ -1424,9 +1390,9 @@ public class LEDCubeManager {
 		antiAliasingSamples = samples;
 	}
 
-	public void setLimitFramerate(boolean limitFramerate) {
-		this.limitFramerate = limitFramerate;
-		config.setProperty("display.limitframerate", limitFramerate);
+	public void setFramerateCap(int framerateCap) {
+		this.framerateCap = framerateCap;
+		config.setProperty("display.frameratecap", framerateCap);
 	}
 
 	public int addResizeHandler(Runnable resizeHandler) {

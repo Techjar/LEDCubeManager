@@ -48,7 +48,7 @@ public class RenderCameraVR implements RenderCamera {
 		if (eye == VRStereoProvider.EyeType.CENTER) {
 			ledcm.resizeGL(displayMode.getWidth(), displayMode.getHeight());
 			ledcm.setupView(Util.convertMatrix(Matrices.perspective(ledcm.getFieldOfView(), (float)LEDCubeManager.getDisplayMode().getWidth() / (float)LEDCubeManager.getDisplayMode().getHeight(), ledcm.getNearClip(), ledcm.getViewDistance())), getView(eye));
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ledcm.isAntiAliasing() ? ledcm.getMultisampleFBO() : 0);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ledcm.getMultisampleFBO());
 			glDisable(GL_STENCIL_TEST);
 		} else {
 			ledcm.resizeGL(texSize.getWidth(), texSize.getHeight());

@@ -28,7 +28,6 @@ public class ShaderProgram {
 	private static final File shaderPath = new File("resources/shaders/");
 	private static final Map<String, Integer> types;
 	private static final Map<String, Integer> typeBitLookup;
-	private static Map<String, List<Integer>> shaderCache = new HashMap<>();
 	private static List<ShaderProgram> programCache = new ArrayList<>();
 	private static ShaderProgram activeProgram;
 	@Getter private int id;
@@ -82,12 +81,6 @@ public class ShaderProgram {
 	@SneakyThrows(IOException.class)
 	public ShaderProgram loadShader(String name, int typeBits) {
 		checkLinked(true);
-		if (shaderCache.containsKey(name)) {
-			for (int shaderId : shaderCache.get(name)) {
-				shaderIds.add(shaderId);
-			}
-			return this;
-		}
 		boolean found = false;
 		for (Map.Entry<String, Integer> entry : types.entrySet()) {
 			String fileName = name + '.' + entry.getKey();
@@ -105,8 +98,6 @@ public class ShaderProgram {
 					throw new RuntimeException("Shader compile error in " + fileName + ": " + log);
 				}
 				shaderIds.add(shaderId);
-				if (!shaderCache.containsKey(name)) shaderCache.put(name, new ArrayList<Integer>());
-				shaderCache.get(name).add(id);
 				LogHelper.info("Loaded shader: %s", fileName);
 			}
 		}
@@ -130,8 +121,10 @@ public class ShaderProgram {
 			String log = glGetProgramInfoLog(id, length);
 			throw new RuntimeException("Program linking error: " + log);
 		}
+		LogHelper.info("Shader program linked.");
 		for (int i : shaderIds) {
 			glDetachShader(id, i);
+			glDeleteShader(i);
 		}
 		shaderIds = null;
 		linked = true;
@@ -160,18 +153,12 @@ public class ShaderProgram {
 	}
 
 	public static void cleanup() {
-		if (programCache.isEmpty() && shaderCache.isEmpty()) return;
+		if (programCache.isEmpty()) return;
 		for (ShaderProgram program : programCache) {
 			program.release();
 		}
-		for (List<Integer> list : shaderCache.values()) {
-			for (int shaderId : list) {
-				glDeleteShader(shaderId);
-			}
-		}
-		shaderCache.clear();
 		programCache.clear();
-		LogHelper.info("Shader cache cleaned up!");
+		LogHelper.info("Shader program cache cleaned up!");
 	}
 
 	private void checkLinked(boolean errorCondition) {
