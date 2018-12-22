@@ -529,7 +529,7 @@ public class LEDCubeManager {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampleTexture, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture, 0);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-				throw new RuntimeException("Main framebuffer is invalid.");
+				throw new RuntimeException("Main framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		} else {
@@ -544,7 +544,7 @@ public class LEDCubeManager {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, multisampleTexture, 0);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multisampleDepthRenderbuffer);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-				throw new RuntimeException("Main framebuffer is invalid.");
+				throw new RuntimeException("Main framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
@@ -568,7 +568,7 @@ public class LEDCubeManager {
 		glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			throw new RuntimeException("Depth texture framebuffer is invalid.");
+			throw new RuntimeException("Depth texture framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
