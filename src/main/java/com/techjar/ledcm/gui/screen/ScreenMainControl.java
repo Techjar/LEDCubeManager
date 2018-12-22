@@ -613,6 +613,8 @@ public class ScreenMainControl extends Screen {
 		limitFramerateSlider.setParentAlignment(GUIAlignment.TOP_CENTER);
 		limitFramerateSlider.setDimension(400 - limitFramerateLabel.getWidth() - 10, 30);
 		limitFramerateSlider.setPosition(limitFramerateLabel.getWidth() / 2 + 5, 235);
+		limitFramerateSlider.setIncrement(1F / 171F);
+		limitFramerateSlider.setShowNotches(false);
 		limitFramerateSlider.setValue(LEDCubeManager.getInstance().getFramerateCap() == 0 ? 0 : (LEDCubeManager.getInstance().getFramerateCap() - 29) / 171F);
 		limitFramerateSlider.setChangeHandler(component -> {
 			if (limitFramerateSlider.getValue() > 0)
