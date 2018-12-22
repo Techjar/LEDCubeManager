@@ -1,2 +1,3 @@
 render flatled.obj
 collision mesh flatled.obj
+material 0,0,0 0,0,0 default default 50
