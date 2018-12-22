@@ -101,7 +101,7 @@ void main(void) {
     vec3 linearColor = color.rgb * (ambient + totalDiffuse) + totalSpecular + (color.rgb * clamp(front_material.emissivity, 0, 1));
     out_Color = vec4(linearColor, color.a + specularLuminance);
 
-    float brightness = dot(out_Color.rgb * front_material.emissivity, vec3(0.2126, 0.7152, 0.0722));
+    float brightness = dot(out_Color.rgb * out_Color.a * front_material.emissivity, vec3(0.2126, 0.7152, 0.0722));
     if (brightness > 1.0)
         bloom_Color = vec4(out_Color.rgb * out_Color.a, 1.0);
     else

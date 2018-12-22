@@ -205,8 +205,7 @@ public class LEDCubeManager {
 
 		Pbuffer pb = new Pbuffer(800, 600, new PixelFormat(32, 0, 24, 8, 0), null);
 		pb.makeCurrent();
-		// Can't use AA with bloom
-		antiAliasingMaxSamples = 0;//glGetInteger(GL_MAX_SAMPLES);
+		antiAliasingMaxSamples = glGetInteger(GL_MAX_SAMPLES);
 		antiAliasingSupported = antiAliasingMaxSamples > 0;
 		pb.destroy();
 		LogHelper.config("AA Supported: %s / Max Samples: %d", antiAliasingSupported ? "yes" : "no", antiAliasingMaxSamples);
@@ -529,7 +528,7 @@ public class LEDCubeManager {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multisampleTexture, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, multisampleDepthTexture, 0);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-				throw new RuntimeException("Main framebuffer is invalid.");
+				throw new RuntimeException("Main framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		} else {
@@ -544,7 +543,7 @@ public class LEDCubeManager {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, multisampleTexture, 0);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multisampleDepthRenderbuffer);
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-				throw new RuntimeException("Main framebuffer is invalid.");
+				throw new RuntimeException("Main framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
@@ -568,7 +567,7 @@ public class LEDCubeManager {
 		glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			throw new RuntimeException("Depth texture framebuffer is invalid.");
+			throw new RuntimeException("Depth texture framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
@@ -579,14 +578,19 @@ public class LEDCubeManager {
 			bloomTexture = 0;
 		}
 		bloomTexture = glGenTextures();
-		glBindTexture(GL_TEXTURE_2D, bloomTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, displayMode.getWidth(), displayMode.getHeight(), 0, GL_RGB, GL_FLOAT, (ByteBuffer)null);
+		if (antiAliasing) {
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, bloomTexture);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, antiAliasingSamples, GL_RGB16F, displayMode.getWidth(), displayMode.getHeight(), false);
+		} else {
+			glBindTexture(GL_TEXTURE_2D, bloomTexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, displayMode.getWidth(), displayMode.getHeight(), 0, GL_RGB, GL_FLOAT, (ByteBuffer)null);
+		}
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glBindFramebuffer(GL_FRAMEBUFFER, multisampleFBO);
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, bloomTexture, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, antiAliasing ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, bloomTexture, 0);
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 			throw new RuntimeException("Main framebuffer is invalid: " + glCheckFramebufferStatus(GL_FRAMEBUFFER));
 		}

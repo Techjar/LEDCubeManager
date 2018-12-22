@@ -28,6 +28,8 @@ public class BloomProcessor {
 	@Setter private int bloomTexture;
 	private int[] pingpongFBO = new int[2];
 	private int[] pingpongTexture = new int[2];
+	private int[] intermediateFBO = new int[2];
+	private int[] intermediateTexture = new int[2];
 	private ShaderProgram blurShader;
 	private ShaderProgram blendShader;
 	private Model planeModel;
@@ -53,6 +55,18 @@ public class BloomProcessor {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongTexture[i], 0);
+
+			intermediateFBO[i] = glGenFramebuffers();
+			intermediateTexture[i] = glGenTextures();
+
+			glBindFramebuffer(GL_FRAMEBUFFER, intermediateFBO[i]);
+			glBindTexture(GL_TEXTURE_2D, intermediateTexture[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, (ByteBuffer)null);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, intermediateTexture[i], 0);
 		}
 
 		planeModel = LEDCubeManager.getModelManager().getModel("plane.model");
@@ -67,26 +81,31 @@ public class BloomProcessor {
 	public void apply(int amount) {
 		LEDCubeManager ledcm = LEDCubeManager.getInstance();
 
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, baseFramebuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO[0]);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO[1]);
+		glReadBuffer(GL_COLOR_ATTACHMENT1);
+		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(false);
 		ledcm.resizeGL(width, height);
 		blurShader.use();
 		for (int i = 0; i < amount * 2; i++) {
 			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[1 - (i % 2)]);
-			glBindTexture(GL_TEXTURE_2D, i == 0 ? bloomTexture : pingpongTexture[i % 2]);
+			glBindTexture(GL_TEXTURE_2D, i == 0 ? intermediateTexture[1] : pingpongTexture[i % 2]);
 			glUniform1i(blurShader.getUniformLocation("horizontal"), 1 - (i % 2));
 
 			LEDCubeManager.sendMatrixToProgram(Util.convertMatrix(Matrices.ortho(0, width, height, 0, -1, 1)), new Matrix4f());
 			planeModel.render(new Vector3(width / 2, height / 2, 0), new Quaternion(90, 0, 0, Angle.Order.XYZ), new Color(), new Vector3(width, 0, height), false, false, -1);
 		}
 
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, baseFramebuffer);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pingpongFBO[1]);
-		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-		glBindFramebuffer(GL_FRAMEBUFFER, baseFramebuffer);
-
 		blendShader.use();
-		glBindTexture(GL_TEXTURE_2D, pingpongTexture[1]);
+		glBindFramebuffer(GL_FRAMEBUFFER, baseFramebuffer);
+		glBindTexture(GL_TEXTURE_2D, intermediateTexture[0]);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, pingpongTexture[0]);
 		glActiveTexture(GL_TEXTURE0);
