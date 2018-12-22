@@ -27,7 +27,6 @@ import com.techjar.ledcm.util.math.Quaternion;
 import com.techjar.ledcm.util.math.Vector2;
 import com.techjar.ledcm.util.math.Vector3;
 import com.techjar.ledcm.vr.VRRenderModel;
-import javafx.scene.effect.Bloom;
 import jopenvr.OpenVRUtil;
 
 import org.lwjgl.BufferUtils;
