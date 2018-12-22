@@ -3,6 +3,7 @@ package com.techjar.ledcm.vr;
 import static org.lwjgl.opengl.GL11.*;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
@@ -603,9 +604,13 @@ public class VRProvider {
 	}
 
 	static Pointer pointerFromString(String in) {
-		Pointer p = new Memory(in.getBytes().length + 1);
-		p.setString(0, in);
-		return p;
+		try {
+			Pointer p = new Memory(in.getBytes("UTF-8").length + 1);
+			p.setString(0, in);
+			return p;
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private static String getVRInitError() {
