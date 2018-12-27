@@ -38,7 +38,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 	@Override
 	public synchronized void refresh() {
 		for (int i = 0; i < size; i++) {
-			float amplitude = (float)MathHelper.log(amplitudes[i], 2); // Huh?
+			float amplitude = (float)MathHelper.log(amplitudes[i], 1.45F); // Huh?
 			if (colorMode == 3 && (amplitude <= 0 || randomColors[i].equals(new Color()))) randomColors[i] = new Color(random.nextInt(256), random.nextInt(256), random.nextInt(256));
 			Vector2 pos = spiralPosition(i);
 			pos = new Vector2(pos.getX() + ((dimension.x / 2) - 1), pos.getY() + ((dimension.z / 2) - 1));
@@ -103,7 +103,7 @@ public class AnimationSpectrumBars extends AnimationSpectrumAnalyzer {
 				if (band > amplitude) amplitude = band;
 			}
 			if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
-			else if (amplitudes[i] > 0) amplitudes[i] -= Math.max(amplitudes[i] / holdUp, 1F);
+			else if (amplitudes[i] > 0) amplitudes[i] -= amplitudes[i] / Math.max(holdUp * MathHelper.log(i, 10), 12F);
 		}
 		if (bandRepeat > 1) {
 			float[] amplitudesRef = new float[amplitudes.length];
