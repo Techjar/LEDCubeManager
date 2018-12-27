@@ -160,6 +160,7 @@ public class LEDCubeManager {
 	public long faceCount;
 	private boolean screenshot;
 	private boolean regrab;
+	private boolean[] vrGUIMouse = new boolean[5];
 	@Getter @Setter private boolean showingVRGUI;
 	@Getter @Setter private boolean showingGUI = true;
 	@Getter @Setter private Vector2 mouseOverride;
@@ -960,18 +961,26 @@ public class LEDCubeManager {
 			if (!screenEat && event.getController().getType() == ControllerType.RIGHT && showingVRGUI && mouseOverride != null) {
 				if (event.isButtonPressEvent() && event.getButton() == ButtonType.TRIGGER) {
 					if (event.getButtonState()) event.getController().triggerHapticPulse(2000);
-					for (Screen screen : screenList)
-						if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), 0, event.getButtonState(), 0)) screenEat = true;
+					for (Screen screen : screenList) {
+						if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), 0, event.getButtonState(), 0)) {
+							screenEat = true;
+							vrGUIMouse[0] = event.getButtonState();
+							break;
+						}
+					}
 				}
 				if (event.isAxisEvent() && event.getAxis() == AxisType.TOUCHPAD) {
 					if (vrScrollTimer.getMilliseconds() > 40 && Math.abs(event.getAxisDelta().getY()) > 4.0F) {
 						vrScrollTimer.restart();
 						event.getController().triggerHapticPulse(500);
-						for (Screen screen : screenList)
-							if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), -1, false, (int)(event.getAxisDelta().getY() * 10))) screenEat = true;
+						for (Screen screen : screenList) {
+							if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), -1, false, (int) (event.getAxisDelta().getY() * 10)))
+								screenEat = true;
+						}
 					}
 				}
 			}
+			if (screenEat) continue;
 			for (InputBinding binding : InputBindingManager.getBindings()) {
 				if (event.isButtonPressEvent() && binding.getBind() != null && binding.getBind().getType() == InputInfo.Type.VR && binding.getBind().getVrControllerType() == event.getController().getType() && binding.getBind().getButton() == event.getButton().ordinal()) {
 					if (screenEat) {
@@ -989,8 +998,19 @@ public class LEDCubeManager {
 					}
 				}
 			}
-			if (screenEat) continue;
 			if (!ledCube.processVRInputEvent(event)) continue;
+		}
+
+		if (!showingVRGUI || mouseOverride == null) {
+			for (int i = 0; i < vrGUIMouse.length; i++) {
+				if (vrGUIMouse[i]) {
+					for (Screen screen : screenList) {
+						if (screen.isVisible() && screen.isEnabled() && !GUI.doMouseEvent(screen.getContainer(), i, false, 0))
+							break;
+					}
+					vrGUIMouse[i] = false;
+				}
+			}
 		}
 	}
 
