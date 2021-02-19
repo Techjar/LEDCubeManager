@@ -159,7 +159,7 @@ public class ScreenMainControl extends Screen {
 		chooseFileBtn.setPosition(320, -5);
 		chooseFileBtn.setClickHandler(component -> {
 			if (LEDCubeManager.isConvertingAudio()) return;
-			if (Main.isVrMode() || LEDCubeManager.getInstance().isFullscreen()) {
+			if (Main.isVrMode() || LEDCubeManager.getInstance().isFullscreen() || OperatingSystem.isLinux()) {
 				fileChooser.showOpenDialog(component2 -> {
 					final File file = fileChooser.getSelectedFile();
 					new Thread(() -> {

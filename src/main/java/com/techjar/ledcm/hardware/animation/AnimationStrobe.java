@@ -24,13 +24,11 @@ public class AnimationStrobe extends Animation {
 
 	@Override
 	public synchronized void refresh() {
-		if (ticks % speed == 0) {
-			state = !state;
-			for (int x = 0; x < dimension.x; x++) {
-				for (int y = 0; y < dimension.y; y++) {
-					for (int z = 0; z < dimension.z; z++) {
-						ledManager.setLEDColor(x, y, z, state ? LEDCubeManager.getPaintColor() : new Color());
-					}
+		state = (ticks % speed == 0);
+		for (int x = 0; x < dimension.x; x++) {
+			for (int y = 0; y < dimension.y; y++) {
+				for (int z = 0; z < dimension.z; z++) {
+					ledManager.setLEDColor(x, y, z, state ? LEDCubeManager.getPaintColor() : new Color());
 				}
 			}
 		}

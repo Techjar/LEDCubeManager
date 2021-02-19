@@ -138,6 +138,14 @@ public class LEDCube {
 						for (int z = (int)vector.getZ(); z <= Math.min((int)vector.getZ() + (int)paintSize.getZ(), dim.z - 1); z++) {
 							if (isLEDWithinIsolation(x, y, z)) {
 								selection.highlight[ledManager.encodeVector(x, y, z)] = true;
+								if (previewTransform) {
+									PooledMutableVector3 vec = PooledMutableVector3.get(x, y, z);
+									removeTransform(vec);
+									selection.transformedHighlight[ledManager.encodeVector(vec)] = true;
+									vec.release();
+								} else {
+									selection.transformedHighlight[ledManager.encodeVector(x, y, z)] = true;
+								}
 							}
 						}
 					}
@@ -461,7 +469,7 @@ public class LEDCube {
 			public void whilePressed() {
 				ledSelections.forEach(selection -> {
 					if (selection.selector == null) {
-						paintLEDHighlight(selection.highlight, paintColor);
+						paintLEDHighlight(selection.transformedHighlight, paintColor);
 					}
 				});
 			}
@@ -481,7 +489,7 @@ public class LEDCube {
 			public void whilePressed() {
 				ledSelections.forEach(selection -> {
 					if (selection.selector == null) {
-						paintLEDHighlight(selection.highlight, ReadableColor.BLACK);
+						paintLEDHighlight(selection.transformedHighlight, ReadableColor.BLACK);
 					}
 				});
 			}
@@ -568,7 +576,7 @@ public class LEDCube {
 					ledSelections.forEach(selection -> {
 						VRTrackedController controller = VRProvider.getController(getBind().getVrControllerType());
 						if (selection.selector == controller) {
-							if (paintLEDHighlight(selection.highlight, paintColor))
+							if (paintLEDHighlight(selection.transformedHighlight, paintColor))
 								controller.triggerHapticPulse(1000);
 						}
 					});
@@ -590,7 +598,7 @@ public class LEDCube {
 					ledSelections.forEach(selection -> {
 						VRTrackedController controller = VRProvider.getController(getBind().getVrControllerType());
 						if (selection.selector == controller) {
-							if (paintLEDHighlight(selection.highlight, paintColor))
+							if (paintLEDHighlight(selection.transformedHighlight, paintColor))
 								controller.triggerHapticPulse(1000);
 						}
 					});
@@ -876,7 +884,7 @@ public class LEDCube {
 	private void floodFill(LEDSelection selection) {
 		Dimension3D dim = ledManager.getDimensions();
 		LEDArray ledArray = ledManager.getLEDArray();
-		Vector3 vector = selection.position;
+		Vector3 vector = previewTransform ? removeTransform(selection.position) : selection.position;
 		Color targetColor = ledArray.getLEDColor((int)vector.getX(), (int)vector.getY(), (int)vector.getZ());
 		if (!targetColor.equals(paintColor)) {
 			boolean[] processed = new boolean[ledManager.getLEDCount()];
@@ -945,6 +953,28 @@ public class LEDCube {
 		Vector4f vec4 = new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1);
 		Matrix4f.transform(transform, vec4, vec4);
 		vector.set(Math.round(vec4.x), Math.round(vec4.y), Math.round(vec4.z));
+		return vector;
+	}
+
+	public Vector3 removeTransform(Vector3 vec) {
+		Dimension3D dim = ledManager.getDimensions();
+		Vector4f vec4 = new Vector4f(vec.getX(), vec.getY(), vec.getZ(), 1);
+		Matrix4f.transform(Matrix4f.invert(transform, null), vec4, vec4);
+		PooledMutableVector3 vector = PooledMutableVector3.get(Math.round(vec4.x), Math.round(vec4.y), Math.round(vec4.z));
+		if (reflectX) vector.setX((dim.x - 1) - vector.getX());
+		if (reflectY) vector.setY((dim.y - 1) - vector.getY());
+		if (reflectZ) vector.setZ((dim.z - 1) - vector.getZ());
+		return vector.toImmutableRelease();
+	}
+
+	public MutableVector3 removeTransform(MutableVector3 vector) {
+		Dimension3D dim = ledManager.getDimensions();
+		Vector4f vec4 = new Vector4f(vector.getX(), vector.getY(), vector.getZ(), 1);
+		Matrix4f.transform(Matrix4f.invert(transform, null), vec4, vec4);
+		vector.set(Math.round(vec4.x), Math.round(vec4.y), Math.round(vec4.z));
+		if (reflectX) vector.setX((dim.x - 1) - vector.getX());
+		if (reflectY) vector.setY((dim.y - 1) - vector.getY());
+		if (reflectZ) vector.setZ((dim.z - 1) - vector.getZ());
 		return vector;
 	}
 
@@ -1042,11 +1072,13 @@ public class LEDCube {
 		public Object selector;
 		public Vector3 position;
 		public boolean[] highlight;
+		public boolean[] transformedHighlight;
 
 		public LEDSelection(Object selector, Vector3 position) {
 			this.selector = selector;
 			this.position = position;
 			this.highlight = new boolean[ledManager.getLEDCount()];
+			this.transformedHighlight = new boolean[ledManager.getLEDCount()];
 		}
 	}
 }
