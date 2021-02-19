@@ -92,7 +92,7 @@ public class LEDCube {
 		if (Main.getLedManagerName() != null) {
 			ledManager = (LEDManager)Class.forName("com.techjar.ledcm.hardware.manager." + Main.getLedManagerName()).getConstructor(String[].class).newInstance((Object)Main.getLedManagerArgs());
 		} else {
-			ledManager = new ArduinoLEDManager(4, false);
+			ledManager = new ArduinoLEDManager(6, false);
 			//ledManager = new TLC5940LEDManager(true);
 			//ledManager = new TestLEDManager(true, 16, 16, 16, false, new Color(255, 0, 0));
 		}

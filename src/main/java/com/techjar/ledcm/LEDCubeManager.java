@@ -1389,8 +1389,11 @@ public class LEDCubeManager {
 			displayMode = mode;
 			configDisplayMode = mode;
 			return true;
+		} else {
+			displayMode = new DisplayMode(width, height);
+			configDisplayMode = new DisplayMode(width, height);
+			return true;
 		}
-		return false;
 	}
 
 	public boolean isFullscreen() {

@@ -32,7 +32,7 @@ public class GUIFileChooser extends GUIWindow {
 	protected GUIScrollBox scrollBox;
 	protected GUIComboBox fileFilterComboBox;
 	protected GUIComboBox rootDirsComboBox;
-	//protected GUITextField fileNameTextField;
+	protected GUITextField fileNameTextField;
 	protected GUIButton chooseBtn;
 	//protected GUIButton cancelBtn;
 	protected int buttonHeight;
@@ -80,6 +80,11 @@ public class GUIFileChooser extends GUIWindow {
 			setCurrentDirectory(new File(rootDirsComboBox.getSelectedItem().toString()));
 		});
 		addComponent(rootDirsComboBox);
+		fileNameTextField = new GUITextField(font, color, new GUIBackground(scrollBoxBg.bgColor, scrollBoxBg.borderColor, scrollBoxBg.borderSize, scrollBoxBg.texture));
+		fileNameTextField.setParentAlignment(GUIAlignment.BOTTOM_LEFT);
+		fileNameTextField.setPosition(5, -10 - buttonHeight);
+		fileNameTextField.setDimension(0, buttonHeight);
+		addComponent(fileNameTextField);
 		chooseBtn = new GUIButton(font, color, "Open", new GUIBackground(guiBg.borderColor, buttonBorderColor, guiBg.borderSize, guiBg.texture));
 		chooseBtn.setParentAlignment(GUIAlignment.BOTTOM_RIGHT);
 		chooseBtn.setPosition(-5, -5);
@@ -114,9 +119,10 @@ public class GUIFileChooser extends GUIWindow {
 
 	protected void updateDimensions() {
 		Rectangle rect = getContainerBox();
-		scrollBox.setDimension((int)rect.getWidth() - 10 - scrollBoxBg.borderSize * 2, (int)rect.getHeight() - buttonHeight * 2 - 20 - scrollBoxBg.borderSize * 2);
+		scrollBox.setDimension((int)rect.getWidth() - 10 - scrollBoxBg.borderSize * 2, (int)rect.getHeight() - (buttonHeight + 5) * (saveDialog ? 3 : 2) - 10 - scrollBoxBg.borderSize * 2);
 		fileFilterComboBox.setDimension((int)rect.getWidth() - 15 - 100, buttonHeight);
 		rootDirsComboBox.setDimension((int)rect.getWidth() - 10, buttonHeight);
+		fileNameTextField.setDimension((int)rect.getWidth() - 10, buttonHeight);
 		chooseBtn.setDimension(100, buttonHeight);
 		updateFileList();
 	}
@@ -125,6 +131,8 @@ public class GUIFileChooser extends GUIWindow {
 		chooseBtn.setText("Open");
 		chooseCallback = callback;
 		saveDialog = false;
+		fileNameTextField.setVisible(false);
+		updateDimensions();
 		setVisible(true);
 	}
 
@@ -132,11 +140,17 @@ public class GUIFileChooser extends GUIWindow {
 		chooseBtn.setText("Save");
 		chooseCallback = callback;
 		saveDialog = true;
+		fileNameTextField.setVisible(true);
+		updateDimensions();
 		setVisible(true);
 	}
 
 	public File getSelectedFile() {
-		return selectedFiles.iterator().next();
+		if (saveDialog) {
+			return new File(currentDir, fileNameTextField.getText());
+		}else {
+			return selectedFiles.iterator().next();
+		}
 	}
 
 	public File[] getSelectedFiles() {
@@ -267,7 +281,7 @@ public class GUIFileChooser extends GUIWindow {
 	}
 
 	protected void chooseFile() {
-		if (selectedFiles.size() > 0) {
+		if ((!saveDialog && selectedFiles.size() > 0) || (saveDialog && !fileNameTextField.getText().isEmpty())) {
 			setVisible(false);
 			if (chooseCallback != null) {
 				chooseCallback.run(this);
@@ -333,6 +347,7 @@ public class GUIFileChooser extends GUIWindow {
 						}
 						selectedFiles.clear();
 						selectedFiles.add(file);
+						fileNameTextField.setText(file.getName());
 						if (clicked && clickTimer.getMilliseconds() <= 500) {
 							if (file.isDirectory()) setCurrentDirectory(file);
 							else chooseFile();
