@@ -1016,6 +1016,7 @@ public class LEDCube {
 		//addAnimation(new AnimationCharTest());
 		addAnimation(new AnimationText());
 		addAnimation(new AnimationStaticFill());
+		addAnimation(new AnimationFloodFill());
 		addAnimation(new AnimationGradient());
 		addAnimation(new AnimationRandomize());
 		addAnimation(new AnimationRain());
