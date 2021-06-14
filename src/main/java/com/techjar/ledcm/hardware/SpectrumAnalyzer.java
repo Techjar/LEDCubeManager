@@ -408,7 +408,11 @@ public class SpectrumAnalyzer {
 			if (animation instanceof AnimationSpectrumAnalyzer) {
 				AnimationSpectrumAnalyzer anim = (AnimationSpectrumAnalyzer)animation;
 				if (anim.isFFT()) {
-					fft.forward(floatsL, floatsR);
+					float[] floats = new float[floatsL.length];
+					for (int i = 0; i < floatsL.length; i++) {
+						floats[i] = MathHelper.clamp(floatsL[i] / 2 + floatsR[i] / 2, -1, 1);
+					}
+					fft.forward(floats);
 					anim.processFFT(fft);
 				}
 				if (anim.isBeatDetect()) {
