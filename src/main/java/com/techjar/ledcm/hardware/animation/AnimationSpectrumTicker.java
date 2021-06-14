@@ -133,11 +133,16 @@ public class AnimationSpectrumTicker extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public synchronized void processFFT(FFT fft) {
+    public int getDesiredFFTCount()  {
+        return 1;
+    }
+
+    @Override
+    public synchronized void processFFT(FFT[] fft) {
         for (int i = 0; i < 64; i++) {
             float amplitude = 0;
             for (int j = 0; j < bandIncrement; j++) {
-                float band = fft.getBand(i * bandIncrement + j);
+                float band = fft[0].getBand(i * bandIncrement + j);
                 if (band > amplitude) amplitude = band;
             }
             if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;

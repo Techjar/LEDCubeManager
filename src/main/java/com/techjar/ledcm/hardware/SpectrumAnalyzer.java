@@ -53,7 +53,8 @@ public class SpectrumAnalyzer {
 	private final int baseBufferSize = 2048;
 	private final int sampleRate = 48000;
 	private final Minim minim;
-	private FFT fft;
+	private FFT fftLeft;
+	private FFT fftRight;
 	private BeatDetect beatDetect;
 	private int beatDetectMode = BeatDetect.FREQ_ENERGY;
 	private AudioPlayer player;
@@ -228,11 +229,12 @@ public class SpectrumAnalyzer {
 			dataLine = (TargetDataLine)currentMixer.getLine(info);
 			dataLine.open(format, bufferSize * 8);
 			dataLine.start();
-			fft = new FFT(baseBufferSize / 2, sampleRate);
+			fftLeft = new FFT(baseBufferSize / 2, sampleRate);
+			fftRight = new FFT(baseBufferSize / 2, sampleRate);
 			beatDetect = new BeatDetect(baseBufferSize / 2, sampleRate);
 			beatDetect.detectMode(beatDetectMode);
 			LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioInit(format));
-			final AudioListener listener = new AnalyzerAudioListener(fft, beatDetect);
+			final AudioListener listener = new AnalyzerAudioListener(fftLeft, fftRight, beatDetect);
 			final AudioListener listener2 = new StreamingAudioListener(true);
 			inputThread = new Thread("Audio Input") {
 				@Override
@@ -309,10 +311,11 @@ public class SpectrumAnalyzer {
 			LEDCubeManager.getLEDCube().getCommThread().getTcpServer().sendPacket(new PacketAudioInit(player.getFormat()));
 			currentTrack = file.getName().substring(0, file.getName().lastIndexOf('.'));
 			setVolume(LEDCubeManager.getInstance().getScreenMainControl().volumeSlider.getValue());
-			fft = new FFT(player.bufferSize(), player.sampleRate());
+			fftLeft = new FFT(player.bufferSize(), player.sampleRate());
+			fftRight = new FFT(player.bufferSize(), player.sampleRate());
 			beatDetect = new BeatDetect(player.bufferSize(), player.sampleRate());
 			beatDetect.detectMode(beatDetectMode);
-			player.addListener(new AnalyzerAudioListener(fft, beatDetect));
+			player.addListener(new AnalyzerAudioListener(fftLeft, fftRight, beatDetect));
 			player.addListener(new StreamingAudioListener(true));
 			player.play();
 		} catch (Exception ex) {
@@ -374,11 +377,13 @@ public class SpectrumAnalyzer {
 	}
 
 	private class AnalyzerAudioListener implements AudioListener {
-		private final FFT fft;
+		private final FFT fftLeft;
+		private final FFT fftRight;
 		private final BeatDetect beatDetect;
 
-		public AnalyzerAudioListener(FFT fft, BeatDetect beatDetect) {
-			this.fft = fft;
+		public AnalyzerAudioListener(FFT fftLeft, FFT fftRight, BeatDetect beatDetect) {
+			this.fftLeft = fftLeft;
+			this.fftRight = fftRight;
 			this.beatDetect = beatDetect;
 		}
 
@@ -388,8 +393,13 @@ public class SpectrumAnalyzer {
 			if (animation instanceof AnimationSpectrumAnalyzer) {
 				AnimationSpectrumAnalyzer anim = (AnimationSpectrumAnalyzer)animation;
 				if (anim.isFFT()) {
-					fft.forward(floats);
-					anim.processFFT(fft);
+					fftLeft.forward(floats);
+					if (anim.getDesiredFFTCount() > 1) {
+						fftRight.forward(floats);
+						anim.processFFT(new FFT[]{fftLeft, fftRight});
+					} else {
+						anim.processFFT(new FFT[]{fftLeft});
+					}
 				}
 				if (anim.isBeatDetect()) {
 					if (anim.getBeatDetectMode() != beatDetectMode) {
@@ -408,8 +418,18 @@ public class SpectrumAnalyzer {
 			if (animation instanceof AnimationSpectrumAnalyzer) {
 				AnimationSpectrumAnalyzer anim = (AnimationSpectrumAnalyzer)animation;
 				if (anim.isFFT()) {
-					fft.forward(floatsL, floatsR);
-					anim.processFFT(fft);
+					if (anim.getDesiredFFTCount() > 1) {
+						fftLeft.forward(floatsL);
+						fftRight.forward(floatsR);
+						anim.processFFT(new FFT[]{fftLeft, fftRight});
+					} else {
+						float[] floats = new float[floatsL.length];
+						for (int i = 0; i < floatsL.length; i++) {
+							floats[i] = MathHelper.clamp(floatsL[i] / 2 + floatsR[i] / 2, -1, 1);
+						}
+						fftLeft.forward(floats);
+						anim.processFFT(new FFT[]{fftLeft});
+					}
 				}
 				if (anim.isBeatDetect()) {
 					if (anim.getBeatDetectMode() != beatDetectMode) {

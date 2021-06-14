@@ -20,6 +20,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     private int bandIncrement = 3;
     private int colorMode;
     private float holdUp = 7;
+    private boolean stereo;
 
     public AnimationSpectrumDots() {
         super();
@@ -59,6 +60,7 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
         return new AnimationOption[]{
             new AnimationOption("colorMode", "Color", AnimationOption.OptionType.COMBOBOX, new Object[]{colorMode, 0, "Picker", 1, "Rainbow", 2, "Amplitude", 3, "Amplitude Rainbow", 4, "Random"}),
             new AnimationOption("holdUp", "Hold Up", AnimationOption.OptionType.SLIDER, new Object[]{holdUp / 29F}),
+            new AnimationOption("stereo", "Stereo", AnimationOption.OptionType.CHECKBOX, new Object[]{stereo}),
         };
     }
 
@@ -70,6 +72,9 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
                 break;
             case "holdUp":
                 holdUp = 1 + (29 * Float.parseFloat(value));
+                break;
+            case "stereo":
+                stereo = Boolean.parseBoolean(value);
                 break;
         }
     }
@@ -90,15 +95,46 @@ public class AnimationSpectrumDots extends AnimationSpectrumAnalyzer {
     }
 
     @Override
-    public synchronized void processFFT(FFT fft) {
-        for (int i = 0; i < amplitudes.length; i++) {
-            float amplitude = 0;
-            for (int j = 0; j < bandIncrement; j++) {
-                float band = fft.getBand(i * bandIncrement + j);
-                if (band > amplitude) amplitude = band;
+    public int getDesiredFFTCount()  {
+        return stereo ? 2 : 1;
+    }
+
+    @Override
+    public synchronized void processFFT(FFT[] fft) {
+        if (fft.length == 1) {
+            for (int i = 0; i < amplitudes.length; i++) {
+                float amplitude = 0;
+                for (int j = 0; j < bandIncrement; j++) {
+                    float band = fft[0].getBand(i * bandIncrement + j);
+                    if (band > amplitude) amplitude = band;
+                }
+                if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
+                else if (amplitudes[i] > 0)
+                    amplitudes[i] -= amplitudes[i] / Math.max(holdUp * MathHelper.log(i, 10), 12F);
             }
-            if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
-            else if (amplitudes[i] > 0) amplitudes[i] -= amplitudes[i] / Math.max(holdUp * MathHelper.log(i, 10), 12F);
+        } else {
+            for (int i = amplitudes.length / 2 - 1; i >= 0; i--) {
+                int k = amplitudes.length / 2 - 1 - i;
+                float amplitude = 0;
+                for (int j = 0; j < bandIncrement * 2; j++) {
+                    float band = fft[0].getBand(k * bandIncrement * 2 + j);
+                    if (band > amplitude) amplitude = band;
+                }
+                if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
+                else if (amplitudes[i] > 0)
+                    amplitudes[i] -= amplitudes[i] / Math.max(holdUp * MathHelper.log(i, 10), 12F);
+            }
+            for (int i = amplitudes.length / 2; i < amplitudes.length; i++) {
+                int k = i - amplitudes.length / 2;
+                float amplitude = 0;
+                for (int j = 0; j < bandIncrement * 2; j++) {
+                    float band = fft[1].getBand(k * bandIncrement * 2 + j);
+                    if (band > amplitude) amplitude = band;
+                }
+                if (amplitude > amplitudes[i]) amplitudes[i] = amplitude;
+                else if (amplitudes[i] > 0)
+                    amplitudes[i] -= amplitudes[i] / Math.max(holdUp * MathHelper.log(i, 10), 12F);
+            }
         }
     }
 
